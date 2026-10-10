@@ -24,6 +24,7 @@ export type ProductFrontend = Omit<Product, "costPrice" | "salePrice"> & {
   costPrice: number;
   salePrice: number;
   category?: Category | null;
+  variants?: any[];
 };
 
 export function isProductLowStock(
@@ -66,7 +67,7 @@ export function getProductColumns({
   can,
   globalLowStockThreshold = 5,
   categoryLowStockThresholds = {},
-  trackStock = true,
+  trackStock = false,
 }: ProductActions): ColumnDef<ProductFrontend>[] {
   const canStock = trackStock && can("produtos", "Editar");
   const canEdit = can("produtos", "Editar");

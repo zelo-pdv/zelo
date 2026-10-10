@@ -30,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { ClientTableData } from "./columns";
 
 export function ClientsDataTable({
@@ -49,6 +50,7 @@ export function ClientsDataTable({
   onExportClick?: () => void;
   isExporting?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [pendingFilter, setPendingFilter] = useState("Todos");
@@ -90,6 +92,10 @@ export function ClientsDataTable({
       .getColumn("pendingAmount")
       ?.setFilterValue(pendingFilter === "Todos" ? undefined : pendingFilter);
   }, [pendingFilter, table]);
+
+  useEffect(() => {
+    table.setPageSize(isMobile ? 5 : 8);
+  }, [isMobile, table]);
 
   useEffect(() => {
     table.setPageIndex(0);

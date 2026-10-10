@@ -70,23 +70,26 @@ export async function PATCH(
     }
 
     const data = validation.data;
+    const { variants, ...restData } = data;
+    const productData = { ...restData };
+    delete (productData as { hasVariants?: boolean }).hasVariants;
 
-    Object.keys(data).forEach(
+    Object.keys(productData).forEach(
       (key) =>
-        data[key as keyof typeof data] === undefined &&
-        delete data[key as keyof typeof data],
+        productData[key as keyof typeof productData] === undefined &&
+        delete productData[key as keyof typeof productData],
     );
 
-    if (Object.keys(data).length === 0) {
+    if (Object.keys(productData).length === 0 && !variants) {
       return NextResponse.json(
         { error: "Nenhum dado para atualizar." },
         { status: 400 },
       );
     }
 
-    if (data.categoryId) {
+    if (productData.categoryId) {
       const existingCategory = await prisma.category.findFirst({
-        where: { id: data.categoryId, lojaId: auth.user.lojaId },
+        where: { id: productData.categoryId, lojaId: auth.user.lojaId },
       });
       if (!existingCategory) {
         return NextResponse.json(
@@ -100,24 +103,58 @@ export async function PATCH(
       v === "" || v === undefined ? null : v;
 
     const normalizedData = {
-      ...data,
-      ...(data.code !== undefined && { code: toNull(data.code) }),
-      ...(data.barcode !== undefined && { barcode: toNull(data.barcode) }),
-      ...(data.description !== undefined && {
-        description: toNull(data.description),
+      ...productData,
+      ...(productData.code !== undefined && { code: toNull(productData.code) }),
+      ...(productData.barcode !== undefined && { barcode: toNull(productData.barcode) }),
+      ...(productData.description !== undefined && {
+        description: toNull(productData.description),
       }),
-      ...(data.image !== undefined && { image: toNull(data.image) }),
-      ...(data.notes !== undefined && { notes: toNull(data.notes) }),
-      ...(data.categoryId !== undefined && {
-        categoryId: toNull(data.categoryId),
+      ...(productData.image !== undefined && { image: toNull(productData.image) }),
+      ...(productData.notes !== undefined && { notes: toNull(productData.notes) }),
+      ...(productData.categoryId !== undefined && {
+        categoryId: toNull(productData.categoryId),
       }),
     };
 
     const product = await prisma.product.update({
       where: { id },
-      data: normalizedData,
+      data: {
+        ...normalizedData,
+        variants: variants !== undefined ? {
+          deleteMany: {
+            id: { notIn: variants.map(v => v.id).filter(Boolean) as string[] }
+          },
+          update: variants.filter(v => v.id).map(v => ({
+            where: { id: v.id },
+            data: {
+              name: v.name,
+              code: toNull(v.code),
+              barcode: toNull(v.barcode),
+              attributes: (v.attributes ?? {}) as any,
+              costPrice: v.costPrice,
+              salePrice: v.salePrice,
+              stock: v.stock,
+              minStock: v.minStock,
+              image: toNull(v.image),
+            }
+          })),
+          create: variants.filter(v => !v.id).map(v => ({
+            name: v.name,
+            code: toNull(v.code),
+            barcode: toNull(v.barcode),
+            attributes: (v.attributes ?? {}) as any,
+            costPrice: v.costPrice,
+            salePrice: v.salePrice,
+            stock: v.stock,
+            minStock: v.minStock,
+            image: toNull(v.image),
+            lojaId: auth.user.lojaId
+          }))
+        } : undefined
+      },
       include: {
         category: true,
+        variants: { where: { deletedAt: null } }
       },
     });
 

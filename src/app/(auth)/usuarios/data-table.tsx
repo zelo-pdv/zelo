@@ -28,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserTableData } from "./columns";
 
 export function UsersDataTable({
@@ -45,6 +46,7 @@ export function UsersDataTable({
   onExportClick?: () => void;
   isExporting?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [groupFilter, setGroupFilter] = useState("Todos");
@@ -86,6 +88,10 @@ export function UsersDataTable({
         statusFilter === "Todos" ? undefined : statusFilter === "Ativo",
       );
   }, [statusFilter, groupFilter, table]);
+
+  useEffect(() => {
+    table.setPageSize(isMobile ? 5 : 10);
+  }, [isMobile, table]);
 
   useEffect(() => {
     table.setPageIndex(0);

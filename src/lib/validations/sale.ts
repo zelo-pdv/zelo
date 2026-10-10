@@ -1,9 +1,11 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { SaleStatus } from "@/prisma/client";
 
 export const saleItemSchema = z.object({
   productId: z.string(),
+  variantId: z.string().optional().nullable(),
   productName: z.string(),
+  variantName: z.string().optional().nullable(),
   quantity: z.number().positive("A quantidade deve ser maior que zero"),
   unitPrice: z.number().positive("O preço unitário deve ser maior que zero"),
 });
@@ -29,3 +31,4 @@ export const saleSchema = z.object({
 });
 
 export type SaleFormValues = z.infer<typeof saleSchema>;
+

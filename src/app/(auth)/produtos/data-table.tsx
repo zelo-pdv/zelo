@@ -30,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { ProductFrontend } from "./columns";
 
 interface ProductsDataTableProps {
@@ -53,6 +54,7 @@ export function ProductsDataTable({
   onExportClick,
   isExporting,
 }: ProductsDataTableProps) {
+  const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -92,6 +94,10 @@ export function ProductsDataTable({
       .getColumn("active")
       ?.setFilterValue(statusFilter === "Todos" ? undefined : statusFilter);
   }, [statusFilter, table]);
+
+  useEffect(() => {
+    table.setPageSize(isMobile ? 5 : 8);
+  }, [isMobile, table]);
 
   useEffect(() => {
     table.setPageIndex(0);

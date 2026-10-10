@@ -724,7 +724,7 @@ function ChangePasswordDialog({
         disabled={isSubmitting}
       >
         {isSubmitting && <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />}
-        Salvar nova senha
+        Salvar
       </Button>
     </div>
   );
@@ -748,7 +748,7 @@ function ChangePasswordDialog({
               className="h-11 w-full rounded-full font-medium"
             >
               {isSubmitting && <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />}
-              Salvar nova senha
+              Salvar
             </Button>
             <Button
               type="button"

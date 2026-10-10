@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getPaymentLabel, PaymentMethod, type Sale, SaleStatus } from "@/types";
 import { useSettingsStore } from "@/store/useSettingsStore";
 
@@ -37,6 +38,7 @@ export function SalesDataTable({
   columns: ColumnDef<Sale>[];
   data: Sale[];
 }) {
+  const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -138,6 +140,10 @@ export function SalesDataTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 8 } },
   });
+
+  useEffect(() => {
+    table.setPageSize(isMobile ? 5 : 8);
+  }, [isMobile, table]);
 
   useEffect(() => {
     table.setPageIndex(0);

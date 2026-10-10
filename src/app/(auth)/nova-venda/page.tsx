@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 import { ProductThumb } from "@/components/product-thumb";
 import { ClientPicker } from "@/components/nova-venda/client-picker";
 import { ProductPicker } from "@/components/nova-venda/product-picker";
+import { VariantPicker } from "@/components/nova-venda/variant-picker";
 
 import { clientsService } from "@/services/clients.service";
 import { productsService } from "@/services/products.service";
@@ -63,8 +64,11 @@ import { useDataSync, notifyLocalSync } from "@/hooks/use-data-sync";
 import { useSettingsStore } from "@/store/useSettingsStore";
 
 type CartItem = {
+  cartItemId: string;
   productId: string;
+  variantId?: string | null;
   productName: string;
+  variantName?: string | null;
   productImage?: string | null;
   quantity: number;
   unitPrice: number;
@@ -80,7 +84,7 @@ export default function NovaVenda() {
     defaultPaymentMethod: PaymentMethod.DINHEIRO,
     defaultSaleStatus: SaleStatus.PAGO,
   };
-  const trackStock = useSettingsStore((s) => s.products?.trackStock ?? true);
+  const trackStock = useSettingsStore((s) => s.products?.trackStock ?? false);
   const outOfStockWarning = useSettingsStore(
     (s) => s.notifications?.outOfStockWarning ?? true,
   );
@@ -98,6 +102,7 @@ export default function NovaVenda() {
   // Estado do Carrinho e Fluxo (substitui o useCartStore)
   const [client, setClient] = useState<Client | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
+  const [variantPickerProduct, setVariantPickerProduct] = useState<any>(null);
   const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
   const [editingSaleNumber, setEditingSaleNumber] = useState<number | null>(null);
   const [step, setStep] = useState<"cart" | "payment">("cart");
@@ -130,12 +135,7 @@ export default function NovaVenda() {
     return true;
   };
 
-  const updateItemPrice = (id: string, newPrice: number) => {
-    if (isNaN(newPrice) || newPrice < 0) return;
-    setItems((prev) =>
-      prev.map((i) => (i.productId === id ? { ...i, unitPrice: newPrice } : i))
-    );
-  };
+  const updateItemPrice = (cartItemId: string, newPrice: number) => { if (isNaN(newPrice) || newPrice < 0) return; setItems((prev) => prev.map((i) => (i.cartItemId === cartItemId ? { ...i, unitPrice: newPrice } : i))); };
 
   const checkout = step === "payment";
 
@@ -290,86 +290,92 @@ export default function NovaVenda() {
   const canCheckout = items.length > 0 && (!salesSettings.requireClient || !!client);
 
   // Funções do carrinho
-  const addProduct = (p: Product) => {
-    const existing = items.find((i) => i.productId === p.id);
+  const addProduct = (p: any, variant?: any) => {
+    if (p.variants && p.variants.length > 0 && !variant) {
+      setVariantPickerProduct(p);
+      return;
+    }
+
+    const cartItemId = variant ? `${p.id}-${variant.id}` : p.id;
+    const stockToCheck = variant ? variant.stock : p.stock;
+    const itemName = variant ? `${p.name} - ${variant.name}` : p.name;
+    const itemPrice = variant && variant.salePrice !== null ? Number(variant.salePrice) : Number(p.salePrice);
+    
+    const existing = items.find((i) => i.cartItemId === cartItemId);
     const currentQty = existing ? existing.quantity : 0;
 
-    // Bloquear venda com estoque zerado ou insuficiente se controle de estoque E bloqueio estiverem ativos
-    if (trackStock && salesSettings.blockOutOfStock && currentQty + 1 > p.stock) {
+    if (trackStock && salesSettings.blockOutOfStock && currentQty + 1 > stockToCheck) {
       toast.error(
-        `Venda bloqueada: Estoque insuficiente para ${p.name}. (Disponível: ${p.stock})`,
-        {
-          id: `stock-block-${p.id}`,
-          duration: 3500,
-        },
+        `Venda bloqueada: Estoque insuficiente para ${itemName}. (Disponível: ${stockToCheck})`,
+        { id: `stock-block-${cartItemId}`, duration: 3500 }
       );
       return;
     }
 
-    if (trackStock && !salesSettings.blockOutOfStock && currentQty + 1 > p.stock && outOfStockWarning) {
+    if (trackStock && !salesSettings.blockOutOfStock && currentQty + 1 > stockToCheck && outOfStockWarning) {
       toast.warning(
-        `Aviso: Estoque insuficiente para ${p.name}. (Disponível: ${p.stock})`,
-        {
-          id: `stock-warn-${p.id}`,
-          duration: 3000,
-        },
+        `Aviso: Estoque insuficiente para ${itemName}. (Disponível: ${stockToCheck})`,
+        { id: `stock-warn-${cartItemId}`, duration: 3000 }
       );
     }
 
     setItems((prev) => {
-      const exists = prev.find((i) => i.productId === p.id);
+      const exists = prev.find((i) => i.cartItemId === cartItemId);
       if (exists) {
         return prev.map((i) =>
-          i.productId === p.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.cartItemId === cartItemId ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [
         ...prev,
         {
+          cartItemId,
           productId: p.id,
+          variantId: variant?.id,
           productName: p.name,
-          productImage: p.image,
-          unitPrice: Number(p.salePrice),
+          variantName: variant?.name,
+          productImage: variant?.image || p.image,
+          unitPrice: itemPrice,
           quantity: 1,
         },
       ];
     });
+    setVariantPickerProduct(null);
   };
 
-  const updateQty = (id: string, qty: number) => {
+  const updateQty = (cartItemId: string, qty: number) => {
     if (qty < 1) return;
 
-    const product = products.find((p) => p.id === id);
+    const item = items.find((i) => i.cartItemId === cartItemId);
+    if (!item) return;
 
-    // Bloquear venda com estoque zerado ou insuficiente se controle de estoque E bloqueio estiverem ativos
-    if (trackStock && salesSettings.blockOutOfStock && product && qty > product.stock) {
+    const product = products.find((p) => p.id === item.productId);
+    const variant = (product as any)?.variants?.find((v: any) => v.id === item.variantId);
+    const stockToCheck = variant ? variant.stock : (product ? product.stock : 0);
+    const itemName = variant ? `${product?.name} - ${variant.name}` : product?.name;
+
+    if (trackStock && salesSettings.blockOutOfStock && product && qty > stockToCheck) {
       toast.error(
-        `Venda bloqueada: Estoque insuficiente para ${product.name}. (Disponível: ${product.stock})`,
-        {
-          id: `stock-block-${id}`,
-          duration: 3500,
-        },
+        `Venda bloqueada: Estoque insuficiente para ${itemName}. (Disponível: ${stockToCheck})`,
+        { id: `stock-block-${cartItemId}`, duration: 3500 }
       );
       return;
     }
 
-    if (trackStock && !salesSettings.blockOutOfStock && product && qty > product.stock && outOfStockWarning) {
+    if (trackStock && !salesSettings.blockOutOfStock && product && qty > stockToCheck && outOfStockWarning) {
       toast.warning(
-        `Aviso: Estoque insuficiente para ${product.name}. (Disponível: ${product.stock})`,
-        {
-          id: `stock-warn-${id}`,
-          duration: 3000,
-        },
+        `Aviso: Estoque insuficiente para ${itemName}. (Disponível: ${stockToCheck})`,
+        { id: `stock-warn-${cartItemId}`, duration: 3000 }
       );
     }
 
     setItems((prev) =>
-      prev.map((i) => (i.productId === id ? { ...i, quantity: qty } : i)),
+      prev.map((i) => (i.cartItemId === cartItemId ? { ...i, quantity: qty } : i)),
     );
   };
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== id));
+  const removeItem = (cartItemId: string) => {
+    setItems((prev) => prev.filter((i) => i.cartItemId !== cartItemId));
   };
 
   const clear = () => {
@@ -586,48 +592,48 @@ export default function NovaVenda() {
           <ScrollArea className="h-full">
             <div className="space-y-2 p-0.5 pb-4">
               {items.map((it) => (
-                <Card key={it.productId} className="border-border/70">
+                <Card key={it.cartItemId} className="border-border/70">
                   <CardContent className="flex items-center gap-3 p-3">
                     <ProductThumb
                       name={it.productName}
-                      image={it.productImage || products.find((p) => p.id === it.productId)?.image}
+                      image={it.productImage || products.find((p) => p.id === it.cartItemId)?.image}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">
                         {it.productName}
                       </div>
-                      {isItemOpenPrice(it.productId) ? (
+                      {isItemOpenPrice(it.cartItemId) ? (
                         <div className="mt-1 flex items-center gap-1.5 text-xs">
                           <span className="text-muted-foreground font-medium">R$</span>
                           <Input
                             type="text"
                             inputMode="decimal"
                             value={
-                              editingPriceMap[it.productId] ??
+                              editingPriceMap[it.cartItemId] ??
                               (it.unitPrice === 0 ? "0,00" : it.unitPrice.toFixed(2).replace(".", ","))
                             }
                             onFocus={() => {
-                              if (editingPriceMap[it.productId] === undefined) {
+                              if (editingPriceMap[it.cartItemId] === undefined) {
                                 setEditingPriceMap((prev) => ({
                                   ...prev,
-                                  [it.productId]:
+                                  [it.cartItemId]:
                                     it.unitPrice === 0 ? "" : it.unitPrice.toFixed(2).replace(".", ","),
                                 }));
                               }
                             }}
                             onChange={(e) => {
                               const val = e.target.value.replace(/[^0-9.,]/g, "");
-                              setEditingPriceMap((prev) => ({ ...prev, [it.productId]: val }));
+                              setEditingPriceMap((prev) => ({ ...prev, [it.cartItemId]: val }));
                               const clean = val.replace(",", ".");
                               const num = parseFloat(clean);
                               if (!isNaN(num) && num >= 0) {
-                                updateItemPrice(it.productId, num);
+                                updateItemPrice(it.cartItemId, num);
                               }
                             }}
                             onBlur={() => {
                               setEditingPriceMap((prev) => {
                                 const copy = { ...prev };
-                                delete copy[it.productId];
+                                delete copy[it.cartItemId];
                                 return copy;
                               });
                             }}
@@ -647,7 +653,7 @@ export default function NovaVenda() {
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        onClick={() => updateQty(it.productId, it.quantity - 1)}
+                        onClick={() => updateQty(it.cartItemId, it.quantity - 1)}
                       >
                         <BoxIcon name="minus" className="text-sm" />
                       </Button>
@@ -658,7 +664,7 @@ export default function NovaVenda() {
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        onClick={() => updateQty(it.productId, it.quantity + 1)}
+                        onClick={() => updateQty(it.cartItemId, it.quantity + 1)}
                       >
                         <BoxIcon name="plus" className="text-sm" />
                       </Button>
@@ -666,7 +672,7 @@ export default function NovaVenda() {
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => removeItem(it.productId)}
+                        onClick={() => removeItem(it.cartItemId)}
                       >
                         <BoxIcon name="trash" className="text-base" />
                       </Button>
@@ -709,6 +715,13 @@ export default function NovaVenda() {
           setClientPicker(false);
         }}
         clients={clients as any}
+      />
+
+      <VariantPicker
+        product={variantPickerProduct}
+        open={!!variantPickerProduct}
+        onClose={() => setVariantPickerProduct(null)}
+        onSelect={(v) => addProduct(variantPickerProduct as any, v)}
       />
 
       <ProductPicker
@@ -778,7 +791,7 @@ export default function NovaVenda() {
                     <div className="space-y-1 mb-4">
                       {items.map((it) => (
                         <div
-                          key={it.productId}
+                          key={it.cartItemId}
                           className="flex items-center justify-between text-sm"
                         >
                           <div className="min-w-0 truncate pr-2">
@@ -985,7 +998,7 @@ export default function NovaVenda() {
                   <div className="space-y-1 pr-2">
                     {items.map((it) => (
                       <div
-                        key={it.productId}
+                        key={it.cartItemId}
                         className="flex items-center justify-between text-sm"
                       >
                         <div className="min-w-0 truncate pr-2">
@@ -1156,3 +1169,7 @@ export default function NovaVenda() {
     </div>
   );
 }
+
+
+
+

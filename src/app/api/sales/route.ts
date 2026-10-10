@@ -137,7 +137,7 @@ export async function POST(req: Request) {
         where: { lojaId: user.lojaId },
       });
       const config = (storeSettings?.config as any) ?? {};
-      const trackStock = config?.products?.trackStock ?? true;
+      const trackStock = config?.products?.trackStock ?? false;
       const blockOutOfStock = config?.sales?.blockOutOfStock ?? false;
 
       const openPriceEnabled = config?.sales?.openPriceEnabled ?? false;
@@ -153,9 +153,12 @@ export async function POST(req: Request) {
           throw new Error("Produto não encontrado.");
         }
         
-        // Verifica estoque apenas se o controle de estoque E o bloqueio de estoque insuficiente estiverem ativos
-        if (trackStock && blockOutOfStock && dbProduct.stock !== null && dbProduct.stock.toNumber() < item.quantity) {
-          throw new Error(`Estoque insuficiente para o produto ${dbProduct.name}.`);
+        const dbVariant = item.variantId ? (dbProduct as any).variants.find((v: any) => v.id === item.variantId) : null;
+        const stockToCheck = dbVariant ? dbVariant.stock : dbProduct.stock;
+        const priceToUse = dbVariant && dbVariant.salePrice !== null ? dbVariant.salePrice : dbProduct.salePrice;
+
+        if (trackStock && blockOutOfStock && stockToCheck !== null && Number(stockToCheck) < item.quantity) {
+          throw new Error(`Estoque insuficiente para o produto ${dbProduct.name}${dbVariant ? ' - ' + dbVariant.name : ''}.`);
         }
 
         const isProductOpenPrice = openPriceEnabled && (
@@ -165,14 +168,16 @@ export async function POST(req: Request) {
 
         const unitPrice = (isProductOpenPrice && item.unitPrice && item.unitPrice > 0)
           ? item.unitPrice
-          : dbProduct.salePrice.toNumber();
+          : Number(priceToUse);
 
         const subtotal = item.quantity * unitPrice;
         calculatedTotal += subtotal;
 
         saleItemsData.push({
           productId: item.productId,
-          productName: dbProduct.name, // Usa o nome real do banco
+          variantId: item.variantId,
+          productName: dbProduct.name,
+          variantName: item.variantName,
           quantity: item.quantity,
           unitPrice: unitPrice,
           subtotal: subtotal,
@@ -305,3 +310,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

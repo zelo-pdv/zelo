@@ -157,7 +157,7 @@ export interface ProductsSettings {
 }
 
 export const defaultProductsSettings: ProductsSettings = {
-  trackStock: true,
+  trackStock: false,
   globalLowStockThreshold: 5,
   hideCostPrice: false,
   showProductImages: true,

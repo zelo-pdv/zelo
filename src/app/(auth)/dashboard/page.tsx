@@ -604,7 +604,7 @@ export default function Dashboard() {
           hint={`${stats.pendingCount} venda${stats.pendingCount === 1 ? "" : "s"} pendente${stats.pendingCount === 1 ? "" : "s"}`}
           tone="pending"
         />
-        {!dashboardSettings.hideLowStockCard && (
+        {!dashboardSettings.hideLowStockCard && (productsSettings?.trackStock ?? false) && (
           <StatCard
             label="Estoque baixo"
             value={`${stats.low.length} produto${stats.low.length === 1 ? "" : "s"}`}
@@ -619,7 +619,7 @@ export default function Dashboard() {
 
       {/* Item #7: Ocultar seção de Estoque Baixo se configurado ou se controle de estoque estiver desativado */}
       {!dashboardSettings.hideLowStockCard &&
-        (productsSettings?.trackStock ?? true) &&
+        (productsSettings?.trackStock ?? false) &&
         products.length > 0 &&
         stats.low.length > 0 && (
           <section className="mt-8">

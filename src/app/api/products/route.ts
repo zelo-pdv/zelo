@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const products = await prisma.product.findMany({
       where: { lojaId: auth.user.lojaId, deletedAt: null },
-      include: { category: true },
+      include: { category: true, variants: { where: { deletedAt: null } } },
       orderBy: { name: "asc" },
     });
 
@@ -55,24 +55,41 @@ export async function POST(request: Request) {
       }
     }
 
+    const { hasVariants, variants, ...productData } = data;
+
     const toNull = (v?: string | null) =>
       v === "" || v === undefined ? null : v;
 
     const product = await prisma.product.create({
       data: {
-        ...data,
-        code: toNull(data.code),
-        barcode: toNull(data.barcode),
-        description: toNull(data.description),
-        image: toNull(data.image),
-        notes: toNull(data.notes),
-        categoryId: toNull(data.categoryId),
-        costPrice: data.costPrice,
-        salePrice: data.salePrice,
+        ...productData,
+        code: toNull(productData.code),
+        barcode: toNull(productData.barcode),
+        description: toNull(productData.description),
+        image: toNull(productData.image),
+        notes: toNull(productData.notes),
+        categoryId: toNull(productData.categoryId),
+        costPrice: productData.costPrice,
+        salePrice: productData.salePrice,
         lojaId: auth.user.lojaId,
+        variants: hasVariants && variants ? {
+          create: variants.map(v => ({
+            name: v.name,
+            code: toNull(v.code),
+            barcode: toNull(v.barcode),
+            attributes: (v.attributes ?? {}) as any,
+            costPrice: v.costPrice,
+            salePrice: v.salePrice,
+            stock: v.stock,
+            minStock: v.minStock,
+            image: toNull(v.image),
+            lojaId: auth.user.lojaId
+          }))
+        } : undefined
       },
       include: {
         category: true,
+        variants: { where: { deletedAt: null } }
       },
     });
 

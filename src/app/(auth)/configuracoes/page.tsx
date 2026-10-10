@@ -466,7 +466,7 @@ function StoreSection() {
 function NotificationsSection() {
   const [isExpanded, setIsExpanded] = useState(false);
   const productsSettings = useSettingsStore((s) => s.products);
-  const trackStock = productsSettings?.trackStock ?? true;
+  const trackStock = productsSettings?.trackStock ?? false;
   const notifications = useSettingsStore((s) => s.notifications) ?? {
     enableToasts: true,
     outOfStockWarning: true,
@@ -546,7 +546,7 @@ function SalesConfigSection() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newPaymentMethod, setNewPaymentMethod] = useState("");
   const productsSettings = useSettingsStore((s) => s.products);
-  const trackStock = productsSettings?.trackStock ?? true;
+  const trackStock = productsSettings?.trackStock ?? false;
   const salesSettings = useSettingsStore((s) => s.sales) ?? {
     requireClient: false,
     blockOutOfStock: false,

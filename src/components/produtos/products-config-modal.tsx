@@ -22,7 +22,7 @@ type UnitFormData = { name: string; abbreviation: string; decimalPlaces: number 
 export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const isMobile = useIsMobile();
   const productsSettings = useSettingsStore((s) => s.products) ?? {
-    trackStock: true,
+    trackStock: false,
     globalLowStockThreshold: 5,
     hideCostPrice: false,
   };
@@ -251,7 +251,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
               </div>
               <Switch
                 id="toggle-track-stock"
-                checked={productsSettings.trackStock ?? true}
+                checked={productsSettings.trackStock ?? false}
                 onCheckedChange={(checked) => {
                   setProductsSettings({ trackStock: checked });
                   if (checked) {
@@ -266,7 +266,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             <Separator className="my-1" />
 
             {/* Alerta global de estoque baixo (visível apenas se controle de estoque ativo) */}
-            {(productsSettings.trackStock ?? true) && (
+            {(productsSettings.trackStock ?? false) && (
               <>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5 pr-4">
