@@ -12,6 +12,9 @@ const userSchema = z.object({
   phone: z.string().optional().nullable(),
   groupId: z.string().min(1, "Grupo é obrigatório"),
   active: z.boolean().default(true),
+  discountLimitMode: z.enum(["INHERIT", "CUSTOM", "UNLIMITED"]).optional().default("INHERIT"),
+  maxDiscountPercentage: z.coerce.number().min(0).max(100).optional().nullable(),
+  maxDiscountValue: z.coerce.number().min(0).optional().nullable(),
 });
 
 export async function GET() {
@@ -90,6 +93,9 @@ export async function POST(request: Request) {
         groupId: data.groupId,
         active: data.active,
         lojaId: currentUser.lojaId,
+        discountLimitMode: data.discountLimitMode,
+        maxDiscountPercentage: data.maxDiscountPercentage,
+        maxDiscountValue: data.maxDiscountValue,
       },
       include: { group: true },
     });

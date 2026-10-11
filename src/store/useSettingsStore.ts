@@ -119,6 +119,9 @@ export interface SalesSettings {
   openPriceEnabled?: boolean;
   openPriceMode?: "ALL" | "SPECIFIC";
   openPriceProductIds?: string[];
+  discountLimitEnabled?: boolean;
+  maxDiscountPercentage?: number | null;
+  maxDiscountValue?: number | null;
 }
 
 export const defaultSalesSettings: SalesSettings = {
@@ -130,6 +133,9 @@ export const defaultSalesSettings: SalesSettings = {
   openPriceEnabled: false,
   openPriceMode: "ALL",
   openPriceProductIds: [],
+  discountLimitEnabled: false,
+  maxDiscountPercentage: null,
+  maxDiscountValue: null,
 };
 
 export type DashboardPeriod = "today" | "week" | "month";

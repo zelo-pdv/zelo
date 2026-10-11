@@ -6,6 +6,9 @@ export interface AccessGroupDTO {
   description?: string;
   active: boolean;
   permissions: any;
+  discountLimitMode?: "INHERIT" | "CUSTOM" | "UNLIMITED" | null;
+  maxDiscountPercentage?: number | null;
+  maxDiscountValue?: number | null;
 }
 
 export async function getAccessGroups(): Promise<any[]> {

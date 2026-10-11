@@ -147,6 +147,19 @@ export function GroupsSection() {
                       <span className="text-xs text-muted-foreground">
                         {total} permiss{total === 1 ? "ão" : "ões"}
                       </span>
+                      {g.discountLimitMode === "UNLIMITED" ? (
+                        <Badge variant="outline" className="text-[10px] border-sky-500/30 text-sky-700 dark:text-sky-400">
+                          Desconto: Ilimitado
+                        </Badge>
+                      ) : g.discountLimitMode === "CUSTOM" ? (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-700 dark:text-amber-400">
+                          Desconto: {g.maxDiscountPercentage != null ? `${g.maxDiscountPercentage}%` : ""}{g.maxDiscountPercentage != null && g.maxDiscountValue != null ? " / " : ""}{g.maxDiscountValue != null ? `R$ ${Number(g.maxDiscountValue).toFixed(2).replace(".", ",")}` : ""}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                          Desconto: Padrão Loja
+                        </Badge>
+                      )}
                     </div>
                     {g.description && (
                       <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
@@ -231,6 +244,9 @@ interface FormData {
   description: string;
   active: boolean;
   permissions: Permissions;
+  discountLimitMode: "INHERIT" | "CUSTOM" | "UNLIMITED";
+  maxDiscountPercentage: string;
+  maxDiscountValue: string;
 }
 
 const emptyForm: FormData = {
@@ -238,6 +254,9 @@ const emptyForm: FormData = {
   description: "",
   active: true,
   permissions: {},
+  discountLimitMode: "INHERIT",
+  maxDiscountPercentage: "",
+  maxDiscountValue: "",
 };
 
 function GroupForm({
@@ -263,6 +282,15 @@ function GroupForm({
               description: initial.description || "",
               active: initial.active,
               permissions: { ...(initial.permissions as Permissions) },
+              discountLimitMode: (initial.discountLimitMode as any) || "INHERIT",
+              maxDiscountPercentage:
+                initial.maxDiscountPercentage !== null && initial.maxDiscountPercentage !== undefined
+                  ? String(initial.maxDiscountPercentage)
+                  : "",
+              maxDiscountValue:
+                initial.maxDiscountValue !== null && initial.maxDiscountValue !== undefined
+                  ? String(initial.maxDiscountValue)
+                  : "",
             }
           : emptyForm,
       );
@@ -312,6 +340,15 @@ function GroupForm({
           description: form.description.trim(),
           active: form.active,
           permissions: form.permissions,
+          discountLimitMode: form.discountLimitMode,
+          maxDiscountPercentage:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+              ? Number(form.maxDiscountPercentage)
+              : null,
+          maxDiscountValue:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountValue !== ""
+              ? Number(form.maxDiscountValue)
+              : null,
         });
         toast.success("Grupo atualizado com sucesso");
       } else {
@@ -320,6 +357,15 @@ function GroupForm({
           description: form.description.trim(),
           active: form.active,
           permissions: form.permissions,
+          discountLimitMode: form.discountLimitMode,
+          maxDiscountPercentage:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+              ? Number(form.maxDiscountPercentage)
+              : null,
+          maxDiscountValue:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountValue !== ""
+              ? Number(form.maxDiscountValue)
+              : null,
         });
         toast.success("Grupo criado com sucesso");
       }
@@ -374,6 +420,93 @@ function GroupForm({
               onCheckedChange={(v) => setForm({ ...form, active: v })}
             />
           </div>
+        </div>
+        {/* Limite de Desconto do Grupo */}
+        <div className="flex flex-col gap-3 rounded-lg border border-border/70 p-3 sm:col-span-2">
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">Limite de Desconto na Venda</Label>
+            <p className="text-xs text-muted-foreground">
+              Define a regra de desconto aplicável aos membros deste grupo ao registrar vendas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, discountLimitMode: "INHERIT" })}
+              className={cn(
+                "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+                form.discountLimitMode === "INHERIT"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted text-muted-foreground"
+              )}
+            >
+              Padrão da Loja
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, discountLimitMode: "CUSTOM" })}
+              className={cn(
+                "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+                form.discountLimitMode === "CUSTOM"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted text-muted-foreground"
+              )}
+            >
+              Personalizado
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, discountLimitMode: "UNLIMITED" })}
+              className={cn(
+                "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+                form.discountLimitMode === "UNLIMITED"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted text-muted-foreground"
+              )}
+            >
+              Ilimitado
+            </button>
+          </div>
+
+          {form.discountLimitMode === "CUSTOM" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/60 animate-in fade-in-50 duration-150">
+              <div className="space-y-1">
+                <Label className="text-xs">Desconto Máximo (%)</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="Ex.: 10"
+                    value={form.maxDiscountPercentage}
+                    onChange={(e) => setForm({ ...form, maxDiscountPercentage: e.target.value })}
+                    className="h-8 text-xs pr-8"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    %
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Desconto Máximo (R$)</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Ex.: 50,00"
+                    value={form.maxDiscountValue}
+                    onChange={(e) => setForm({ ...form, maxDiscountValue: e.target.value })}
+                    className="h-8 text-xs pr-10"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    R$
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

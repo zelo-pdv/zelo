@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"; // Ajuste o caminho do seu prisma se necessá
 import { saleSchema } from "@/lib/validations/sale";
 import { requirePermission } from "@/lib/require-permission";
 import { createAuditLog } from "@/lib/audit";
+import { getEffectiveDiscountLimit, validateDiscountLimit } from "@/lib/discount-limit";
 
 export async function GET(req: Request) {
   try {
@@ -187,6 +188,36 @@ export async function POST(req: Request) {
       const discount = parsed.discount ?? 0;
       if (discount < 0 || discount > calculatedTotal) {
         throw new Error("Desconto inválido.");
+      }
+
+      if (discount > 0) {
+        const sellerUser = await tx.user.findUnique({
+          where: { id: user.id },
+          include: { group: true },
+        });
+
+        const effectiveLimit = getEffectiveDiscountLimit(
+          {
+            id: sellerUser?.id,
+            isAdmin: user.isAdmin,
+            isOwner: user.isOwner,
+            discountLimitMode: sellerUser?.discountLimitMode,
+            maxDiscountPercentage: sellerUser?.maxDiscountPercentage,
+            maxDiscountValue: sellerUser?.maxDiscountValue,
+          },
+          sellerUser?.group,
+          config?.sales,
+        );
+
+        const limitValidation = validateDiscountLimit(
+          calculatedTotal,
+          discount,
+          effectiveLimit,
+        );
+
+        if (!limitValidation.valid) {
+          throw new Error(limitValidation.error || "Desconto excede o limite permitido.");
+        }
       }
 
       const finalTotal = calculatedTotal - discount;

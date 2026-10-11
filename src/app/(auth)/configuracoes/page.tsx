@@ -811,6 +811,92 @@ function SalesConfigSection() {
             )}
           </div>
 
+          {/* Limite Geral de Desconto */}
+          <div className="flex flex-col gap-3 rounded-xl border border-border/70 p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5 pr-4">
+                <Label
+                  className="text-sm font-medium cursor-pointer"
+                  htmlFor="toggle-discount-limit"
+                >
+                  Limite Geral de Desconto na Venda
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Define o teto de desconto padrão para vendedores da loja. Pode ser estipulado em porcentagem (%) ou valor em reais (R$). Limites por grupo ou individuais têm preferência.
+                </p>
+              </div>
+              <Switch
+                id="toggle-discount-limit"
+                checked={salesSettings.discountLimitEnabled ?? false}
+                onCheckedChange={(checked) => {
+                  setSalesSettings({ discountLimitEnabled: checked });
+                  if (checked) {
+                    toast.success("Limite geral de desconto ativado");
+                  } else {
+                    toast.info("Limite geral de desconto desativado (ilimitado)");
+                  }
+                }}
+              />
+            </div>
+
+            {salesSettings.discountLimitEnabled && (
+              <div className="mt-2 pt-3 border-t border-border/60 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in-50 duration-150">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Desconto Máximo em Porcentagem (%)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      placeholder="Ex.: 15"
+                      value={salesSettings.maxDiscountPercentage ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? null : Number(e.target.value);
+                        setSalesSettings({ maxDiscountPercentage: val });
+                      }}
+                      className="h-9 pr-10 text-sm bg-background"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                      %
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Ex: 15% limita o desconto a no máximo 15% do subtotal da venda.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Desconto Máximo em Reais (R$)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="Ex.: 50,00"
+                      value={salesSettings.maxDiscountValue ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? null : Number(e.target.value);
+                        setSalesSettings({ maxDiscountValue: val });
+                      }}
+                      className="h-9 pr-12 text-sm bg-background"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                      R$
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Ex: R$ 50,00 limita o desconto a no máximo 50 reais, independente do subtotal.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Item #2: Forma de pagamento padrão */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
             <div className="space-y-0.5 pr-4">

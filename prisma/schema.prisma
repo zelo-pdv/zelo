@@ -63,29 +63,35 @@ model AccessGroup {
   name        String
   description String?
   active      Boolean   @default(true)
-  permissions Json
-  lojaId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  loja        Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  users       User[]
+  permissions           Json
+  discountLimitMode     String?   @default("INHERIT")
+  maxDiscountPercentage Decimal?  @db.Decimal(5, 2)
+  maxDiscountValue      Decimal?  @db.Decimal(10, 2)
+  lojaId                String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+  loja                  Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  users                 User[]
 
   @@unique([lojaId, name])
   @@index([lojaId])
 }
 
 model User {
-  id          String      @id @default(cuid())
-  name        String
-  email       String      @unique
-  password    String
-  phone       String?
-  avatar      String?
-  active      Boolean     @default(true)
-  lastLogin   DateTime?
-  lojaId      String
-  groupId     String
+  id                    String      @id @default(cuid())
+  name                  String
+  email                 String      @unique
+  password              String
+  phone                 String?
+  avatar                String?
+  active                Boolean     @default(true)
+  lastLogin             DateTime?
+  discountLimitMode     String?     @default("INHERIT")
+  maxDiscountPercentage Decimal?    @db.Decimal(5, 2)
+  maxDiscountValue      Decimal?    @db.Decimal(10, 2)
+  lojaId                String
+  groupId               String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?

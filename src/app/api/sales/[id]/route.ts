@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/require-permission";
 import { SaleStatus } from "@/prisma/client";
 import { createAuditLog } from "@/lib/audit";
 import { saleSchema } from "@/lib/validations/sale";
+import { getEffectiveDiscountLimit, validateDiscountLimit } from "@/lib/discount-limit";
 
 export async function PATCH(
   request: Request,
@@ -254,6 +255,36 @@ export async function PUT(
       const discount = parsed.discount ?? 0;
       if (discount < 0 || discount > calculatedTotal) {
         throw new Error("Desconto inválido.");
+      }
+
+      if (discount > 0) {
+        const sellerUser = await tx.user.findUnique({
+          where: { id: auth.user.id },
+          include: { group: true },
+        });
+
+        const effectiveLimit = getEffectiveDiscountLimit(
+          {
+            id: sellerUser?.id,
+            isAdmin: auth.user.isAdmin,
+            isOwner: auth.user.isOwner,
+            discountLimitMode: sellerUser?.discountLimitMode,
+            maxDiscountPercentage: sellerUser?.maxDiscountPercentage,
+            maxDiscountValue: sellerUser?.maxDiscountValue,
+          },
+          sellerUser?.group,
+          config?.sales,
+        );
+
+        const limitValidation = validateDiscountLimit(
+          calculatedTotal,
+          discount,
+          effectiveLimit,
+        );
+
+        if (!limitValidation.valid) {
+          throw new Error(limitValidation.error || "Desconto excede o limite permitido.");
+        }
       }
 
       const finalTotal = calculatedTotal - discount;

@@ -17,6 +17,9 @@ const updateUserSchema = z.object({
     .or(z.literal("")),
   groupId: z.string().min(1, "Grupo é obrigatório").optional(),
   active: z.boolean().optional(),
+  discountLimitMode: z.enum(["INHERIT", "CUSTOM", "UNLIMITED"]).optional(),
+  maxDiscountPercentage: z.coerce.number().min(0).max(100).optional().nullable(),
+  maxDiscountValue: z.coerce.number().min(0).optional().nullable(),
 });
 
 export async function PATCH(
@@ -51,7 +54,13 @@ export async function PATCH(
     const data = updateUserSchema.parse(body);
 
     // Usuário não-admin não pode alterar seu próprio grupo ou status
-    if (!currentUser.isAdmin && (data.groupId !== undefined || data.active !== undefined)) {
+    if (!currentUser.isAdmin && (
+      data.groupId !== undefined ||
+      data.active !== undefined ||
+      data.discountLimitMode !== undefined ||
+      data.maxDiscountPercentage !== undefined ||
+      data.maxDiscountValue !== undefined
+    )) {
       return NextResponse.json(
         { error: "Você não tem permissão para alterar grupo ou status." },
         { status: 403 },
@@ -123,6 +132,15 @@ export async function PATCH(
     }
     if (data.phone !== undefined) {
       updateData.phone = data.phone && data.phone.trim() !== "" ? data.phone.trim() : null;
+    }
+    if (data.discountLimitMode !== undefined) {
+      updateData.discountLimitMode = data.discountLimitMode;
+    }
+    if (data.maxDiscountPercentage !== undefined) {
+      updateData.maxDiscountPercentage = data.maxDiscountPercentage;
+    }
+    if (data.maxDiscountValue !== undefined) {
+      updateData.maxDiscountValue = data.maxDiscountValue;
     }
 
     if (!updateData.password) {

@@ -51,6 +51,10 @@ import { VariantPicker } from "@/components/nova-venda/variant-picker";
 import { clientsService } from "@/services/clients.service";
 import { productsService } from "@/services/products.service";
 import { apiRequest } from "@/lib/api-request";
+import {
+  type EffectiveDiscountLimit,
+  validateDiscountLimit,
+} from "@/lib/discount-limit";
 import { salesService, updateSale } from "@/services/sales.service";
 import {
   Client,
@@ -119,6 +123,25 @@ export default function NovaVenda() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed");
   const [discountValue, setDiscountValue] = useState<string>("");
+  const [effectiveDiscountLimit, setEffectiveDiscountLimit] = useState<EffectiveDiscountLimit>({
+    unlimited: true,
+    source: "none",
+    maxPercentage: null,
+    maxValue: null,
+  });
+
+  const fetchDiscountLimit = async () => {
+    try {
+      const limit = await apiRequest<EffectiveDiscountLimit>("/sales/discount-limit");
+      if (limit) setEffectiveDiscountLimit(limit);
+    } catch (e) {
+      console.error("Erro ao obter limite de desconto:", e);
+    }
+  };
+
+  useEffect(() => {
+    void fetchDiscountLimit();
+  }, []);
 
   const [clientPicker, setClientPicker] = useState(false);
   const [productPicker, setProductPicker] = useState(false);
@@ -282,6 +305,10 @@ export default function NovaVenda() {
     return Math.min(subtotal, Math.max(0, num));
   }, [subtotal, discountValue, discountType]);
 
+  const discountValidation = useMemo(() => {
+    return validateDiscountLimit(subtotal, discountAmount, effectiveDiscountLimit);
+  }, [subtotal, discountAmount, effectiveDiscountLimit]);
+
   const total = useMemo(
     () => Math.max(0, subtotal - discountAmount),
     [subtotal, discountAmount],
@@ -409,6 +436,11 @@ export default function NovaVenda() {
     }
     if (status === SaleStatus.PENDENTE && !client) {
       toast.warning("Para vendas pendentes (fiado), é necessário vincular um cliente.");
+      return;
+    }
+
+    if (!discountValidation.valid) {
+      toast.error(discountValidation.error || "Desconto excede o limite permitido.");
       return;
     }
 
@@ -845,13 +877,32 @@ export default function NovaVenda() {
                           placeholder={discountType === "fixed" ? "0,00" : "0"}
                           value={discountValue}
                           onChange={(e) => setDiscountValue(e.target.value)}
-                          className="h-9 pr-14 text-sm bg-background"
+                          className={cn(
+                            "h-9 pr-14 text-sm bg-background",
+                            !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+                          )}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
                           {discountType === "fixed" ? "reais" : "%"}
                         </div>
                       </div>
-                      {discountAmount > 0 && (
+                      {!effectiveDiscountLimit.unlimited && (
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                          <span>Seu limite de desconto:</span>
+                          <span className="font-medium">
+                            {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
+                            {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
+                            {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
+                          </span>
+                        </div>
+                      )}
+                      {!discountValidation.valid && (
+                        <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
+                          <BoxIcon name="error-circle" className="text-sm shrink-0" />
+                          <span>{discountValidation.error}</span>
+                        </div>
+                      )}
+                      {discountValidation.valid && discountAmount > 0 && (
                         <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
                           <span>Desconto aplicado:</span>
                           <span className="tabular-nums">- {currency(discountAmount)}</span>
@@ -1054,13 +1105,32 @@ export default function NovaVenda() {
                     placeholder={discountType === "fixed" ? "0,00" : "0"}
                     value={discountValue}
                     onChange={(e) => setDiscountValue(e.target.value)}
-                    className="h-9 pr-14 text-sm bg-background"
+                    className={cn(
+                      "h-9 pr-14 text-sm bg-background",
+                      !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+                    )}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
                     {discountType === "fixed" ? "reais" : "%"}
                   </div>
                 </div>
-                {discountAmount > 0 && (
+                {!effectiveDiscountLimit.unlimited && (
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                    <span>Seu limite de desconto:</span>
+                    <span className="font-medium">
+                      {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
+                      {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
+                      {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
+                    </span>
+                  </div>
+                )}
+                {!discountValidation.valid && (
+                  <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
+                    <BoxIcon name="error-circle" className="text-sm shrink-0" />
+                    <span>{discountValidation.error}</span>
+                  </div>
+                )}
+                {discountValidation.valid && discountAmount > 0 && (
                   <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
                     <span>Desconto aplicado:</span>
                     <span className="tabular-nums">- {currency(discountAmount)}</span>

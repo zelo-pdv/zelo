@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, description, active, permissions } = parsed.data;
+    const { name, description, active, permissions, discountLimitMode, maxDiscountPercentage, maxDiscountValue } = parsed.data;
 
     const group = await prisma.accessGroup.create({
       data: {
@@ -48,6 +48,9 @@ export async function POST(request: Request) {
         active,
         permissions,
         lojaId: user.lojaId,
+        discountLimitMode,
+        maxDiscountPercentage,
+        maxDiscountValue,
       },
     });
 

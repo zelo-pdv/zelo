@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Popover,
@@ -102,7 +103,16 @@ export function getUserColumns({
             </div>
 
             <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
-              Escopo: {u.groupLabel}
+              <span>Escopo: {u.groupLabel}</span>
+              <span>·</span>
+              <span>
+                Desconto:{" "}
+                {u.discountLimitMode === "UNLIMITED"
+                  ? "Ilimitado"
+                  : u.discountLimitMode === "CUSTOM"
+                  ? `${u.maxDiscountPercentage != null ? `${u.maxDiscountPercentage}%` : ""}${u.maxDiscountPercentage != null && u.maxDiscountValue != null ? " / " : ""}${u.maxDiscountValue != null ? `R$ ${Number(u.maxDiscountValue).toFixed(2).replace(".", ",")}` : ""}`
+                  : "Padrão Grupo"}
+              </span>
             </div>
           </div>
         );
@@ -118,6 +128,35 @@ export function getUserColumns({
       ),
       filterFn: (row, id, value) =>
         value === "Todos" || row.getValue(id) === value,
+    },
+    {
+      id: "discountLimit",
+      header: "Limite Desconto",
+      cell: ({ row }) => {
+        const u = row.original;
+        if (u.discountLimitMode === "UNLIMITED") {
+          return (
+            <Badge variant="outline" className="text-[10px] border-sky-500/30 text-sky-700 dark:text-sky-400">
+              Ilimitado
+            </Badge>
+          );
+        }
+        if (u.discountLimitMode === "CUSTOM") {
+          const parts: string[] = [];
+          if (u.maxDiscountPercentage != null) parts.push(`${u.maxDiscountPercentage}%`);
+          if (u.maxDiscountValue != null) parts.push(`R$ ${Number(u.maxDiscountValue).toFixed(2).replace(".", ",")}`);
+          return (
+            <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-700 dark:text-amber-400">
+              {parts.length > 0 ? parts.join(" ou ") : "Personalizado"}
+            </Badge>
+          );
+        }
+        return (
+          <Badge variant="outline" className="text-[10px] text-muted-foreground">
+            Padrão do Grupo
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "active",

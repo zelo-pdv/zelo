@@ -73,6 +73,9 @@ export type AppUser = {
   updatedAt?: string | Date;
   group?: AccessGroupDTO;
   isFirstUser?: boolean;
+  discountLimitMode?: string | null;
+  maxDiscountPercentage?: any;
+  maxDiscountValue?: any;
 };
 
 interface FormData {
@@ -82,6 +85,9 @@ interface FormData {
   phone?: string | null;
   groupId: string;
   active: boolean;
+  discountLimitMode: "INHERIT" | "CUSTOM" | "UNLIMITED";
+  maxDiscountPercentage: string;
+  maxDiscountValue: string;
 }
 
 const emptyForm: FormData = {
@@ -91,6 +97,9 @@ const emptyForm: FormData = {
   phone: "",
   groupId: "",
   active: true,
+  discountLimitMode: "INHERIT",
+  maxDiscountPercentage: "",
+  maxDiscountValue: "",
 };
 
 // Schema do Zod para Validação no Frontend
@@ -101,6 +110,9 @@ const userFormSchema = z.object({
   phone: z.string().optional().nullable(),
   groupId: z.string().min(1, "Selecione um grupo de acesso"),
   active: z.boolean(),
+  discountLimitMode: z.enum(["INHERIT", "CUSTOM", "UNLIMITED"]).optional(),
+  maxDiscountPercentage: z.string().optional(),
+  maxDiscountValue: z.string().optional(),
 });
 
 export default function UsuariosPage() {
@@ -318,6 +330,15 @@ function UserForm({
         phone: initial.phone ? maskPhone(initial.phone) : "",
         groupId: initial.groupId,
         active: initial.active,
+        discountLimitMode: (initial.discountLimitMode as any) || "INHERIT",
+        maxDiscountPercentage:
+          initial.maxDiscountPercentage !== null && initial.maxDiscountPercentage !== undefined
+            ? String(initial.maxDiscountPercentage)
+            : "",
+        maxDiscountValue:
+          initial.maxDiscountValue !== null && initial.maxDiscountValue !== undefined
+            ? String(initial.maxDiscountValue)
+            : "",
       });
     } else {
       const saved = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LEGACY_DRAFT_KEY);
@@ -373,6 +394,15 @@ function UserForm({
           phone: form.phone ? "+55" + form.phone.replace(/\D/g, "") : undefined,
           groupId: form.groupId,
           active: form.active,
+          discountLimitMode: form.discountLimitMode,
+          maxDiscountPercentage:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+              ? Number(form.maxDiscountPercentage)
+              : null,
+          maxDiscountValue:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountValue !== ""
+              ? Number(form.maxDiscountValue)
+              : null,
         });
         toast.success("Usuário atualizado com sucesso!");
         onSuccess(updated, true);
@@ -384,6 +414,15 @@ function UserForm({
           phone: form.phone ? "+55" + form.phone.replace(/\D/g, "") : undefined,
           groupId: form.groupId,
           active: form.active,
+          discountLimitMode: form.discountLimitMode,
+          maxDiscountPercentage:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+              ? Number(form.maxDiscountPercentage)
+              : null,
+          maxDiscountValue:
+            form.discountLimitMode === "CUSTOM" && form.maxDiscountValue !== ""
+              ? Number(form.maxDiscountValue)
+              : null,
         });
         toast.success("Usuário criado com sucesso!");
         localStorage.removeItem(DRAFT_KEY);
@@ -511,6 +550,94 @@ function UserForm({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Limite de Desconto Individual */}
+      <div className="sm:col-span-2 flex flex-col gap-3 rounded-lg border border-border/70 p-3">
+        <div className="space-y-0.5">
+          <Label className="text-sm font-medium">Limite de Desconto Individual</Label>
+          <p className="text-xs text-muted-foreground">
+            Define se este vendedor possui um limite exclusivo ou segue o padrão do seu grupo de acesso.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, discountLimitMode: "INHERIT" })}
+            className={cn(
+              "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+              form.discountLimitMode === "INHERIT"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:bg-muted text-muted-foreground"
+            )}
+          >
+            Padrão do Grupo
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, discountLimitMode: "CUSTOM" })}
+            className={cn(
+              "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+              form.discountLimitMode === "CUSTOM"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:bg-muted text-muted-foreground"
+            )}
+          >
+            Personalizado
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, discountLimitMode: "UNLIMITED" })}
+            className={cn(
+              "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
+              form.discountLimitMode === "UNLIMITED"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:bg-muted text-muted-foreground"
+            )}
+          >
+            Ilimitado
+          </button>
+        </div>
+
+        {form.discountLimitMode === "CUSTOM" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/60 animate-in fade-in-50 duration-150">
+            <div className="space-y-1">
+              <Label className="text-xs">Desconto Máximo (%)</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="Ex.: 15"
+                  value={form.maxDiscountPercentage}
+                  onChange={(e) => setForm({ ...form, maxDiscountPercentage: e.target.value })}
+                  className="h-8 text-xs pr-8"
+                />
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                  %
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Desconto Máximo (R$)</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  placeholder="Ex.: 50,00"
+                  value={form.maxDiscountValue}
+                  onChange={(e) => setForm({ ...form, maxDiscountValue: e.target.value })}
+                  className="h-8 text-xs pr-10"
+                />
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                  R$
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

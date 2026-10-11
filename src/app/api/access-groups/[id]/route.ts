@@ -22,7 +22,7 @@ export async function PATCH(
       );
     }
     
-    const { name, description, active, permissions } = parsed.data;
+    const { name, description, active, permissions, discountLimitMode, maxDiscountPercentage, maxDiscountValue } = parsed.data;
 
     const existing = await prisma.accessGroup.findFirst({
       where: { id, lojaId: auth.user.lojaId },
@@ -38,6 +38,9 @@ export async function PATCH(
         description,
         active,
         permissions,
+        discountLimitMode,
+        maxDiscountPercentage,
+        maxDiscountValue,
       },
     });
 
