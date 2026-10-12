@@ -113,6 +113,20 @@ export async function PATCH(
       },
     });
 
+    await createAuditLog({
+      action: "UPDATE_CLIENT",
+      entity: "Client",
+      entityId: id,
+      details: {
+        name: updatedClient.name,
+        phone: updatedClient.phone,
+        email: updatedClient.email,
+        active: updatedClient.active,
+      },
+      userId: user.id,
+      lojaId: user.lojaId,
+    });
+
     return NextResponse.json(updatedClient);
   } catch (error: any) {
     console.error("Erro ao atualizar cliente:", error);

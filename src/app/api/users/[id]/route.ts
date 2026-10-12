@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { requireAdmin } from "@/lib/require-permission";
 import { checkEmailConflict, checkPhoneConflict } from "@/lib/validations/uniqueness";
+import { createAuditLog } from "@/lib/audit";
 
 const updateUserSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").optional(),
@@ -203,6 +204,19 @@ export async function PATCH(
     const safeUser = { ...user };
     delete (safeUser as { password?: string }).password;
 
+    await createAuditLog({
+      action: "UPDATE_USER",
+      entity: "User",
+      entityId: id,
+      details: {
+        name: user.name,
+        email: user.email,
+        active: user.active,
+      },
+      userId: currentUser.id,
+      lojaId: currentUser.lojaId,
+    });
+
     return NextResponse.json(safeUser);
   } catch (error) {
     console.error("Erro ao atualizar usuário:", error);
@@ -257,6 +271,19 @@ export async function DELETE(
     }
 
     await prisma.user.delete({ where: { id, lojaId: currentUser.lojaId } });
+
+    await createAuditLog({
+      action: "DELETE_USER",
+      entity: "User",
+      entityId: id,
+      details: {
+        name: targetUser.name,
+        email: targetUser.email,
+      },
+      userId: currentUser.id,
+      lojaId: currentUser.lojaId,
+    });
+
     return NextResponse.json({ message: "Usuário deletado com sucesso" });
   } catch (error) {
     console.error("Erro ao deletar usuário:", error);

@@ -173,21 +173,30 @@ export async function PATCH(
       },
     });
 
-    const changedFields: any = {};
+    const changedFields: any = { name: product.name };
+    let hasChanges = false;
     if (normalizedData.salePrice !== undefined && Number(normalizedData.salePrice) !== Number(existingProduct.salePrice)) {
       changedFields.oldSalePrice = Number(existingProduct.salePrice);
       changedFields.newSalePrice = Number(product.salePrice);
+      hasChanges = true;
     }
     if (normalizedData.costPrice !== undefined && Number(normalizedData.costPrice) !== Number(existingProduct.costPrice)) {
       changedFields.oldCostPrice = Number(existingProduct.costPrice);
       changedFields.newCostPrice = Number(product.costPrice);
+      hasChanges = true;
     }
     if (normalizedData.stock !== undefined && Number(normalizedData.stock) !== Number(existingProduct.stock)) {
       changedFields.oldStock = Number(existingProduct.stock);
       changedFields.newStock = Number(product.stock);
+      hasChanges = true;
+    }
+    if (normalizedData.name !== undefined && normalizedData.name !== existingProduct.name) {
+      changedFields.oldName = existingProduct.name;
+      changedFields.newName = product.name;
+      hasChanges = true;
     }
 
-    if (Object.keys(changedFields).length > 0) {
+    if (hasChanges) {
       await createAuditLog({
         action: "UPDATE_PRODUCT",
         entity: "Product",

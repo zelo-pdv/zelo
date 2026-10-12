@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
 import { checkEmailConflict, checkPhoneConflict } from "@/lib/validations/uniqueness";
 import { clientFormSchema } from "@/lib/validations/client";
+import { createAuditLog } from "@/lib/audit";
 
 // [GET] /api/clients - Lista todos os clientes com seus endereços
 export async function GET() {
@@ -89,6 +90,19 @@ export async function POST(req: NextRequest) {
       include: {
         address: true,
       },
+    });
+
+    await createAuditLog({
+      action: "CREATE_CLIENT",
+      entity: "Client",
+      entityId: newClient.id,
+      details: {
+        name: newClient.name,
+        phone: newClient.phone,
+        email: newClient.email,
+      },
+      userId: user.id,
+      lojaId: user.lojaId,
     });
 
     return NextResponse.json(newClient, { status: 201 });

@@ -56,6 +56,13 @@ export const NAV: NavItem[] = [
 
 export const SECONDARY_NAV: NavItem[] = [
   {
+    to: "/relatorios",
+    label: "Relatórios",
+    short: "Relatórios",
+    icon: createBoxIcon("file-blank"),
+    adminOnly: true,
+  },
+  {
     to: "/usuarios",
     label: "Usuários",
     short: "Usuários",
@@ -84,6 +91,7 @@ export const TitlePages: TitlePage[] = [
   { label: "Nova Venda", to: "/nova-venda" },
   { label: "Clientes", to: "/clientes" },
   { label: "Histórico", to: "/historico" },
+  { label: "Relatórios", to: "/relatorios" },
   { label: "Configurações", to: "/configuracoes" },
   { label: "Usuários", to: "/usuarios" },
   { label: "Registros", to: "/registros" },

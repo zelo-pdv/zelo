@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { requireAdmin } from "@/lib/require-permission";
+import { createAuditLog } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -39,6 +40,17 @@ export async function PUT(request: Request) {
         lojaId,
         config: body,
       },
+    });
+
+    await createAuditLog({
+      action: "UPDATE_SETTINGS",
+      entity: "Settings",
+      entityId: updated.id,
+      details: {
+        summary: "Configurações gerais atualizadas",
+      },
+      userId: auth.user.id,
+      lojaId,
     });
 
     return NextResponse.json(updated.config);

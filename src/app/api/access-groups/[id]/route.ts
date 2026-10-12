@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-permission";
 import { updateAccessGroupSchema } from "@/lib/validations/access-group";
+import { createAuditLog } from "@/lib/audit";
 
 export async function PATCH(
   request: Request,
@@ -42,6 +43,17 @@ export async function PATCH(
         maxDiscountPercentage,
         maxDiscountValue,
       },
+    });
+
+    await createAuditLog({
+      action: "UPDATE_ACCESS_GROUP",
+      entity: "AccessGroup",
+      entityId: id,
+      details: {
+        name: group.name,
+      },
+      userId: auth.user.id,
+      lojaId: auth.user.lojaId,
     });
 
     return NextResponse.json(group);
@@ -96,6 +108,17 @@ export async function DELETE(
 
     await prisma.accessGroup.delete({
       where: { id },
+    });
+
+    await createAuditLog({
+      action: "DELETE_ACCESS_GROUP",
+      entity: "AccessGroup",
+      entityId: id,
+      details: {
+        name: existing.name,
+      },
+      userId: auth.user.id,
+      lojaId: auth.user.lojaId,
     });
 
     return NextResponse.json({ success: true });

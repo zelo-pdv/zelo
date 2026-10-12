@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { requireAdmin } from "@/lib/require-permission";
 import { accessGroupSchema } from "@/lib/validations/access-group";
+import { createAuditLog } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -52,6 +53,17 @@ export async function POST(request: Request) {
         maxDiscountPercentage,
         maxDiscountValue,
       },
+    });
+
+    await createAuditLog({
+      action: "CREATE_ACCESS_GROUP",
+      entity: "AccessGroup",
+      entityId: group.id,
+      details: {
+        name: group.name,
+      },
+      userId: user.id,
+      lojaId: user.lojaId,
     });
 
     return NextResponse.json(group, { status: 201 });

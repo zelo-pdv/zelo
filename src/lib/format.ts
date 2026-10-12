@@ -1,5 +1,9 @@
-export const currency = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+export const currency = (v?: number | string | null) => {
+  if (v === undefined || v === null || v === "") return "R$ 0,00";
+  const num = typeof v === "number" ? v : Number(v);
+  if (isNaN(num)) return "R$ 0,00";
+  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
 
 export const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", {

@@ -333,6 +333,9 @@ export async function POST(req: Request) {
         details: {
           saleNumber: sale.saleNumber,
           total: Number(sale.total),
+          paymentMethod: sale.paymentMethod,
+          status: sale.status,
+          clientName: sale.clientName || "Consumidor Final",
           itemsCount: sale.items.length,
         },
         userId: user.id,

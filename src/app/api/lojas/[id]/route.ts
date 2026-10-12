@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { lojaSchema } from "@/lib/validations/loja";
 import { requireAdmin } from "@/lib/require-permission";
+import { createAuditLog } from "@/lib/audit";
 
 export async function PUT(
   request: Request,
@@ -86,6 +87,19 @@ export async function PUT(
       Array.isArray(updatedLoja.address) && updatedLoja.address.length > 0
         ? updatedLoja.address[0]
         : null;
+
+    await createAuditLog({
+      action: "UPDATE_STORE",
+      entity: "Loja",
+      entityId: id,
+      details: {
+        name: updatedLoja.name,
+        ownerName: updatedLoja.ownerName,
+        phone: updatedLoja.phone,
+      },
+      userId: auth.user.id,
+      lojaId: id,
+    });
 
     return NextResponse.json({
       ...updatedLoja,

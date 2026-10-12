@@ -4,6 +4,7 @@ import { hash } from "bcrypt";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/require-permission";
 import { checkEmailConflict, checkPhoneConflict } from "@/lib/validations/uniqueness";
+import { createAuditLog } from "@/lib/audit";
 
 const userSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -98,6 +99,19 @@ export async function POST(request: Request) {
         maxDiscountValue: data.maxDiscountValue,
       },
       include: { group: true },
+    });
+
+    await createAuditLog({
+      action: "CREATE_USER",
+      entity: "User",
+      entityId: user.id,
+      details: {
+        name: user.name,
+        email: user.email,
+        groupName: user.group?.name || "Padrão",
+      },
+      userId: currentUser.id,
+      lojaId: currentUser.lojaId,
     });
 
     const safeUser = { ...user } as Record<string, unknown>;

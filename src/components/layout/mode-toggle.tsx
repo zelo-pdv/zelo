@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,25 @@ export function ModeToggle({
   title?: boolean;
 }) {
   const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="inline-flex items-center">
+        <div
+          className={cn(
+            "relative inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground",
+            className
+          )}
+        />
+        {title && <span className="ml-2 text-sm invisible">Tema claro</span>}
+      </div>
+    );
+  }
 
   return (
     <div className="inline-flex items-center">

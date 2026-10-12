@@ -94,10 +94,10 @@ export async function POST(request: Request) {
     });
 
     await createAuditLog({
-      action: "CREATE",
+      action: "CREATE_PRODUCT",
       entity: "Product",
       entityId: product.id,
-      details: { name: product.name, salePrice: product.salePrice, stock: product.stock },
+      details: { name: product.name, salePrice: Number(product.salePrice), stock: Number(product.stock) },
       userId: auth.user.id,
       lojaId: auth.user.lojaId,
     });

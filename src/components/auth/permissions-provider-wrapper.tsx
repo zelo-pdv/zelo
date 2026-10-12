@@ -44,11 +44,13 @@ function getUserContext(): UserContextData | null {
 }
 
 export function PermissionsProviderWrapper({
+  initialContext,
   children,
 }: {
+  initialContext?: UserContextData | null;
   children: ReactNode;
 }) {
-  const [context, setContext] = useState<UserContextData | null>(() => getUserContext());
+  const [context, setContext] = useState<UserContextData | null>(() => initialContext ?? getUserContext());
   const fetchSettings = useSettingsStore((s) => s.fetchSettings);
 
   useEffect(() => {
