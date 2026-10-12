@@ -52,7 +52,6 @@ describe('Multi-tenant Isolation', () => {
         salePrice: 20,
         stock: 50,
         minStock: 5,
-        unit: 'UN',
         categoryId: categoryBId,
       })
     }, cookiesB);

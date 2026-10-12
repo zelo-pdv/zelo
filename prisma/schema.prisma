@@ -29,7 +29,6 @@ model Loja {
   products        Product[]
   sales           Sale[]
   settings        Settings?
-  units           Unit[]
   users           User[]
   productVariants ProductVariant[]
 }
@@ -127,20 +126,6 @@ model Client {
   @@index([lojaId, deletedAt])
 }
 
-model Unit {
-  id            String   @id @default(cuid())
-  name          String
-  abbreviation  String
-  decimalPlaces Int      @default(0)
-  lojaId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  loja          Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  @@unique([lojaId, name])
-  @@unique([lojaId, abbreviation])
-  @@index([lojaId])
-}
 
 model Category {
   id                String    @id @default(cuid())
@@ -166,7 +151,6 @@ model Product {
   name        String
   description String?
   image       String?
-  unit        String           @default("UN")
   costPrice   Decimal?         @db.Decimal(10, 2)
   salePrice   Decimal          @db.Decimal(10, 2)
   stock       Decimal          @default(0) @db.Decimal(10, 3)

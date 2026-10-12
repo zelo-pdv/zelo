@@ -116,10 +116,6 @@ export async function POST(request: Request) {
         0,
       );
 
-      const unit = String(
-        item.unit ?? item.unidade ?? item["Unidade"] ?? "UN",
-      ).trim().toUpperCase();
-
       const code = item.code ?? item.codigo ?? item["Código"] ?? item["Código Interno"];
       const barcode = item.barcode ?? item.codigoBarras ?? item.codigo_barras ?? item["Código de Barras"];
       const description = item.description ?? item.descricao ?? item["Descrição"];
@@ -128,7 +124,6 @@ export async function POST(request: Request) {
         await prisma.product.create({
           data: {
             name,
-            unit: unit || "UN",
             costPrice,
             salePrice,
             stock,

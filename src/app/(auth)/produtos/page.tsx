@@ -35,7 +35,6 @@ import { getProductColumns, ProductFrontend } from "./columns";
 import { ProductsDataTable } from "./data-table";
 import { productsService } from "@/services/products.service";
 import { categoriesService } from "@/services/categories.service";
-import { unitsService, Unit } from "@/services/units.service";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Category } from "@/prisma/client";
 import { usePermissions } from "@/components/auth/permissions-provider";
@@ -70,7 +69,6 @@ export type FormState = {
   notes: string;
   barcode: string;
   code: string;
-  unit: string;
   image: string;
   hasVariants: boolean;
   variants: FormVariantState[];
@@ -87,7 +85,6 @@ const emptyForm: FormState = {
   notes: "",
   barcode: "",
   code: "",
-  unit: "UN",
   image: "",
   hasVariants: false,
   variants: [],
@@ -102,7 +99,6 @@ export default function ProdutosPage() {
   };
   const [products, setProducts] = useState<ProductFrontend[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -125,16 +121,14 @@ export default function ProdutosPage() {
     try {
       if (!silent) setLoading(true);
 
-      const [fetchedProducts, fetchedCategories, fetchedUnits] =
+      const [fetchedProducts, fetchedCategories] =
         await Promise.all([
           productsService.list(),
           categoriesService.list(),
-          unitsService.getUnits(),
         ]);
 
       setProducts(fetchedProducts as ProductFrontend[]);
       setCategories(fetchedCategories as Category[]);
-      setUnits(fetchedUnits as Unit[]);
     } catch (error) {
       if (!silent) {
         toast.error("Erro ao carregar dados dos produtos.");
@@ -253,7 +247,6 @@ export default function ProdutosPage() {
                 notes: editing.notes || "",
                 barcode: editing.barcode || "",
                 code: editing.code || "",
-                unit: editing.unit || "UN",
                 image: editing.image || "",
                 hasVariants: (editing.variants?.length ?? 0) > 0,
                 variants: editing.variants?.map((v: any) => ({
@@ -278,7 +271,6 @@ export default function ProdutosPage() {
         isEdit={!!editing}
         productId={editing?.id}
         categories={categories}
-        units={units}
         products={products}
         onSubmit={async (data) => {
           if (editing) {

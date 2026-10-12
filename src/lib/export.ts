@@ -136,7 +136,6 @@ export const handleExportProducts = async () => {
     const headers = [
       "Nome",
       "Categoria",
-      "Unidade",
       "Preço de Venda",
       "Preço de Custo",
       "Estoque",
@@ -150,7 +149,6 @@ export const handleExportProducts = async () => {
     const rows = products.map((p: any) => [
       p.name,
       p.category?.name || "Geral",
-      p.unit || "UN",
       currency(p.salePrice),
       currency(p.costPrice),
       Number(p.stock ?? 0),

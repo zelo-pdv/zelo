@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { categoriesService } from '@/services/categories.service';
-import { unitsService, Unit } from '@/services/units.service';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -14,10 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { cn } from '@/lib/utils';
 import { GlobalLoader } from '@/components/ui/global-loader';
-
-type UnitFormData = { name: string; abbreviation: string; decimalPlaces: number };
 
 export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const isMobile = useIsMobile();
@@ -40,19 +36,14 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
     }
   }, [productsSettings.globalLowStockThreshold]);
 
-  const [activeProductTab, setActiveProductTab] = useState<"categories" | "units">("categories");
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
     [],
   );
 
-  const [units, setUnits] = useState<Unit[]>([]);
-
   const [loading, setLoading] = useState(true);
 
   // States for Category Modal
-
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-
   const [editingCategory, setEditingCategory] = useState<{
     id: string;
     name: string;
@@ -61,32 +52,14 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
   const [categoryName, setCategoryName] = useState("");
   const [categoryLowStockThreshold, setCategoryLowStockThreshold] = useState("");
-
-  // States for Unit Modal
-
-  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
-
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
-
-  const [unitForm, setUnitForm] = useState<UnitFormData>({
-    name: "",
-    abbreviation: "",
-    decimalPlaces: 0,
-  });
-
   const [savingCategory, setSavingCategory] = useState(false);
-  const [savingUnit, setSavingUnit] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
 
     try {
-      const [cats, uns] = await Promise.all([
-        categoriesService.list(),
-        unitsService.getUnits(),
-      ]);
+      const cats = await categoriesService.list();
       setCategories((cats as any[]) || []);
-      setUnits((uns as any[]) || []);
     } catch {
       toast.error("Erro ao carregar configurações de produtos.");
     } finally {
@@ -161,74 +134,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
     setIsCategoryModalOpen(true);
   };
 
-  // Unit Actions
-
-  const handleSaveUnit = async () => {
-    if (!unitForm.name.trim() || !unitForm.abbreviation.trim()) {
-      return toast.error("Nome e sigla são obrigatórios.");
-    }
-
-    setSavingUnit(true);
-    try {
-      const payload = {
-        ...unitForm,
-        decimalPlaces: Number(unitForm.decimalPlaces),
-      };
-
-      if (editingUnit) {
-        await unitsService.updateUnit(editingUnit.id, payload);
-
-        toast.success("Unidade atualizada!");
-      } else {
-        await unitsService.createUnit(payload);
-
-        toast.success("Unidade criada!");
-      }
-
-      setIsUnitModalOpen(false);
-
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar unidade.");
-    } finally {
-      setSavingUnit(false);
-    }
-  };
-
-  const handleDeleteUnit = async (id: string) => {
-    if (!confirm("Tem certeza que deseja remover esta unidade?")) return;
-
-    try {
-      await unitsService.deleteUnit(id);
-
-      toast.success("Unidade removida.");
-
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao remover unidade.");
-    }
-  };
-
-  const openUnitModal = (u?: Unit) => {
-    if (u) {
-      setEditingUnit(u);
-
-      setUnitForm({
-        name: u.name,
-        abbreviation: u.abbreviation,
-        decimalPlaces: u.decimalPlaces,
-      });
-    } else {
-      setEditingUnit(null);
-
-      setUnitForm({ name: "", abbreviation: "", decimalPlaces: 0 });
-    }
-
-    setIsUnitModalOpen(true);
-  };
-
-
-    
   if (!isOpen) return null;
 
   const content = (
@@ -271,7 +176,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5 pr-4">
                     <Label className="text-sm font-medium">
-                      Alerta global de estoque baixo (unidades)
+                      Alerta global de estoque baixo (quantidade)
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       Quantidade padrão para alertar estoque baixo em produtos que não possuem estoque mínimo específico configurado.
@@ -395,45 +300,12 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             </div>
           </div>
 
-        {/* Navegação por Abas (Mobile e PC) */}
-        <div className="flex rounded-lg bg-muted p-1 gap-1 w-full">
-          <button
-            type="button"
-            onClick={() => setActiveProductTab("categories")}
-            className={cn(
-              "flex-1 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all text-center cursor-pointer",
-              activeProductTab === "categories"
-                ? "bg-background text-foreground shadow-xs font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Categorias ({categories.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveProductTab("units")}
-            className={cn(
-              "flex-1 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all text-center cursor-pointer",
-              activeProductTab === "units"
-                ? "bg-background text-foreground shadow-xs font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Unidades de Medida ({units.length})
-          </button>
-        </div>
-
         {loading ? (
           <GlobalLoader />
         ) : (
           <div className="w-full">
             {/* Categorias */}
-            <div
-              className={cn(
-                "border rounded-md p-4 flex flex-col h-100",
-                activeProductTab !== "categories" && "hidden"
-              )}
-            >
+            <div className="border rounded-md p-4 flex flex-col h-100">
               <div className="flex justify-between items-center mb-4 shrink-0">
                 <h3 className="font-semibold text-lg">Categorias</h3>
 
@@ -502,72 +374,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             <BoxIcon name="trash" className="text-base text-muted-foreground hover:text-destructive" />
                           </Button>
                         </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollArea>
-              )}
-            </div>
-
-            {/* Unidades */}
-            <div
-              className={cn(
-                "border rounded-md p-4 flex flex-col h-100",
-                activeProductTab !== "units" && "hidden"
-              )}
-            >
-              <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="font-semibold text-lg">Unidades de Medida</h3>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openUnitModal()}
-                >
-                  <BoxIcon name="plus" className="mr-2 text-base" /> Nova Unidade
-                </Button>
-              </div>
-
-              {units.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground text-center">
-                    Nenhuma unidade cadastrada.
-                  </p>
-                </div>
-              ) : (
-                <ScrollArea className="flex-1 min-h-0">
-                  <ul className="space-y-2">
-                    {units.map((u) => (
-                      <li
-                        key={u.id}
-                        className="flex justify-between items-center bg-muted/50 px-3 py-2 rounded-md"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{u.name}</span>
-
-                          <span className="text-xs text-muted-foreground">
-                            Sigla: {u.abbreviation} | Casas Decimais:{" "}
-                            {u.decimalPlaces}
-                          </span>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openUnitModal(u)}
-                          >
-                            <BoxIcon name="pencil" className="text-base text-muted-foreground hover:text-foreground" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteUnit(u.id)}
-                          >
-                            <BoxIcon name="trash" className="text-base text-muted-foreground hover:text-destructive" />
-                          </Button>
                         </div>
                       </li>
                     ))}
@@ -693,152 +499,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             </DialogContent>
           </Dialog>
         )}
-
-        {/* Modal / Drawer Unidade */}
-        {isMobile ? (
-          <Drawer open={isUnitModalOpen} onOpenChange={setIsUnitModalOpen} blur>
-            <DrawerContent className="p-4">
-              <DrawerHeader className="px-0">
-                <DrawerTitle>
-                  {editingUnit ? "Editar unidade" : "Nova unidade"}
-                </DrawerTitle>
-              </DrawerHeader>
-
-              <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome</Label>
-                  <Input
-                    className="border-primary/50 focus:ring-primary/50 bg-primary/3"
-                    value={unitForm.name}
-                    onChange={(e) =>
-                      setUnitForm({ ...unitForm, name: e.target.value })
-                    }
-                    placeholder="Ex: Quilo"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Sigla</Label>
-                  <Input
-                    className="border-primary/50 focus:ring-primary/50 bg-primary/3"
-                    value={unitForm.abbreviation}
-                    onChange={(e) =>
-                      setUnitForm({
-                        ...unitForm,
-                        abbreviation: e.target.value,
-                      })
-                    }
-                    placeholder="Ex: KG"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Casas Decimais (0 a 3)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="3"
-                    value={unitForm.decimalPlaces}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      setUnitForm({
-                        ...unitForm,
-                        decimalPlaces: val ? Math.min(3, Number(val)) : 0,
-                      });
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 w-full pt-4">
-                <LoadingButton
-                  onClick={handleSaveUnit}
-                  loading={savingUnit}
-                  className="h-11 w-full rounded-full font-medium"
-                >
-                  Salvar
-                </LoadingButton>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsUnitModalOpen(false)}
-                  className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <Dialog open={isUnitModalOpen} onOpenChange={setIsUnitModalOpen} blur>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingUnit ? "Editar unidade" : "Nova unidade"}
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome</Label>
-                  <Input
-                    className="border-primary/50 focus:ring-primary/50 bg-primary/3"
-                    value={unitForm.name}
-                    onChange={(e) =>
-                      setUnitForm({ ...unitForm, name: e.target.value })
-                    }
-                    placeholder="Ex: Quilo"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Sigla</Label>
-                  <Input
-                    className="border-primary/50 focus:ring-primary/50 bg-primary/3"
-                    value={unitForm.abbreviation}
-                    onChange={(e) =>
-                      setUnitForm({
-                        ...unitForm,
-                        abbreviation: e.target.value,
-                      })
-                    }
-                    placeholder="Ex: KG"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Casas Decimais (0 a 3)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="3"
-                    value={unitForm.decimalPlaces}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      setUnitForm({
-                        ...unitForm,
-                        decimalPlaces: val ? Math.min(3, Number(val)) : 0,
-                      });
-                    }}
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsUnitModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <LoadingButton onClick={handleSaveUnit} loading={savingUnit}>
-                  Salvar
-                </LoadingButton>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      
     </div>
   );
 

@@ -164,23 +164,11 @@ export async function POST(request: Request) {
               name: "Geral",
             },
           },
-          units: {
-            create: [
-              { name: "Unidade", abbreviation: "UN", decimalPlaces: 0 },
-              { name: "Quilo", abbreviation: "KG", decimalPlaces: 3 },
-              { name: "Grama", abbreviation: "G", decimalPlaces: 0 },
-              { name: "Litro", abbreviation: "L", decimalPlaces: 3 },
-              { name: "Caixa", abbreviation: "CX", decimalPlaces: 0 },
-              { name: "Pacote", abbreviation: "PCT", decimalPlaces: 0 },
-              { name: "Metro", abbreviation: "M", decimalPlaces: 2 },
-              { name: "Par", abbreviation: "PAR", decimalPlaces: 0 },
-            ],
-          },
           settings: {
             create: {
               config: {
                 store: { name: lojaData.name, email: lojaData.email || "", phone: lojaData.phone || "" },
-                products: { trackStock: true, showImages: true, defaultUnit: "UN" },
+                products: { trackStock: true, showImages: true },
                 sales: { blockOutOfStock: true, defaultPaymentMethod: "PIX", defaultStatus: "PAID", requireClient: false },
                 dashboard: { hideCostPrice: false },
                 onboarding: { completed: true, step: 4 },

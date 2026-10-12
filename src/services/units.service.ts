@@ -1,5 +1,4 @@
-import { apiRequest } from "@/lib/api-request";
-
+// A funcionalidade de unidades de medida foi removida do sistema.
 export interface Unit {
   id: string;
   name: string;
@@ -12,26 +11,15 @@ export type UnitFormData = Omit<Unit, "id" | "lojaId">;
 
 export const unitsService = {
   async getUnits(): Promise<Unit[]> {
-    return apiRequest("/units");
+    return [];
   },
-
-  async createUnit(data: UnitFormData): Promise<Unit> {
-    return apiRequest("/units", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+  async createUnit(): Promise<any> {
+    throw new Error("Funcionalidade de unidades de medida descontinuada.");
   },
-
-  async updateUnit(id: string, data: UnitFormData): Promise<void> {
-    return apiRequest(`/units/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
+  async updateUnit(): Promise<void> {
+    throw new Error("Funcionalidade de unidades de medida descontinuada.");
   },
-
-  async deleteUnit(id: string): Promise<void> {
-    return apiRequest(`/units/${id}`, {
-      method: "DELETE",
-    });
+  async deleteUnit(): Promise<void> {
+    throw new Error("Funcionalidade de unidades de medida descontinuada.");
   },
 };

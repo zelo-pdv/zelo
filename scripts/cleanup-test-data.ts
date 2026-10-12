@@ -112,17 +112,12 @@ async function main() {
     where: { lojaId: { in: testStoreIds } },
   });
 
-  console.log("11/13. Excluindo categorias de teste...");
+  console.log("11/12. Excluindo categorias de teste...");
   await prisma.category.deleteMany({
     where: { lojaId: { in: testStoreIds } },
   });
 
-  console.log("12/13. Excluindo unidades de teste...");
-  await prisma.unit.deleteMany({
-    where: { lojaId: { in: testStoreIds } },
-  });
-
-  console.log("13/13. Excluindo configurações e lojas de teste...");
+  console.log("12/12. Excluindo configurações e lojas de teste...");
   await prisma.settings.deleteMany({
     where: { lojaId: { in: testStoreIds } },
   });

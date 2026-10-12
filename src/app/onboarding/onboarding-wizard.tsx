@@ -730,8 +730,8 @@ export function OnboardingWizard({
                 />
                 <p className="text-xs text-blue-900/80 dark:text-blue-200/80 leading-relaxed">
                   Criamos automaticamente para você o cliente{" "}
-                  <strong>&quot;Consumidor Final&quot;</strong>, a categoria{" "}
-                  <strong>&quot;Geral&quot;</strong> e unidades de medida usuais
+                  <strong>&quot;Consumidor Final&quot;</strong> e a categoria{" "}
+                  <strong>&quot;Geral&quot;</strong>
                   para você começar a cadastrar e vender imediatamente!
                 </p>
               </div>

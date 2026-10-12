@@ -7,42 +7,34 @@ datasource db {
   provider = "postgresql"
 }
 
-enum SaleStatus {
-  PAGO
-  PENDENTE
-  CANCELADO
-}
-
 model Loja {
-  id        String  @id @default(cuid())
-  name      String  @unique
-  ownerName String
-  phone     String?
-  email     String? @unique
-  document  String?
-  logo      String?
-  active    Boolean @default(true)
-  ownerId   String?
-  owner     User?   @relation("StoreOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-
-  address      Address[]
-  users        User[]
-  accessGroups AccessGroup[]
-  clients      Client[]
-  categories   Category[]
-  units        Unit[]
-  products     Product[]
-  sales        Sale[]
-  auditLogs    AuditLog[]
-  settings     Settings?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id              String           @id @default(cuid())
+  name            String           @unique
+  ownerName       String
+  phone           String?
+  email           String?          @unique
+  document        String?
+  logo            String?
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  ownerId         String?
+  accessGroups    AccessGroup[]
+  address         Address[]
+  auditLogs       AuditLog[]
+  categories      Category[]
+  clients         Client[]
+  owner           User?            @relation("StoreOwner", fields: [ownerId], references: [id])
+  products        Product[]
+  sales           Sale[]
+  settings        Settings?
+  users           User[]
+  productVariants ProductVariant[]
 }
 
 model Address {
-  id           String  @id @default(cuid())
+  id           String    @id @default(cuid())
   street       String?
   number       String?
   complement   String?
@@ -50,19 +42,15 @@ model Address {
   city         String?
   state        String?
   zipCode      String?
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  clientId String?
-  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  lojaId       String
+  userId       String?
+  clientId     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  client       Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  loja         Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@index([userId])
@@ -70,71 +58,67 @@ model Address {
 }
 
 model AccessGroup {
-  id          String  @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
-  active      Boolean @default(true)
-  permissions Json
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  users User[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  active      Boolean   @default(true)
+  permissions           Json
+  discountLimitMode     String?   @default("INHERIT")
+  maxDiscountPercentage Decimal?  @db.Decimal(5, 2)
+  maxDiscountValue      Decimal?  @db.Decimal(10, 2)
+  lojaId                String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+  loja                  Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  users                 User[]
 
   @@unique([lojaId, name])
   @@index([lojaId])
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String    @unique
-  password  String
-  phone     String?
-  avatar    String?
-  active    Boolean   @default(true)
-  lastLogin DateTime?
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  groupId String
-  group   AccessGroup @relation(fields: [groupId], references: [id], onDelete: Restrict)
-
-  address Address[]
-  sales   Sale[]
-  ownedStores Loja[] @relation("StoreOwner")
-  auditLogs AuditLog[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id                    String      @id @default(cuid())
+  name                  String
+  email                 String      @unique
+  password              String
+  phone                 String?
+  avatar                String?
+  active                Boolean     @default(true)
+  lastLogin             DateTime?
+  discountLimitMode     String?     @default("INHERIT")
+  maxDiscountPercentage Decimal?    @db.Decimal(5, 2)
+  maxDiscountValue      Decimal?    @db.Decimal(10, 2)
+  lojaId                String
+  groupId               String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  address     Address[]
+  auditLogs   AuditLog[]
+  ownedStores Loja[]      @relation("StoreOwner")
+  sales       Sale[]
+  group       AccessGroup @relation(fields: [groupId], references: [id])
+  loja        Loja        @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@index([groupId])
 }
 
 model Client {
-  id    String  @id @default(cuid())
-  name  String
-  phone String
-  email String?
-  notes  String?
-  active Boolean @default(true)
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  address Address[]
-  sales   Sale[]
-
+  id        String    @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  notes     String?
+  lojaId    String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  active    Boolean   @default(true)
+  address   Address[]
+  loja      Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  sales     Sale[]
 
   @@index([lojaId])
   @@index([lojaId, active])
@@ -142,37 +126,18 @@ model Client {
   @@index([lojaId, deletedAt])
 }
 
-model Unit {
-  id           String @id @default(cuid())
-  name         String
-  abbreviation String
-  decimalPlaces Int     @default(0)
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([lojaId, name])
-  @@unique([lojaId, abbreviation])
-  @@index([lojaId])
-}
 
 model Category {
-  id     String  @id @default(cuid())
-  name   String
-  active Boolean @default(true)
+  id                String    @id @default(cuid())
+  name              String
+  active            Boolean   @default(true)
+  lojaId            String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
   lowStockThreshold Int?
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  products Product[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  loja              Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  products          Product[]
 
   @@unique([lojaId, name])
   @@index([lojaId])
@@ -180,31 +145,27 @@ model Category {
 }
 
 model Product {
-  id          String  @id @default(cuid())
+  id          String           @id @default(cuid())
   code        String?
   barcode     String?
   name        String
   description String?
   image       String?
-  unit        String  @default("UN")
-  costPrice   Decimal @default(0.00) @db.Decimal(10, 2)
-  salePrice   Decimal @db.Decimal(10, 2)
-  stock       Decimal @default(0) @db.Decimal(10, 3)
-  minStock    Decimal @default(0) @db.Decimal(10, 3)
+  costPrice   Decimal?         @db.Decimal(10, 2)
+  salePrice   Decimal          @db.Decimal(10, 2)
+  stock       Decimal          @default(0) @db.Decimal(10, 3)
+  minStock    Decimal          @default(0) @db.Decimal(10, 3)
   notes       String?
-  active      Boolean @default(true)
-
-  lojaId String
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  saleItems SaleItem[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  lojaId      String
+  categoryId  String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  active      Boolean          @default(true)
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  loja        Loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  variants    ProductVariant[]
+  saleItems   SaleItem[]
 
   @@unique([lojaId, code])
   @@index([lojaId])
@@ -214,33 +175,59 @@ model Product {
   @@index([lojaId, deletedAt])
 }
 
-model Sale {
-  id            String        @id @default(cuid())
-  saleNumber    Int?
-  date          DateTime      @default(now())
-  total         Decimal       @db.Decimal(10, 2)
-  discount      Decimal?      @default(0.00) @db.Decimal(10, 2)
-  paymentMethod String
-  status        SaleStatus    @default(PAGO)
-  dueDate       DateTime?
-  notes         String?
+model ProductVariant {
+  id         String   @id @default(cuid())
+  name       String
+  code       String?
+  barcode    String?
+  attributes Json?
+  image      String?
+  costPrice  Decimal? @db.Decimal(10, 2)
+  salePrice  Decimal? @db.Decimal(10, 2)
+  stock      Decimal  @default(0) @db.Decimal(10, 3)
+  minStock   Decimal  @default(0) @db.Decimal(10, 3)
+  active     Boolean  @default(true)
 
   lojaId String
   loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
-  clientId String?
-  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  clientName String?
-
-  sellerId String?
-  seller   User?   @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-
-  items SaleItem[]
+  saleItems SaleItem[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  @@unique([lojaId, code])
+  @@index([lojaId])
+  @@index([productId])
+  @@index([lojaId, active])
+  @@index([lojaId, deletedAt])
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  date          DateTime   @default(now())
+  total         Decimal    @db.Decimal(10, 2)
+  paymentMethod String
+  status        SaleStatus @default(PAGO)
+  dueDate       DateTime?
+  notes         String?
+  lojaId        String
+  clientId      String?
+  clientName    String?
+  sellerId      String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+  discount      Decimal?   @default(0.00) @db.Decimal(10, 2)
+  saleNumber    Int?
+  client        Client?    @relation(fields: [clientId], references: [id])
+  loja          Loja       @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  seller        User?      @relation(fields: [sellerId], references: [id])
+  items         SaleItem[]
 
   @@unique([lojaId, saleNumber])
   @@index([lojaId])
@@ -250,20 +237,21 @@ model Sale {
 }
 
 model SaleItem {
-  id          String  @id @default(cuid())
+  id          String          @id @default(cuid())
   saleId      String
   productId   String
   productName String
-  quantity    Decimal @db.Decimal(10, 3)
-  unitPrice   Decimal @db.Decimal(10, 2)
-  subtotal    Decimal @db.Decimal(10, 2)
-
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  variantId   String?
+  variantName String?
+  quantity    Decimal         @db.Decimal(10, 3)
+  unitPrice   Decimal         @db.Decimal(10, 2)
+  subtotal    Decimal         @db.Decimal(10, 2)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+  product     Product         @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  sale        Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
   @@index([saleId])
   @@index([productId])
@@ -276,14 +264,11 @@ model AuditLog {
   entity    String
   entityId  String
   details   Json
-  
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   lojaId    String
-  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
   createdAt DateTime @default(now())
+  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@index([userId])
@@ -293,9 +278,14 @@ model AuditLog {
 model Settings {
   id        String   @id @default(cuid())
   lojaId    String   @unique
-  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   config    Json
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+}
+
+enum SaleStatus {
+  PAGO
+  PENDENTE
+  CANCELADO
 }

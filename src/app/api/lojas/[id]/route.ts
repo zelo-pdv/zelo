@@ -236,7 +236,6 @@ export async function DELETE(
       await tx.category.deleteMany({ where: { lojaId: id } });
       await tx.address.deleteMany({ where: { lojaId: id } });
       await tx.client.deleteMany({ where: { lojaId: id } });
-      await tx.unit.deleteMany({ where: { lojaId: id } });
       await tx.settings.deleteMany({ where: { lojaId: id } });
       await tx.auditLog.deleteMany({ where: { lojaId: id } });
 

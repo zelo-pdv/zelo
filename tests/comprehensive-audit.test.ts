@@ -479,7 +479,6 @@ describe("Zelo - Comprehensive Functional Audit & Security Suite", () => {
             salePrice: 120.0,
             stock: 20,
             minStock: 5,
-            unit: "UN",
             categoryId: categoryId,
             description: "Fragrância amadeirada marcante",
           }),
@@ -502,7 +501,6 @@ describe("Zelo - Comprehensive Functional Audit & Security Suite", () => {
           body: JSON.stringify({
             name: "Produto Preço Negativo",
             salePrice: -10,
-            unit: "UN",
           }),
         },
         ownerCookies
@@ -553,7 +551,6 @@ describe("Zelo - Comprehensive Functional Audit & Security Suite", () => {
             name: "Camisa Polo Zelo",
             salePrice: 89.9,
             costPrice: 40.0,
-            unit: "UN",
             hasVariants: true,
             variants: [
               {

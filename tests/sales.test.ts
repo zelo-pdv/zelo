@@ -24,7 +24,6 @@ describe('Sales & Stock Logic', () => {
         salePrice: 100,
         stock: 10,
         minStock: 5,
-        unit: 'UN',
         categoryId,
       })
     }, cookies);

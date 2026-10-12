@@ -95,7 +95,7 @@ src/
 
 1. **Autenticação & Registro:**
    - `/login`: Autenticação por e-mail e senha. Verifica credenciais, status do usuário e loja ativa. Emite cookie de sessão.
-   - `/cadastro`: Criação atômica de conta criando: Loja, Usuário Administrador (owner), Grupos de permissões padrões, Cliente padrão (*"Consumidor Final"*), Categoria padrão (*"Geral"*), Unidades de medida e Configurações iniciais com flag de onboarding pendente. Redireciona diretamente para o Onboarding.
+   - `/cadastro`: Criação atômica de conta criando: Loja, Usuário Administrador (owner), Grupos de permissões padrões, Cliente padrão (*"Consumidor Final"*), Categoria padrão (*"Geral"*) e Configurações iniciais com flag de onboarding pendente. Redireciona diretamente para o Onboarding.
 2. **Onboarding Inicial (`/onboarding`):**
    - Questionário de 4 etapas para personalização rápida:
      1. Perfil e segmento do negócio.
@@ -122,7 +122,7 @@ src/
 ## 5. Regras de Negócio Cruciais
 
 ### Isolamento Multi-tenant
-- Toda tabela relacionada a dados operacionais (`Product`, `Client`, `Sale`, `AccessGroup`, `User`, `Category`, `Unit`, `Settings`, `Address`) possui a coluna obrigatória `lojaId`.
+- Toda tabela relacionada a dados operacionais (`Product`, `Client`, `Sale`, `AccessGroup`, `User`, `Category`, `Settings`, `Address`) possui a coluna obrigatória `lojaId`.
 - Nenhuma query, listagem, atualização ou exclusão pode ser executada sem filtrar estritamente por `lojaId: user.lojaId`.
 
 ### RBAC (Role-Based Access Control)

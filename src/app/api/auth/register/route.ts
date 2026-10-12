@@ -7,17 +7,6 @@ import { setAuthCookies } from "@/lib/cookies";
 import { JWT_SECRET } from "@/lib/jwt-secret";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-const defaultUnits = [
-  { name: "Unidade", abbreviation: "UN", decimalPlaces: 0 },
-  { name: "Quilo", abbreviation: "KG", decimalPlaces: 3 },
-  { name: "Grama", abbreviation: "G", decimalPlaces: 0 },
-  { name: "Litro", abbreviation: "L", decimalPlaces: 3 },
-  { name: "Caixa", abbreviation: "CX", decimalPlaces: 0 },
-  { name: "Pacote", abbreviation: "PCT", decimalPlaces: 0 },
-  { name: "Metro", abbreviation: "M", decimalPlaces: 2 },
-  { name: "Par", abbreviation: "PAR", decimalPlaces: 0 },
-];
-
 const defaultAccessGroups = [
   {
     name: "ADMIN",
@@ -136,13 +125,6 @@ export async function POST(req: Request) {
               create: {
                 name: "Geral",
               },
-            },
-            units: {
-              create: defaultUnits.map((u) => ({
-                name: u.name,
-                abbreviation: u.abbreviation,
-                decimalPlaces: u.decimalPlaces,
-              })),
             },
             settings: {
               create: {

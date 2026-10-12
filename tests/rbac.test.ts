@@ -102,7 +102,6 @@ describe('RBAC & Owner Protection', () => {
         salePrice: 20,
         stock: 50,
         minStock: 5,
-        unit: 'UN',
         categoryId,
       })
     }, adminCookies);

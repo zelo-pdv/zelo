@@ -32,7 +32,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FormState, FormVariantState } from "@/app/(auth)/produtos/page";
 import { ProductFrontend } from "@/app/(auth)/produtos/columns";
 import { Category } from "@/prisma/client";
-import { Unit } from "@/services/units.service";
 import { storageService } from "@/services/storage.service";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { useSettingsStore } from "@/store/useSettingsStore";
@@ -52,7 +51,6 @@ export function ProductForm({
   initial: FormState;
   isEdit: boolean;
   categories: Category[];
-  units?: Unit[];
   productId?: string;
   products?: ProductFrontend[];
   onSubmit: (data: FormState) => Promise<void>;

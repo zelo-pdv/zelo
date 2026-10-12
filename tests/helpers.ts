@@ -118,7 +118,6 @@ export async function deleteTestLoja(lojaId: string) {
     await prisma.category.deleteMany({ where: { lojaId } });
     await prisma.address.deleteMany({ where: { lojaId } });
     await prisma.client.deleteMany({ where: { lojaId } });
-    await prisma.unit.deleteMany({ where: { lojaId } });
     await prisma.settings.deleteMany({ where: { lojaId } });
     await prisma.auditLog.deleteMany({ where: { lojaId } });
     await prisma.loja.update({

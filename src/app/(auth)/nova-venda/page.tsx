@@ -672,11 +672,11 @@ export default function NovaVenda() {
                             className="h-6.5 w-24 px-2 py-0 text-xs font-semibold tabular-nums text-foreground border-primary/40 focus:border-primary"
                             title="Preço aberto editável na venda"
                           />
-                          <span className="text-muted-foreground">un</span>
+                          
                         </div>
                       ) : (
                         <div className="text-xs text-muted-foreground">
-                          {currency(it.unitPrice)} un
+                          {currency(it.unitPrice)}
                         </div>
                       )}
                     </div>

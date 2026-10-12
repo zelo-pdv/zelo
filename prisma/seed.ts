@@ -2,17 +2,6 @@ import "dotenv/config";
 import prisma from "../src/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const defaultUnits = [
-  { name: "Unidade", abbreviation: "UN", decimalPlaces: 0 },
-  { name: "Quilo", abbreviation: "KG", decimalPlaces: 3 },
-  { name: "Grama", abbreviation: "G", decimalPlaces: 0 },
-  { name: "Litro", abbreviation: "L", decimalPlaces: 3 },
-  { name: "Caixa", abbreviation: "CX", decimalPlaces: 0 },
-  { name: "Pacote", abbreviation: "PCT", decimalPlaces: 0 },
-  { name: "Metro", abbreviation: "M", decimalPlaces: 2 },
-  { name: "Par", abbreviation: "PAR", decimalPlaces: 0 },
-];
-
 const defaultGroups = [
   {
     name: "ADMIN",
@@ -98,26 +87,7 @@ async function setupDefaultDataForLoja(lojaId: string) {
     }
   }
 
-  // 3. Unidades padrão
-  for (const unit of defaultUnits) {
-    await prisma.unit.upsert({
-      where: {
-        lojaId_abbreviation: {
-          lojaId,
-          abbreviation: unit.abbreviation,
-        },
-      },
-      update: {},
-      create: {
-        lojaId,
-        name: unit.name,
-        abbreviation: unit.abbreviation,
-        decimalPlaces: unit.decimalPlaces,
-      },
-    });
-  }
-
-  // 4. Categoria padrão "Geral" (migra "Diversos" se existir)
+  // 3. Categoria padrão "Geral" (migra "Diversos" se existir)
   const diversosCat = await prisma.category.findFirst({
     where: { lojaId, name: "Diversos" },
   });

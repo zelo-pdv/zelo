@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const categorySchema = z.object({
   name: z
@@ -29,7 +29,6 @@ export const productSchema = z.object({
   categoryId: z.string().optional().nullable(),
   description: z.string().max(500, "A descrição é muito longa").optional().nullable(),
   image: z.string().max(2048).optional().nullable(),
-  unit: z.string().min(1, "A unidade é obrigatória").max(10, "A unidade é muito longa").default("UN"),
   costPrice: z.coerce.number().min(0, "O preço de custo não pode ser negativo").max(9999999, "Valor muito alto").optional().nullable(),
   salePrice: z.coerce
     .number()

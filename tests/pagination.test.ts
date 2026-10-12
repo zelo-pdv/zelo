@@ -24,7 +24,6 @@ describe('Sales Pagination', () => {
         salePrice: 10,
         stock: 500,
         minStock: 5,
-        unit: 'UN',
         categoryId,
       })
     }, cookies);
