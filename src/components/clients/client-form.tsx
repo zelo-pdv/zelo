@@ -218,6 +218,11 @@ export function ClientForm({
   }, [form, open, isEdit]);
 
   const submit = async () => {
+    if (!form.name || form.name.trim().length < 2) {
+      toast.error("O nome do cliente deve ter no mínimo 2 caracteres.");
+      return;
+    }
+
     // E-mail validation
     if (form.email && form.email.trim() !== "") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

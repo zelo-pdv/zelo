@@ -36,7 +36,7 @@ export async function PUT(
       );
     }
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível atualizar a unidade." },
       { status: 500 },
     );
   }
@@ -66,7 +66,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível excluir a unidade." },
       { status: 500 },
     );
   }

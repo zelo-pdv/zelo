@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/require-permission";
 import { uploadImageToSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
-  const auth = await requirePermission("produtos", "Visualizar");
+  const auth = await requirePermission("produtos", "Adicionar");
   if (!auth.authorized) {
     return auth.response;
   }

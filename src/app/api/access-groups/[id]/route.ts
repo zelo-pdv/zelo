@@ -57,7 +57,7 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { error: "Erro desconhecido ao atualizar grupo." },
+      { error: "Não foi possível atualizar o grupo de acesso." },
       { status: 500 },
     );
   }

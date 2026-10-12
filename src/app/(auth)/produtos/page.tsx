@@ -281,44 +281,35 @@ export default function ProdutosPage() {
         units={units}
         products={products}
         onSubmit={async (data) => {
-          try {
-            if (editing) {
-              const updatedProduct = (await productsService.update(
-                editing.id,
-                data,
-              )) as ProductFrontend;
+          if (editing) {
+            const updatedProduct = (await productsService.update(
+              editing.id,
+              data,
+            )) as ProductFrontend;
 
-              setProducts((prev) =>
-                prev.map((product) =>
-                  product.id === editing.id
-                    ? { ...product, ...updatedProduct }
-                    : product,
-                ),
-              );
+            setProducts((prev) =>
+              prev.map((product) =>
+                product.id === editing.id
+                  ? { ...product, ...updatedProduct }
+                  : product,
+              ),
+            );
 
-              toast.success("Produto atualizado com sucesso!");
-              notifyLocalSync("products");
-            } else {
-              const newProduct = (await productsService.create(
-                data,
-              )) as ProductFrontend;
+            toast.success("Produto atualizado com sucesso!");
+            notifyLocalSync("products");
+          } else {
+            const newProduct = (await productsService.create(
+              data,
+            )) as ProductFrontend;
 
-              setProducts((prev) => [newProduct, ...prev]);
+            setProducts((prev) => [newProduct, ...prev]);
 
-              toast.success("Produto cadastrado com sucesso!");
-              notifyLocalSync("products");
-            }
-
-            setCreating(false);
-            setEditing(null);
-          } catch (error) {
-            const message =
-              error instanceof Error
-                ? error.message
-                : "Ocorreu um erro inesperado.";
-
-            toast.error(message);
+            toast.success("Produto cadastrado com sucesso!");
+            notifyLocalSync("products");
           }
+
+          setCreating(false);
+          setEditing(null);
         }}
       />
 

@@ -27,7 +27,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
     }
 
-    if (body.incrementStock !== undefined) {
+    const hasOnlyIncrementStock =
+      body.incrementStock !== undefined &&
+      Object.keys(body).filter((k) => k !== "incrementStock").length === 0;
+
+    if (hasOnlyIncrementStock) {
       const product = await prisma.product.update({
         where: { id },
         data: {
@@ -58,7 +62,8 @@ export async function PATCH(
       });
     }
 
-    const validation = productSchema.partial().safeParse(body);
+    const { incrementStock, ...bodyWithoutIncrement } = body;
+    const validation = productSchema.partial().safeParse(bodyWithoutIncrement);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -74,13 +79,20 @@ export async function PATCH(
     const productData = { ...restData };
     delete (productData as { hasVariants?: boolean }).hasVariants;
 
+    const sentKeys = new Set(Object.keys(bodyWithoutIncrement));
+    for (const key of Object.keys(productData)) {
+      if (!sentKeys.has(key)) {
+        delete (productData as any)[key];
+      }
+    }
+
     Object.keys(productData).forEach(
       (key) =>
         productData[key as keyof typeof productData] === undefined &&
         delete productData[key as keyof typeof productData],
     );
 
-    if (Object.keys(productData).length === 0 && !variants) {
+    if (Object.keys(productData).length === 0 && !variants && incrementStock === undefined) {
       return NextResponse.json(
         { error: "Nenhum dado para atualizar." },
         { status: 400 },
@@ -102,8 +114,11 @@ export async function PATCH(
     const toNull = (v?: string | null) =>
       v === "" || v === undefined ? null : v;
 
-    const normalizedData = {
+    const normalizedData: any = {
       ...productData,
+      ...(incrementStock !== undefined && productData.stock === undefined
+        ? { stock: { increment: Number(incrementStock) } }
+        : {}),
       ...(productData.code !== undefined && { code: toNull(productData.code) }),
       ...(productData.barcode !== undefined && { barcode: toNull(productData.barcode) }),
       ...(productData.description !== undefined && {

@@ -36,7 +36,7 @@ export async function PUT(
       );
     }
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível atualizar a categoria." },
       { status: 500 },
     );
   }
@@ -75,7 +75,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível excluir a categoria." },
       { status: 500 },
     );
   }

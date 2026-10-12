@@ -52,14 +52,21 @@ export async function PATCH(
       if (body.status === SaleStatus.CANCELADO && existing.status !== SaleStatus.CANCELADO) {
         if (trackStock) {
           for (const item of existing.items) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: {
-                stock: {
-                  increment: item.quantity,
+            if (item.variantId) {
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } },
+              }).catch(() => {});
+            } else {
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stock: {
+                    increment: item.quantity,
+                  },
                 },
-              },
-            });
+              });
+            }
           }
         }
       }
@@ -68,18 +75,29 @@ export async function PATCH(
       if (existing.status === SaleStatus.CANCELADO && body.status !== SaleStatus.CANCELADO) {
         if (trackStock) {
           for (const item of existing.items) {
-            const p = await tx.product.findUnique({ where: { id: item.productId } });
-            if (blockOutOfStock && p && p.stock !== null && p.stock.toNumber() < Number(item.quantity)) {
-              throw new Error(`Estoque insuficiente para reativar o produto ${item.productName}.`);
-            }
-            await tx.product.update({
-              where: { id: item.productId },
-              data: {
-                stock: {
-                  decrement: item.quantity,
+            if (item.variantId) {
+              const v = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+              if (blockOutOfStock && v && v.stock !== null && v.stock.toNumber() < Number(item.quantity)) {
+                throw new Error(`Estoque insuficiente para reativar a variação ${item.variantName || item.productName}.`);
+              }
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stock: { decrement: item.quantity } },
+              }).catch(() => {});
+            } else {
+              const p = await tx.product.findUnique({ where: { id: item.productId } });
+              if (blockOutOfStock && p && p.stock !== null && p.stock.toNumber() < Number(item.quantity)) {
+                throw new Error(`Estoque insuficiente para reativar o produto ${item.productName}.`);
+              }
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stock: {
+                    decrement: item.quantity,
+                  },
                 },
-              },
-            });
+              });
+            }
           }
         }
       }
@@ -198,20 +216,32 @@ export async function PUT(
       // 1. Devolve o estoque dos itens antigos da venda
       if (trackStock) {
         for (const oldItem of existing.items) {
-          await tx.product.update({
-            where: { id: oldItem.productId },
-            data: {
-              stock: {
-                increment: oldItem.quantity,
+          if (oldItem.variantId) {
+            await tx.productVariant.update({
+              where: { id: oldItem.variantId },
+              data: {
+                stock: {
+                  increment: oldItem.quantity,
+                },
               },
-            },
-          });
+            }).catch(() => {});
+          } else {
+            await tx.product.update({
+              where: { id: oldItem.productId },
+              data: {
+                stock: {
+                  increment: oldItem.quantity,
+                },
+              },
+            });
+          }
         }
       }
 
       // 2. Monta os novos itens e valida disponibilidade de estoque
       const productsInDb = await tx.product.findMany({
         where: { id: { in: productIds }, lojaId: auth.user.lojaId },
+        include: { variants: { where: { deletedAt: null } } },
       });
       const productMap = new Map(productsInDb.map((p) => [p.id, p]));
 
@@ -227,8 +257,16 @@ export async function PUT(
           throw new Error("Produto não encontrado.");
         }
 
-        if (trackStock && blockOutOfStock && dbProduct.stock !== null && dbProduct.stock.toNumber() < item.quantity) {
-          throw new Error(`Estoque insuficiente para o produto ${dbProduct.name}.`);
+        const dbVariant = item.variantId ? dbProduct.variants?.find((v: any) => v.id === item.variantId) : null;
+        if (item.variantId && !dbVariant) {
+          throw new Error(`Variação não encontrada para o produto ${dbProduct.name}.`);
+        }
+
+        const stockToCheck = dbVariant ? dbVariant.stock : dbProduct.stock;
+        const priceToUse = dbVariant && dbVariant.salePrice !== null ? dbVariant.salePrice : dbProduct.salePrice;
+
+        if (trackStock && blockOutOfStock && stockToCheck !== null && Number(stockToCheck) < item.quantity) {
+          throw new Error(`Estoque insuficiente para o produto ${dbProduct.name}${dbVariant ? ' - ' + dbVariant.name : ''}.`);
         }
 
         const isProductOpenPrice = openPriceEnabled && (
@@ -238,14 +276,16 @@ export async function PUT(
 
         const unitPrice = (isProductOpenPrice && item.unitPrice && item.unitPrice > 0)
           ? item.unitPrice
-          : dbProduct.salePrice.toNumber();
+          : Number(priceToUse);
 
         const subtotal = item.quantity * unitPrice;
         calculatedTotal += subtotal;
 
         saleItemsData.push({
           productId: item.productId,
+          variantId: item.variantId || null,
           productName: dbProduct.name,
+          variantName: item.variantName || (dbVariant ? dbVariant.name : null),
           quantity: item.quantity,
           unitPrice: unitPrice,
           subtotal: subtotal,
@@ -297,14 +337,25 @@ export async function PUT(
       // 4. Decrementa o estoque dos novos itens
       if (trackStock) {
         for (const item of saleItemsData) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: {
-                decrement: item.quantity,
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: {
+                stock: {
+                  decrement: item.quantity,
+                },
               },
-            },
-          });
+            }).catch(() => {});
+          } else {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: {
+                  decrement: item.quantity,
+                },
+              },
+            });
+          }
         }
       }
 
@@ -412,14 +463,25 @@ export async function DELETE(
 
       if (trackStock && existing.status !== SaleStatus.CANCELADO) {
         for (const item of existing.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: {
-                increment: item.quantity,
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: {
+                stock: {
+                  increment: item.quantity,
+                },
               },
-            },
-          });
+            }).catch(() => {});
+          } else {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: {
+                  increment: item.quantity,
+                },
+              },
+            });
+          }
         }
       }
 

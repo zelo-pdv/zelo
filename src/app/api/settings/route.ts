@@ -1,22 +1,24 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requirePermission } from "@/lib/require-permission";
+import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-permission";
 
 export async function GET() {
   try {
-    const auth = await requirePermission("dashboard", "Visualizar");
-    if (!auth.authorized) return auth.response;
-    const { lojaId } = auth.user;
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
 
     const settings = await prisma.settings.findUnique({
-      where: { lojaId },
+      where: { lojaId: user.lojaId },
     });
 
     return NextResponse.json(settings?.config ?? {});
   } catch (error) {
     console.error("GET /api/settings error:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar configurações" },
+      { error: "Erro ao buscar configurações da loja." },
       { status: 500 }
     );
   }
@@ -24,9 +26,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    // Apenas admin (que tem acesso completo, mas não temos action "Configurar" explícita) 
-    // Vamos usar Visualizar dashboard pra validar lojaId, porém a interface restringe Configurações
-    const auth = await requirePermission("dashboard", "Visualizar");
+    const auth = await requireAdmin();
     if (!auth.authorized) return auth.response;
     const { lojaId } = auth.user;
 
@@ -45,7 +45,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error("PUT /api/settings error:", error);
     return NextResponse.json(
-      { error: "Erro ao salvar configurações" },
+      { error: "Erro ao salvar configurações da loja." },
       { status: 500 }
     );
   }

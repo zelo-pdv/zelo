@@ -129,8 +129,11 @@ export async function POST(req: Request) {
 
       // Recupera todos os produtos novamente dentro da transação para garantir integridade e preço atualizado
       const productsInDb = await tx.product.findMany({
-        where: { id: { in: productIds }, lojaId: user.lojaId }
+        where: { id: { in: productIds }, lojaId: user.lojaId },
+        include: { variants: { where: { deletedAt: null } } },
       });
+
+
       const productMap = new Map(productsInDb.map(p => [p.id, p]));
 
       // Recupera configurações da loja para verificar se o controle de estoque está ativo
@@ -268,20 +271,35 @@ export async function POST(req: Request) {
       // 2. Decrementa o estoque atomicamente e valida sob underflow somente se o controle de estoque estiver ativo
       if (trackStock) {
         for (const item of saleItemsData) {
-          const dbProduct = productMap.get(item.productId);
-          if (dbProduct && dbProduct.stock !== null) {
-            const updatedProduct = await tx.product.update({
-              where: { id: item.productId },
+          if (item.variantId) {
+            const updatedVariant = await tx.productVariant.update({
+              where: { id: item.variantId },
               data: {
                 stock: {
                   decrement: item.quantity,
                 },
               },
-              select: { stock: true }
+              select: { stock: true },
             });
-            
-            if (blockOutOfStock && updatedProduct.stock !== null && updatedProduct.stock.toNumber() < 0) {
-              throw new Error(`Estoque insuficiente para o produto ${item.productName}.`);
+            if (blockOutOfStock && updatedVariant.stock !== null && updatedVariant.stock.toNumber() < 0) {
+              throw new Error(`Estoque insuficiente para a variação ${item.variantName || item.productName}.`);
+            }
+          } else {
+            const dbProduct = productMap.get(item.productId);
+            if (dbProduct && dbProduct.stock !== null) {
+              const updatedProduct = await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stock: {
+                    decrement: item.quantity,
+                  },
+                },
+                select: { stock: true }
+              });
+              
+              if (blockOutOfStock && updatedProduct.stock !== null && updatedProduct.stock.toNumber() < 0) {
+                throw new Error(`Estoque insuficiente para o produto ${item.productName}.`);
+              }
             }
           }
         }

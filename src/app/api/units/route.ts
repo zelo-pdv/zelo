@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json(units);
   } catch {
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível carregar as unidades." },
       { status: 500 },
     );
   }
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       );
     }
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: "Não foi possível cadastrar a unidade." },
       { status: 500 },
     );
   }

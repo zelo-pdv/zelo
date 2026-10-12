@@ -167,9 +167,9 @@ export function ProductForm({
 
       const finalData = { ...form, image: finalImageUrl };
       await onSubmit(finalData);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erro ao salvar produto.");
+      toast.error(error?.message || "Erro ao salvar produto.");
     } finally {
       setBusy(false);
       setUploadingImage(false);
