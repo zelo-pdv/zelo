@@ -26,6 +26,8 @@ import { Client } from "@/prisma/client";
 import { ClientWithAddress } from "@/types";
 import { maskCep, maskPhone } from "@/lib/masks";
 import { Switch } from "@/components/ui/switch";
+import { BoxIcon } from "@/components/ui/box-icon";
+import { cn } from "@/lib/utils";
 
 // Tipagem segura para o endereço do formulário
 export type AddressData = {
@@ -129,6 +131,7 @@ export function ClientForm({
   const [form, setForm] = useState<ClientFormData>(getInitialState());
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [isAddressOpen, setIsAddressOpen] = useState(false);
 
   const buscarCep = async (cep: string) => {
     const cepLimpo = cep.replace(/\D/g, "");
@@ -183,7 +186,16 @@ export function ClientForm({
     if (open) {
       if (isEdit) {
         setForm(getInitialState());
+        // Minimizado por padrão; abre apenas se o cliente já tiver endereço preenchido ao editar
+        const hasExistingAddress = Boolean(
+          initial?.address &&
+            (Array.isArray(initial.address)
+              ? initial.address.some((a) => a.street || a.city || a.zipCode)
+              : (initial.address as any).street || (initial.address as any).city)
+        );
+        setIsAddressOpen(hasExistingAddress);
       } else {
+        setIsAddressOpen(false);
         const draft = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LEGACY_DRAFT_KEY);
         if (draft) {
           try {
@@ -281,125 +293,152 @@ export function ClientForm({
         </div>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
-        <h3 className="text-sm font-medium">Endereço</h3>
-
-        <div className="col-span-2 space-y-2">
-          <Label>Logradouro (Rua / Av.)</Label>
-          <Input
-            placeholder="Ex: Rua das Flores"
-            value={form.address.street}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                address: { ...form.address, street: e.target.value },
-              })
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2">
-            <Label>Número</Label>
-            <Input
-              placeholder="Nº 123"
-              value={form.address.number}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  address: { ...form.address, number: e.target.value },
-                })
-              }
+      <div className="rounded-xl border border-border bg-muted/20 overflow-hidden transition-all">
+        <button
+          type="button"
+          onClick={() => setIsAddressOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between p-3.5 text-left cursor-pointer group hover:bg-muted/40 transition-colors"
+          aria-expanded={isAddressOpen}
+        >
+          <div className="flex items-center gap-2">
+            <BoxIcon name="map-pin" className="text-base text-muted-foreground group-hover:text-foreground" />
+            <h3 className="text-sm font-medium">Endereço</h3>
+            <span className="text-[11px] text-muted-foreground">
+              (opcional)
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground">
+            <span>{isAddressOpen ? "Ocultar" : "Adicionar / Ver"}</span>
+            <BoxIcon
+              name="chevron-down"
+              className={cn(
+                "text-base transition-transform duration-200",
+                isAddressOpen && "rotate-180"
+              )}
             />
           </div>
-          <div className="space-y-2">
-            <Label>CEP</Label>
-            <Input
-              placeholder="00000-000"
-              value={form.address.zipCode}
-              maxLength={9}
-              disabled={cepLoading}
-              onChange={(e) => {
-                const value = maskCep(e.target.value);
+        </button>
 
-                setForm({
-                  ...form,
-                  address: {
-                    ...form.address,
-                    zipCode: value,
-                  },
-                });
-
-                // Dispara a busca apenas quando completar os 8 dígitos numéricos
-                if (value.replace(/\D/g, "").length === 8) {
-                  buscarCep(value);
+        {isAddressOpen && (
+          <div className="space-y-3 p-4 pt-0 border-t border-border/50 animate-in fade-in-50 duration-150">
+            <div className="col-span-2 space-y-2 pt-3">
+              <Label>Logradouro (Rua / Av.)</Label>
+              <Input
+                placeholder="Ex: Rua das Flores"
+                value={form.address.street}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    address: { ...form.address, street: e.target.value },
+                  })
                 }
-              }}
-            />
-            {cepLoading && (
-              <p className="text-xs text-muted-foreground">
-                Buscando endereço...
-              </p>
-            )}
-          </div>
-        </div>
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label>Complemento</Label>
-          <Input
-            placeholder="Apto 12, Bloco A"
-            value={form.address.complement}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                address: { ...form.address, complement: e.target.value },
-              })
-            }
-          />
-        </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label>Número</Label>
+                <Input
+                  placeholder="Nº 123"
+                  value={form.address.number}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      address: { ...form.address, number: e.target.value },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>CEP</Label>
+                <Input
+                  placeholder="00000-000"
+                  value={form.address.zipCode}
+                  maxLength={9}
+                  disabled={cepLoading}
+                  onChange={(e) => {
+                    const value = maskCep(e.target.value);
 
-        <div className="space-y-2">
-          <Label>Bairro</Label>
-          <Input
-            placeholder="Centro"
-            value={form.address.neighborhood}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                address: { ...form.address, neighborhood: e.target.value },
-              })
-            }
-          />
-        </div>
+                    setForm({
+                      ...form,
+                      address: {
+                        ...form.address,
+                        zipCode: value,
+                      },
+                    });
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2">
-            <Label>Cidade</Label>
-            <Input
-              placeholder="São Paulo"
-              value={form.address.city}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  address: { ...form.address, city: e.target.value },
-                })
-              }
-            />
+                    // Dispara a busca apenas quando completar os 8 dígitos numéricos
+                    if (value.replace(/\D/g, "").length === 8) {
+                      buscarCep(value);
+                    }
+                  }}
+                />
+                {cepLoading && (
+                  <p className="text-xs text-muted-foreground">
+                    Buscando endereço...
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Complemento</Label>
+              <Input
+                placeholder="Apto 12, Bloco A"
+                value={form.address.complement}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    address: { ...form.address, complement: e.target.value },
+                  })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Bairro</Label>
+              <Input
+                placeholder="Centro"
+                value={form.address.neighborhood}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    address: { ...form.address, neighborhood: e.target.value },
+                  })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label>Cidade</Label>
+                <Input
+                  placeholder="São Paulo"
+                  value={form.address.city}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      address: { ...form.address, city: e.target.value },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado</Label>
+                <Input
+                  placeholder="SP"
+                  value={form.address.state}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      address: { ...form.address, state: e.target.value },
+                    })
+                  }
+                />
+              </div>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Estado</Label>
-            <Input
-              placeholder="SP"
-              value={form.address.state}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  address: { ...form.address, state: e.target.value },
-                })
-              }
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="space-y-2">

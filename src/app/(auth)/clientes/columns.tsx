@@ -138,6 +138,7 @@ export function getClientColumns({
       cell: ({ row }) => {
         const c = row.original;
         const active = c.active ?? true;
+        const isDefaultClient = c.name.trim().toLowerCase() === "consumidor final";
         return (
           <div className="flex justify-end gap-1">
             <Button
@@ -150,35 +151,35 @@ export function getClientColumns({
             >
               <BoxIcon name="show" className="text-base" />
             </Button>
-            {can("clientes", "Editar") && (
-              <>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className={
-                    !active
-                      ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
-                      : "h-8 w-8 text-muted-foreground hover:text-foreground"
-                  }
-                  onClick={() => onToggleActive(c)}
-                  aria-label={!active ? "Ativar cliente" : "Desativar cliente"}
-                  title={!active ? "Ativar cliente" : "Desativar cliente"}
-                >
-                  <BoxIcon name="power-off" className="text-base" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={() => onEdit(c)}
-                  aria-label="Editar"
-                  title="Editar cliente"
-                >
-                  <BoxIcon name="pencil" className="text-base" />
-                </Button>
-              </>
+            {can("clientes", "Editar") && !isDefaultClient && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className={
+                  !active
+                    ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
+                    : "h-8 w-8 text-muted-foreground hover:text-foreground"
+                }
+                onClick={() => onToggleActive(c)}
+                aria-label={!active ? "Ativar cliente" : "Desativar cliente"}
+                title={!active ? "Ativar cliente" : "Desativar cliente"}
+              >
+                <BoxIcon name="power-off" className="text-base" />
+              </Button>
             )}
-            {can("clientes", "Excluir") && (
+            {can("clientes", "Editar") && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => onEdit(c)}
+                aria-label="Editar"
+                title="Editar cliente"
+              >
+                <BoxIcon name="pencil" className="text-base" />
+              </Button>
+            )}
+            {can("clientes", "Excluir") && !isDefaultClient && (
               <Button
                 size="icon"
                 variant="ghost"

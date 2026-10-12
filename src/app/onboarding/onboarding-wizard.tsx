@@ -143,12 +143,12 @@ export function OnboardingWizard({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans">
+    <div className="flex min-h-screen flex-col bg-background font-sans overflow-x-hidden w-full">
       {/* Topo / Barra de Navegação */}
-      <header className="border-b border-border/60 bg-background/95 backdrop-blur-md sticky top-0 z-30">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3.5 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center">
+      <header className="border-b border-border/60 bg-background/95 backdrop-blur-md sticky top-0 z-30 w-full">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-3 sm:px-6 py-3.5">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="relative flex items-center justify-center shrink-0">
               <Image
                 src="/zelo-black.png"
                 alt="Zelo"
@@ -166,11 +166,11 @@ export function OnboardingWizard({
                 className="size-8 object-contain hidden dark:block"
               />
             </div>
-            <div>
+            <div className="min-w-0 truncate">
               <span className="text-base font-bold tracking-tight text-foreground">
                 Zelo
               </span>
-              <span className="text-xs text-muted-foreground ml-2 hidden sm:inline-block">
+              <span className="text-xs text-muted-foreground ml-2 hidden sm:inline-block truncate">
                 Configuração inicial de{" "}
                 <strong className="text-foreground font-semibold">
                   {storeName}
@@ -179,14 +179,14 @@ export function OnboardingWizard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={handleSkip}
               disabled={saving}
-              className="text-xs text-muted-foreground hover:text-foreground h-8 px-2.5 rounded-lg cursor-pointer">
+              className="text-xs text-muted-foreground hover:text-foreground h-8 px-2 sm:px-2.5 rounded-lg cursor-pointer">
               Pular onboarding
             </Button>
             <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full hidden sm:inline-block">
@@ -206,8 +206,8 @@ export function OnboardingWizard({
       </header>
 
       {/* Conteúdo Principal / Card da Etapa */}
-      <main className="mx-auto flex flex-1 max-w-2xl w-full flex-col justify-center px-4 py-8 sm:px-6">
-        <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-8 shadow-sm">
+      <main className="mx-auto flex flex-1 max-w-2xl w-full flex-col justify-center px-3 sm:px-6 py-6 sm:py-8">
+        <div className="rounded-2xl border border-border/70 bg-card p-4 sm:p-8 shadow-sm w-full overflow-hidden">
           {/* ============================================================== */}
           {/* ETAPA 1: CONTROLE DE ESTOQUE */}
           {/* ============================================================== */}
@@ -739,26 +739,19 @@ export function OnboardingWizard({
           )}
 
           {/* Botões de Ação do Rodapé */}
-          <div className="flex items-center justify-between gap-3 pt-6 mt-6 border-t border-border/60">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-6 mt-6 border-t border-border/60">
             {step > 1 ? (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleBack}
                 disabled={saving}
-                className="h-11 px-5 rounded-xl cursor-pointer">
+                className="h-11 px-5 rounded-xl cursor-pointer w-full sm:w-auto">
                 <BoxIcon name="left-arrow-alt" className="mr-1 text-lg" />
                 Voltar
               </Button>
             ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleSkip}
-                disabled={saving}
-                className="h-11 px-4 text-sm text-muted-foreground hover:text-foreground rounded-xl cursor-pointer">
-                Pular configuração
-              </Button>
+              <div />
             )}
 
             {step < 4 ? (
@@ -766,7 +759,7 @@ export function OnboardingWizard({
                 type="button"
                 onClick={handleNext}
                 disabled={saving}
-                className="h-11 px-6 rounded-xl font-semibold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 cursor-pointer ml-auto">
+                className="h-11 px-6 rounded-xl font-semibold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 cursor-pointer w-full sm:w-auto sm:ml-auto">
                 {saving ? (
                   <>
                     <BoxIcon
@@ -787,19 +780,19 @@ export function OnboardingWizard({
                 type="button"
                 onClick={handleFinish}
                 disabled={saving}
-                className="h-12 px-8 rounded-xl font-bold text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer ml-auto">
+                className="h-11 sm:h-12 px-5 sm:px-7 rounded-xl font-bold text-sm sm:text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer w-full sm:w-auto sm:ml-auto shrink min-w-0">
                 {saving ? (
                   <>
                     <BoxIcon
                       name="loader-alt"
-                      className="mr-2 text-xl bx-spin"
+                      className="mr-2 text-lg sm:text-xl bx-spin shrink-0"
                     />
-                    Finalizando e abrindo o Zelo...
+                    <span className="truncate">Concluindo...</span>
                   </>
                 ) : (
                   <>
-                    Concluir e Começar a Vender
-                    <BoxIcon name="check" className="ml-2 text-xl font-bold" />
+                    <span className="truncate">Concluir e Começar</span>
+                    <BoxIcon name="check" className="ml-2 text-lg sm:text-xl font-bold shrink-0" />
                   </>
                 )}
               </Button>

@@ -20,3 +20,17 @@ export async function updateLoja(id: string, data: LojaFormData) {
     body: JSON.stringify(data),
   });
 }
+
+export async function deleteLoja(id: string, password?: string) {
+  return apiRequest(`/lojas/${id}?mode=account`, {
+    method: "DELETE",
+    body: JSON.stringify({ password }),
+  });
+}
+
+export async function purgeLojaData(id: string, password?: string) {
+  return apiRequest(`/lojas/${id}?mode=data`, {
+    method: "DELETE",
+    body: JSON.stringify({ password }),
+  });
+}

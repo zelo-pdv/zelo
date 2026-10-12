@@ -86,9 +86,9 @@ export async function PATCH(
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
-        ...(phone !== undefined ? { phone } : {}),
+        ...(phone !== undefined ? { phone: phone || "" } : {}),
         ...(email !== undefined ? { email: email && email.trim() !== "" ? email.trim() : null } : {}),
-        ...(notes !== undefined ? { notes } : {}),
+        ...(notes !== undefined ? { notes: notes || null } : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
         // Como o relacionamento é de lista (to-many), usamos deleteMany + create
         // para substituir o endereço antigo pelo novo com segurança.
@@ -114,10 +114,16 @@ export async function PATCH(
     });
 
     return NextResponse.json(updatedClient);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao atualizar cliente:", error);
+    if (error?.name === "ZodError" && error?.issues?.[0]?.message) {
+      return NextResponse.json(
+        { error: error.issues[0].message },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
-      { error: "Erro ao atualizar cliente." },
+      { error: error?.message || "Erro ao atualizar cliente." },
       { status: 500 },
     );
   }
@@ -138,6 +144,14 @@ export async function DELETE(
     // Validate that client belongs to user's loja before deleting
     const existingClient = await prisma.client.findFirst({ where: { id, lojaId: user.lojaId, deletedAt: null } });
     if (!existingClient) return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
+
+    // Bloqueia a exclusão do cliente padrão "Consumidor Final"
+    if (existingClient.name.trim().toLowerCase() === "consumidor final") {
+      return NextResponse.json(
+        { error: 'O cliente "Consumidor Final" é o cliente padrão do sistema e não pode ser excluído.' },
+        { status: 400 },
+      );
+    }
 
     // Soft delete: preserva o histórico de vendas intacto
     await prisma.client.update({

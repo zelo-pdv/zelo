@@ -44,15 +44,20 @@ export default function DeleteClient({
             onClick={async (e) => {
               e.preventDefault();
               if (!client) return;
+              if (client.name.trim().toLowerCase() === "consumidor final") {
+                toast.error('O cliente "Consumidor Final" não pode ser excluído.');
+                onClose();
+                return;
+              }
               try {
                 setLoading(true);
                 await clientsService.remove(client.id);
                 toast.success("Cliente removido com sucesso");
                 onConfirm(client.id);
                 onClose();
-              } catch (error) {
+              } catch (error: any) {
                 console.error("Erro ao remover cliente:", error);
-                toast.error("Erro ao remover cliente.");
+                toast.error(error?.message || "Erro ao remover cliente.");
               } finally {
                 setLoading(false);
               }

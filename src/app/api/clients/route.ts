@@ -66,9 +66,9 @@ export async function POST(req: NextRequest) {
     const newClient = await prisma.client.create({
       data: {
         name,
-        phone,
+        phone: phone || "",
         email: email && email.trim() !== "" ? email.trim() : null,
-        notes,
+        notes: notes || null,
         active: body.active !== undefined ? Boolean(body.active) : true,
         lojaId: user.lojaId,
         address: address
@@ -92,10 +92,16 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newClient, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao criar cliente:", error);
+    if (error?.name === "ZodError" && error?.issues?.[0]?.message) {
+      return NextResponse.json(
+        { error: error.issues[0].message },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
-      { error: "Erro interno ao criar cliente." },
+      { error: error?.message || "Erro interno ao criar cliente." },
       { status: 500 },
     );
   }
