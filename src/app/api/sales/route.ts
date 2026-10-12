@@ -138,8 +138,8 @@ export async function POST(req: Request) {
         where: { lojaId: user.lojaId },
       });
       const config = (storeSettings?.config as any) ?? {};
-      const trackStock = config?.products?.trackStock ?? false;
-      const blockOutOfStock = config?.sales?.blockOutOfStock ?? false;
+      const trackStock = config?.products?.trackStock !== undefined ? Boolean(config.products.trackStock) : true;
+      const blockOutOfStock = config?.sales?.blockOutOfStock !== undefined ? Boolean(config.sales.blockOutOfStock) : true;
 
       const openPriceEnabled = config?.sales?.openPriceEnabled ?? false;
       const openPriceMode = config?.sales?.openPriceMode ?? "ALL";

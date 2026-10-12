@@ -78,3 +78,58 @@ export async function login(email: string, password: string = "password123") {
 
   return { status, data, cookies };
 }
+
+export async function registerUser(uniquePrefix: string) {
+  const payload = {
+    ownerName: `Owner ${uniquePrefix}`,
+    storeName: `Loja ${uniquePrefix}`,
+    email: `reg_${uniquePrefix}@test.com`,
+    password: "password123",
+    confirmPassword: "password123",
+    phone: "(11) 98765-4321",
+  };
+
+  const { status, data, cookies } = await fetchApi("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  return { status, data, cookies, payload };
+}
+
+export async function deleteTestLoja(lojaId: string) {
+  await import("dotenv/config");
+  const { default: prisma } = await import("../src/lib/prisma");
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { lojaId },
+      select: { id: true },
+    });
+    const saleIds = sales.map((s) => s.id);
+    if (saleIds.length > 0) {
+      await prisma.saleItem.deleteMany({
+        where: { saleId: { in: saleIds } },
+      });
+    }
+
+    await prisma.sale.deleteMany({ where: { lojaId } });
+    await prisma.productVariant.deleteMany({ where: { lojaId } });
+    await prisma.product.deleteMany({ where: { lojaId } });
+    await prisma.category.deleteMany({ where: { lojaId } });
+    await prisma.address.deleteMany({ where: { lojaId } });
+    await prisma.client.deleteMany({ where: { lojaId } });
+    await prisma.unit.deleteMany({ where: { lojaId } });
+    await prisma.settings.deleteMany({ where: { lojaId } });
+    await prisma.auditLog.deleteMany({ where: { lojaId } });
+    await prisma.loja.update({
+      where: { id: lojaId },
+      data: { ownerId: null },
+    }).catch(() => {});
+    await prisma.user.deleteMany({ where: { lojaId } });
+    await prisma.accessGroup.deleteMany({ where: { lojaId } });
+    await prisma.loja.delete({ where: { id: lojaId } });
+  } catch (err) {
+    console.error(`Erro ao deletar loja de teste ${lojaId}:`, err);
+  }
+}
+

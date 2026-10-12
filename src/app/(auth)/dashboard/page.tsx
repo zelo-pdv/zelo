@@ -306,6 +306,7 @@ export default function Dashboard() {
     hideRecentSales: false,
   };
   const productsSettings = useSettingsStore((s) => s.products) ?? {
+    trackStock: false,
     globalLowStockThreshold: 5,
     hideCostPrice: false,
   };
@@ -513,6 +514,9 @@ export default function Dashboard() {
   }
 
   const firstName = user?.name ? user.name.split(" ")[0] : "Usuário";
+  const showLowStockCard =
+    !dashboardSettings.hideLowStockCard &&
+    Boolean(productsSettings?.trackStock);
 
   return (
     <div className="w-full px-4">
@@ -581,9 +585,9 @@ export default function Dashboard() {
       <div
         className={cn(
           "flex overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory gap-3 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:overflow-visible",
-          dashboardSettings.hideLowStockCard
-            ? "sm:grid-cols-2"
-            : "sm:grid-cols-2 lg:grid-cols-3",
+          showLowStockCard
+            ? "sm:grid-cols-2 lg:grid-cols-3"
+            : "sm:grid-cols-2",
           "[&>div]:min-w-[85vw] [&>div]:snap-center sm:[&>div]:min-w-0",
         )}>
         <StatCard
@@ -604,7 +608,7 @@ export default function Dashboard() {
           hint={`${stats.pendingCount} venda${stats.pendingCount === 1 ? "" : "s"} pendente${stats.pendingCount === 1 ? "" : "s"}`}
           tone="pending"
         />
-        {!dashboardSettings.hideLowStockCard && (productsSettings?.trackStock ?? false) && (
+        {showLowStockCard && (
           <StatCard
             label="Estoque baixo"
             value={`${stats.low.length} produto${stats.low.length === 1 ? "" : "s"}`}
@@ -618,8 +622,7 @@ export default function Dashboard() {
       <SalesWeekChart data={last7DaysData} />
 
       {/* Item #7: Ocultar seção de Estoque Baixo se configurado ou se controle de estoque estiver desativado */}
-      {!dashboardSettings.hideLowStockCard &&
-        (productsSettings?.trackStock ?? false) &&
+      {showLowStockCard &&
         products.length > 0 &&
         stats.low.length > 0 && (
           <section className="mt-8">

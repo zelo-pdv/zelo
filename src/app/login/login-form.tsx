@@ -5,6 +5,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,12 @@ export function LoginForm() {
       }
 
       toast.success(`Bem-vindo(a), o Zelo está pronto!`);
+
+      if (res?.user && res.user.onboardingCompleted === false) {
+        router.push("/onboarding");
+        return;
+      }
+
       const targetRoute = getFirstAccessibleRoute({
         permissions: res?.user?.permissions,
         isAdmin: res?.user?.isAdmin,
@@ -228,6 +235,18 @@ export function LoginForm() {
                 </>
               )}
             </Button>
+
+            <div className="pt-3 text-center">
+              <p className="text-sm text-muted-foreground">
+                Ainda não tem uma conta?{" "}
+                <Link
+                  href="/cadastro"
+                  className="font-semibold text-primary hover:underline transition-colors"
+                >
+                  Cadastre-se grátis
+                </Link>
+              </p>
+            </div>
           </form>
         </div>
       </div>

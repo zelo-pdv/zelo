@@ -176,6 +176,17 @@ export async function POST(request: Request) {
               { name: "Par", abbreviation: "PAR", decimalPlaces: 0 },
             ],
           },
+          settings: {
+            create: {
+              config: {
+                store: { name: lojaData.name, email: lojaData.email || "", phone: lojaData.phone || "" },
+                products: { trackStock: true, showImages: true, defaultUnit: "UN" },
+                sales: { blockOutOfStock: true, defaultPaymentMethod: "PIX", defaultStatus: "PAID", requireClient: false },
+                dashboard: { hideCostPrice: false },
+                onboarding: { completed: true, step: 4 },
+              },
+            },
+          },
         },
         include: {
           address: true,

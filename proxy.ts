@@ -38,6 +38,11 @@ export async function requireAuth() {
     redirect("/login");
   }
 
+  // Se a loja ainda não concluiu o onboarding inicial, redireciona
+  if (payload.onboardingCompleted === false) {
+    redirect("/onboarding");
+  }
+
   // Authorization check inside requireAuth
   const headersList = await headers();
   const pathname = headersList.get("x-invoke-path") || headersList.get("referer") || "";
@@ -72,7 +77,7 @@ export async function requireAuth() {
   return { token, user: payload };
 }
 
-// Função para proteger ROTAS PÚBLICAS (ex: página de login)
+// Função para proteger ROTAS PÚBLICAS (ex: página de login e cadastro)
 export async function requireGuest() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -80,6 +85,9 @@ export async function requireGuest() {
   if (token) {
     const payload = (await verifyJwtToken(token)) as any;
     if (payload) {
+      if (payload.onboardingCompleted === false) {
+        redirect("/onboarding");
+      }
       if (payload.isAdmin) {
         redirect("/dashboard");
       }
@@ -96,6 +104,28 @@ export async function requireGuest() {
       redirect(found?.to || "/dashboard");
     }
   }
+}
+
+// Função para proteger a página de ONBOARDING
+export async function requireOnboarding() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+
+  if (!token) {
+    redirect("/login");
+  }
+
+  const payload = (await verifyJwtToken(token)) as any;
+  if (!payload) {
+    redirect("/login");
+  }
+
+  // Se o onboarding já foi concluído, encaminha diretamente para o painel
+  if (payload.onboardingCompleted !== false) {
+    redirect("/dashboard");
+  }
+
+  return { token, user: payload };
 }
 
 // Wrapper para validação estrita com Zod em Route Handlers

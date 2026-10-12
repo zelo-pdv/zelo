@@ -8,6 +8,7 @@ export const userContextSchema = z.object({
   permissions: z.record(z.string(), z.array(z.string())).optional().default({}),
   groupName: z.string().optional(),
   isAdmin: z.boolean().optional(),
+  onboardingCompleted: z.boolean().optional(),
 });
 
 export type UserContextData = z.infer<typeof userContextSchema>;

@@ -15,6 +15,8 @@ export interface AuthenticatedUser {
   isOwner: boolean;
   permissions: Permissions;
   lojaId: string;
+  storeName?: string;
+  onboardingCompleted: boolean;
 }
 
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
@@ -34,11 +36,19 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.sub,
+        id: payload.sub as string,
       },
       include: {
         group: true,
-        loja: { select: { ownerId: true } },
+        loja: {
+          select: {
+            name: true,
+            ownerId: true,
+            settings: {
+              select: { config: true },
+            },
+          },
+        },
       },
     });
 
@@ -53,6 +63,14 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     const isOwner = user.loja?.ownerId === user.id;
     const isAdmin = user.group.name === "ADMIN" || isOwner;
 
+    const storeConfig = (user.loja?.settings?.config as any) ?? {};
+    // Se a loja tiver o objeto onboarding configurado, usa seu status;
+    // Lojas antigas/existentes sem o objeto onboarding são consideradas concluídas por compatibilidade.
+    const onboardingCompleted =
+      storeConfig.onboarding !== undefined
+        ? Boolean(storeConfig.onboarding.completed)
+        : true;
+
     return {
       id: user.id,
       name: user.name,
@@ -64,6 +82,8 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       isOwner,
       permissions: user.group.permissions as unknown as Permissions,
       lojaId: user.lojaId,
+      storeName: user.loja?.name,
+      onboardingCompleted,
     };
   } catch (error) {
     console.error("Erro ao obter usuário autenticado:", error);

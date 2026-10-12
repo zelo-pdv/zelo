@@ -18,7 +18,17 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { group: true, loja: { select: { ownerId: true } } },
+      include: {
+        group: true,
+        loja: {
+          select: {
+            ownerId: true,
+            settings: {
+              select: { config: true },
+            },
+          },
+        },
+      },
     });
 
     console.log("LOGIN ATTEMPT - EMAIL:", email, "USER FOUND:", !!user);
@@ -43,6 +53,12 @@ export async function POST(req: Request) {
     const isOwner = user.loja?.ownerId === user.id;
     const isAdmin = user.group?.name === "ADMIN" || isOwner;
 
+    const storeConfig = (user.loja?.settings?.config as any) ?? {};
+    const onboardingCompleted =
+      storeConfig.onboarding !== undefined
+        ? Boolean(storeConfig.onboarding.completed)
+        : true;
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -50,6 +66,8 @@ export async function POST(req: Request) {
       groupName: user.group?.name || "",
       isAdmin,
       permissions: user.group?.permissions || {},
+      lojaId: user.lojaId,
+      onboardingCompleted,
     };
 
     const token = await new SignJWT(payload)
