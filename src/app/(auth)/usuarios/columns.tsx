@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -38,82 +37,9 @@ export function getUserColumns({
       cell: ({ row }) => {
         const u = row.original;
         return (
-          <div className="min-w-0 max-w-full">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <div className="flex items-center gap-2 min-w-0 max-w-[calc(100vw-130px)] sm:max-w-none">
-                <span className="truncate text-sm font-medium">{u.name}</span>
-              </div>
-              <div className="sm:hidden shrink-0">
-                <Popover>
-                  <PopoverTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <BoxIcon name="dots-vertical-rounded" className="text-base" />
-                      </Button>
-                    }
-                  ></PopoverTrigger>
-                  <PopoverContent className="w-52" align="end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start h-9 px-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(u);
-                      }}
-                    >
-                      <BoxIcon name="pencil" className="mr-2 text-base" />
-                      Editar usuário
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start h-9 px-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onChangePassword(u);
-                      }}
-                    >
-                      <BoxIcon name="key" className="mr-2 text-base" />
-                      Trocar senha
-                    </Button>
-                    <Separator className="my-1" />
-                    {u.id !== currentUserId && !u.isFirstUser && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start h-9 px-3 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(u);
-                        }}
-                      >
-                        <BoxIcon name="trash" className="mr-2 text-base" />
-                        Remover usuário
-                      </Button>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
-              <span>Escopo: {u.groupLabel}</span>
-              <span>·</span>
-              <span>
-                Desconto:{" "}
-                {u.discountLimitMode === "UNLIMITED"
-                  ? "Ilimitado"
-                  : u.discountLimitMode === "CUSTOM"
-                  ? `${u.maxDiscountPercentage != null ? `${u.maxDiscountPercentage}%` : ""}${u.maxDiscountPercentage != null && u.maxDiscountValue != null ? " / " : ""}${u.maxDiscountValue != null ? `R$ ${Number(u.maxDiscountValue).toFixed(2).replace(".", ",")}` : ""}`
-                  : "Padrão Grupo"}
-              </span>
-            </div>
+          <div className="flex flex-col min-w-0">
+            <span className="truncate text-sm font-medium">{u.name}</span>
+            <span className="truncate text-xs text-muted-foreground">{u.email}</span>
           </div>
         );
       },
@@ -122,7 +48,7 @@ export function getUserColumns({
       accessorKey: "groupLabel",
       header: "Escopo",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground hidden sm:block">
+        <span className="text-sm text-muted-foreground">
           {row.original.groupLabel}
         </span>
       ),
@@ -161,6 +87,18 @@ export function getUserColumns({
     {
       accessorKey: "active",
       header: "Status",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.active ? "secondary" : "outline"}
+          className={
+            row.original.active
+              ? ""
+              : "border-muted-foreground/40 text-muted-foreground bg-muted/40"
+          }
+        >
+          {row.original.active ? "Ativo" : "Inativo"}
+        </Badge>
+      ),
       filterFn: "equals",
     },
     {
@@ -169,60 +107,70 @@ export function getUserColumns({
       enableHiding: false,
       cell: ({ row }) => {
         const u = row.original;
+        const isSelfOrFirst = u.id === currentUserId || u.isFirstUser;
+
         return (
-          <div className="hidden justify-end gap-1 sm:flex">
+          <div className="flex justify-end">
             <Popover>
               <PopoverTrigger
                 render={
-                  <Button size="icon" variant="ghost" className="h-8 w-8">
-                    <BoxIcon name="cog" className="text-base" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                    aria-label="Ações do usuário"
+                  >
+                    <BoxIcon name="dots-vertical-rounded" className="text-base" />
                   </Button>
                 }
-              ></PopoverTrigger>
-              <PopoverContent align="end" className="w-64 p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium">Status do Usuário</div>
-                    <div className="text-xs text-muted-foreground">
-                      {u.active ? "Ativo no sistema" : "Acesso bloqueado"}
-                    </div>
-                  </div>
-                  <Switch
-                    checked={u.active}
-                    onCheckedChange={() => onToggle(u.id)}
-                  />
-                </div>
+              />
+              <PopoverContent className="w-52 p-1.5" align="end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onEdit(u)}
+                >
+                  <BoxIcon name="pencil" className="mr-2 text-base" />
+                  Editar usuário
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onChangePassword(u)}
+                >
+                  <BoxIcon name="key" className="mr-2 text-base" />
+                  Trocar senha
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onToggle(u.id)}
+                >
+                  <BoxIcon name="power-off" className="mr-2 text-base" />
+                  {u.active ? "Bloquear acesso" : "Ativar acesso"}
+                </Button>
+
+                {!isSelfOrFirst && (
+                  <>
+                    <Separator className="my-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-start px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                      onClick={() => onDelete(u)}
+                    >
+                      <BoxIcon name="trash" className="mr-2 text-base" />
+                      Remover usuário
+                    </Button>
+                  </>
+                )}
               </PopoverContent>
             </Popover>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => onEdit(u)}
-              title="Editar usuário"
-            >
-              <BoxIcon name="pencil" className="text-base" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => onChangePassword(u)}
-              title="Trocar senha"
-            >
-              <BoxIcon name="key" className="text-base" />
-            </Button>
-            {u.id !== currentUserId && !u.isFirstUser && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-destructive"
-                onClick={() => onDelete(u)}
-                title="Remover usuário"
-              >
-                <BoxIcon name="trash" className="text-base" />
-              </Button>
-            )}
           </div>
         );
       },

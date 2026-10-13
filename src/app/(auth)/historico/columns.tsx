@@ -2,6 +2,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { currency, dateTime } from "@/lib/format";
 import { getPaymentLabel, type Sale } from "@/types";
 
@@ -124,51 +130,69 @@ export function getSaleColumns({
         const isCancelled = s.status === "CANCELADO";
 
         return (
-          <div className="flex justify-end gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => onView(s)}
-              aria-label="Ver detalhes"
-              title="Ver detalhes"
-            >
-              <BoxIcon name="show" className="text-base" />
-            </Button>
-            {!isCancelled && onEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-foreground/80 hover:text-foreground"
-                onClick={() => onEdit(s)}
-                aria-label="Editar venda"
-                title="Editar venda"
-              >
-                <BoxIcon name="edit-alt" className="text-base" />
-              </Button>
-            )}
-            {!isCancelled && onCancel && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => onCancel(s)}
-                aria-label="Cancelar venda"
-                title="Cancelar venda"
-              >
-                <BoxIcon name="x-circle" className="text-base" />
-              </Button>
-            )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => onVoucher(s)}
-              aria-label="Ver comprovante"
-              title="Ver comprovante"
-            >
-              <BoxIcon name="receipt" className="text-base" />
-            </Button>
+          <div className="flex justify-end">
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                    aria-label="Ações da venda"
+                  >
+                    <BoxIcon name="dots-vertical-rounded" className="text-base" />
+                  </Button>
+                }
+              />
+              <PopoverContent className="w-52 p-1.5" align="end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onView(s)}
+                >
+                  <BoxIcon name="show" className="mr-2 text-base" />
+                  Visualizar venda
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onVoucher(s)}
+                >
+                  <BoxIcon name="receipt" className="mr-2 text-base" />
+                  Ver comprovante
+                </Button>
+
+                {!isCancelled && onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                    onClick={() => onEdit(s)}
+                  >
+                    <BoxIcon name="pencil" className="mr-2 text-base" />
+                    Editar venda
+                  </Button>
+                )}
+
+                {!isCancelled && onCancel && (
+                  <>
+                    <Separator className="my-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-start px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                      onClick={() => onCancel(s)}
+                    >
+                      <BoxIcon name="x-circle" className="mr-2 text-base" />
+                      Cancelar venda
+                    </Button>
+                  </>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
         );
       },

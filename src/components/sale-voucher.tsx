@@ -512,6 +512,14 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
           <BoxIcon name="download" className="mr-2 text-base text-foreground" /> Imagem
         </Button>
       </div>
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+        onClick={onClose}
+      >
+        Fechar
+      </Button>
     </div>
   );
 
@@ -520,8 +528,8 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
     return (
       <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
         <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="shrink-0 px-4">
-            <DrawerTitle className="sr-only">Comprovante da venda</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center">Comprovante de Venda</DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">

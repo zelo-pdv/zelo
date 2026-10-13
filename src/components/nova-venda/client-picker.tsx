@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import {
   Drawer,
@@ -102,10 +103,22 @@ export function ClientPicker({
     return (
       <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
         <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="flex-row items-center gap-2 mb-1">
-            <DrawerTitle>Escolher cliente</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center">Escolher cliente</DrawerTitle>
           </DrawerHeader>
-          {PickerContent}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {PickerContent}
+            <div className="shrink-0 pt-3 pb-6 px-4 border-t border-border w-full flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onClose}
+                className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DrawerContent>
       </Drawer>
     );

@@ -30,7 +30,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { currency } from "@/lib/format";
+import { maskPhone } from "@/lib/masks";
 import type { ClientTableData } from "./columns";
 
 export function ClientsDataTable({
@@ -41,6 +46,12 @@ export function ClientsDataTable({
   onImportClick,
   onExportClick,
   isExporting,
+  onView,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  canEdit,
+  canDelete,
 }: {
   columns: ColumnDef<ClientTableData>[];
   data: ClientTableData[];
@@ -49,6 +60,12 @@ export function ClientsDataTable({
   onImportClick?: () => void;
   onExportClick?: () => void;
   isExporting?: boolean;
+  onView?: (client: ClientTableData) => void;
+  onEdit?: (client: ClientTableData) => void;
+  onDelete?: (client: ClientTableData) => void;
+  onToggleActive?: (client: ClientTableData) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -120,7 +137,10 @@ export function ClientsDataTable({
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
         <div className="flex items-center gap-2 w-full sm:flex-1">
           <div className="relative w-full sm:w-[40%] sm:max-w-[40%] min-w-0">
-            <BoxIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
+            <BoxIcon
+              name="search"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none"
+            />
             <Input
               placeholder="Buscar clientes..."
               value={globalFilter}
@@ -128,7 +148,7 @@ export function ClientsDataTable({
               autoComplete="new-password"
               name="search-table"
               id="search-table"
-              className="rounded-xl pl-9 w-full"
+              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-sm shadow-xs"
             />
           </div>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
@@ -136,10 +156,10 @@ export function ClientsDataTable({
               render={
                 <Button
                   variant={activeFiltersCount > 0 ? "default" : "outline"}
-                  className="rounded-xl shrink-0 gap-1.5 text-xs sm:text-sm font-medium"
+                  className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
                   aria-label="Abrir filtros"
                 >
-                  <BoxIcon name="slider-alt" className="text-base" />
+                  <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground text-primary text-[11px] font-bold">
@@ -284,7 +304,179 @@ export function ClientsDataTable({
         </div>
       </div>
 
-      <Card className="border-border/70 p-0">
+      {/* Paginação unificada acima da listagem */}
+      <TablePagination
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalFiltered={totalFiltered}
+        pageCount={table.getPageCount()}
+        canPreviousPage={table.getCanPreviousPage()}
+        canNextPage={table.getCanNextPage()}
+        onPreviousPage={() => table.previousPage()}
+        onNextPage={() => table.nextPage()}
+      />
+
+      {/* Listagem Mobile com visual de tabela/card */}
+      <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
+        {rows.length ? (
+          rows.map((row) => {
+            const client = row.original;
+            const isProtected = client.name === "Consumidor Final";
+            const hasMobileActions = onView || onEdit || onDelete || onToggleActive;
+            const initial = client.name.charAt(0).toUpperCase() || "C";
+
+            return (
+              <div
+                key={row.id}
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
+              >
+                {/* Avatar / Inicial do Cliente */}
+                <div className="h-12 w-12 rounded-2xl shrink-0 bg-primary/10 text-primary font-bold flex items-center justify-center text-lg">
+                  {initial}
+                </div>
+
+                {/* Dados do Cliente */}
+                <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-foreground text-sm line-clamp-1 truncate leading-tight">
+                      {client.name}
+                    </span>
+                    {!client.active && (
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4"
+                      >
+                        Inativo
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {client.phone ? (
+                      <span>{maskPhone(client.phone)}</span>
+                    ) : (
+                      <span>Sem telefone</span>
+                    )}
+                    <span className="text-muted-foreground/40 font-light select-none">
+                      |
+                    </span>
+                    <span className="font-medium">
+                      {currency(client.totalSpent)}
+                    </span>
+                  </div>
+
+                  {client.pendingAmount > 0 && (
+                    <div className="mt-0.5">
+                      <Badge
+                        variant="destructive"
+                        className="text-[10px] px-1.5 py-0 h-4 font-semibold"
+                      >
+                        Pendente: {currency(client.pendingAmount)}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                {/* Menu de Ações (3 pontos) */}
+                {hasMobileActions && (
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Ações do cliente"
+                        >
+                          <BoxIcon
+                            name="dots-vertical-rounded"
+                            className="text-lg"
+                          />
+                        </Button>
+                      }
+                    />
+                    <PopoverContent className="w-48 p-1.5" align="end">
+                      {onView && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView(client);
+                          }}
+                        >
+                          <BoxIcon name="show" className="mr-2 text-base" />
+                          Visualizar
+                        </Button>
+                      )}
+
+                      {canEdit && onEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(client);
+                          }}
+                        >
+                          <BoxIcon name="pencil" className="mr-2 text-base" />
+                          Editar
+                        </Button>
+                      )}
+
+                      {canEdit && onToggleActive && !isProtected && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleActive(client);
+                          }}
+                        >
+                          <BoxIcon
+                            name="power-off"
+                            className="mr-2 text-base"
+                          />
+                          {client.active ? "Desativar" : "Ativar"}
+                        </Button>
+                      )}
+
+                      {canDelete && onDelete && !isProtected && (
+                        <>
+                          <Separator className="my-1" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 w-full justify-start px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(client);
+                            }}
+                          >
+                            <BoxIcon name="trash" className="mr-2 text-base" />
+                            Excluir
+                          </Button>
+                        </>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Nenhum cliente encontrado.
+          </div>
+        )}
+      </div>
+
+      <div className="hidden md:block">
+        <Card className="border-border/70 p-0">
         <CardContent className="p-0">
           <div className="w-full overflow-x-hidden sm:overflow-x-auto">
             <Table className="table-fixed w-full">
@@ -349,37 +541,8 @@ export function ClientsDataTable({
           </div>
         </CardContent>
       </Card>
-
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <div className="text-xs text-muted-foreground">
-          {totalFiltered === 0 ? 0 : pageIndex * pageSize + 1}–
-          {Math.min((pageIndex + 1) * pageSize, totalFiltered)} de{" "}
-          {totalFiltered}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-          >
-            <BoxIcon name="chevron-left" className="text-base" />
-          </Button>
-          <div className="text-xs tabular-nums text-muted-foreground">
-            {pageIndex + 1} / {table.getPageCount() || 1}
-          </div>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-          >
-            <BoxIcon name="chevron-right" className="text-base" />
-          </Button>
-        </div>
       </div>
+
     </div>
   );
 }

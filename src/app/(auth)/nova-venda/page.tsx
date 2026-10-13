@@ -802,8 +802,8 @@ export default function NovaVenda() {
           }}
         >
           <DrawerContent className="h-[90vh]">
-            <DrawerHeader className="flex-row items-center gap-2 shrink-0 px-4 md:px-6">
-              <DrawerTitle>
+            <DrawerHeader className="shrink-0 px-4 text-center">
+              <DrawerTitle className="text-center font-semibold">
                 {editingSaleId ? `Editar Venda #${editingSaleNumber || editingSaleId.slice(-6)}` : "Pagamento"}
               </DrawerTitle>
             </DrawerHeader>

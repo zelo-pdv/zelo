@@ -18,7 +18,6 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import {
   Dialog,
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatAuditLog, PAYMENT_METHOD_NAMES } from "@/lib/audit-formatter";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { toast } from "sonner";
 
 interface AuditLog {
@@ -84,7 +84,6 @@ export default function RegistrosPage() {
 
   // Busca e controles de UI
   const [searchTerm, setSearchTerm] = useState("");
-  const [showSearchInput, setShowSearchInput] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Paginação
@@ -258,94 +257,66 @@ export default function RegistrosPage() {
 
   return (
     <div className="w-full px-3 sm:px-6 space-y-4 max-w-7xl mx-auto">
-      {/* Barra de Ações Compacta e Otimizada para Mobile */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Registros de Atividade
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Acompanhe com clareza tudo o que acontece na sua loja em tempo real.
-          </p>
-        </div>
+      {/* Barra de Busca e Filtros Padronizada */}
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
+        <div className="flex items-center gap-2 w-full sm:flex-1">
+          <div className="relative w-full sm:w-[40%] sm:max-w-[40%] min-w-0">
+            <BoxIcon
+              name="search"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none"
+            />
+            <Input
+              placeholder="Buscar por cliente, produto, #venda ou operador..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="new-password"
+              name="search-table"
+              id="search-table"
+              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-sm shadow-xs"
+            />
+          </div>
 
-        {/* Botões de Ação Principais */}
-        <div className="flex items-center gap-2">
-          {/* Botão de Pesquisa */}
-          <Button
-            variant={showSearchInput || searchTerm ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setShowSearchInput(!showSearchInput)}
-            className="h-9 gap-1.5 text-xs px-3 shadow-xs"
-            title="Pesquisar nos registros"
-          >
-            <BoxIcon name="search" className="text-base" />
-            <span className="hidden sm:inline">Pesquisar</span>
-          </Button>
-
-          {/* Botão de Filtros (Abre Drawer no Mobile e Desktop) */}
           <Button
             variant={activeFiltersCount > 0 ? "default" : "outline"}
-            size="sm"
             onClick={() => setIsFilterDrawerOpen(true)}
-            className="h-9 gap-1.5 text-xs px-3 shadow-xs relative"
+            className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
+            aria-label="Abrir filtros"
           >
-            <BoxIcon name="filter" className="text-base" />
-            <span>Filtros</span>
+            <BoxIcon name="slider-alt" className="text-lg" />
+            <span className="hidden sm:inline">Filtros</span>
             {activeFiltersCount > 0 && (
-              <span className="ml-1 size-5 rounded-full bg-primary-foreground text-primary font-bold text-[10px] inline-flex items-center justify-center">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground text-primary text-[11px] font-bold">
                 {activeFiltersCount}
               </span>
             )}
           </Button>
+        </div>
 
-          {/* Exportar PDF */}
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportPdf}
             disabled={loading || logs.length === 0}
-            className="h-9 gap-1.5 text-xs px-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900 shadow-xs"
+            className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900"
             title="Baixar em PDF"
           >
             <BoxIcon name="file-blank" className="text-base" />
             <span className="hidden sm:inline">Baixar PDF</span>
           </Button>
 
-          {/* Atualizar */}
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => fetchLogs(page)}
             disabled={loading}
-            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            className="h-11 w-11 rounded-xl border border-border/70 bg-white dark:bg-card text-muted-foreground hover:text-foreground shadow-xs cursor-pointer shrink-0"
             title="Atualizar lista"
           >
             <BoxIcon name="refresh" className={`text-base ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
-
-      {/* Barra de Pesquisa Expansível */}
-      {showSearchInput && (
-        <div className="relative animate-in fade-in duration-200">
-          <BoxIcon name="search" className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
-          <Input
-            placeholder="Buscar por nome do cliente, produto, número #venda ou operador..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-9 h-9 text-xs"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <BoxIcon name="x" className="text-sm" />
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Chips Rápidos de Filtros Ativos (Sem gastar espaço vertical) */}
       {(activeFiltersCount > 0 || searchTerm) && (
@@ -407,6 +378,18 @@ export default function RegistrosPage() {
           </button>
         </div>
       )}
+
+      {/* Paginação unificada acima da listagem */}
+      <TablePagination
+        pageIndex={page - 1}
+        pageSize={40}
+        totalFiltered={totalCount}
+        pageCount={totalPages}
+        canPreviousPage={page > 1 && !loading}
+        canNextPage={page < totalPages && !loading}
+        onPreviousPage={() => fetchLogs(page - 1)}
+        onNextPage={() => fetchLogs(page + 1)}
+      />
 
       {/* Lista Principal de Registros (Ocupa 100% da visualização livre) */}
       <Card className="border shadow-xs overflow-hidden">
@@ -521,37 +504,6 @@ export default function RegistrosPage() {
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="p-3 sm:p-4 border-t border-border/50 flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">
-                Página {page} de {totalPages}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchLogs(page - 1)}
-                  disabled={page <= 1 || loading}
-                  className="h-8 text-xs px-2.5"
-                >
-                  <BoxIcon name="chevron-left" className="text-base" />
-                  <span className="hidden sm:inline ml-1">Anterior</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchLogs(page + 1)}
-                  disabled={page >= totalPages || loading}
-                  className="h-8 text-xs px-2.5"
-                >
-                  <span className="hidden sm:inline mr-1">Próxima</span>
-                  <BoxIcon name="chevron-right" className="text-base" />
-                </Button>
-              </div>
             </div>
           )}
         </CardContent>
@@ -695,37 +647,36 @@ export default function RegistrosPage() {
               showSwipeHandle
             >
               <DrawerContent className="max-h-[85vh] p-4 sm:p-6 overflow-y-auto">
-                <DrawerHeader className="px-0 pt-0 text-left">
-                  <DrawerTitle className="text-base font-bold text-foreground">
+                <DrawerHeader className="px-0 pt-0 text-center">
+                  <DrawerTitle className="text-base font-bold text-foreground text-center">
                     Filtrar Registros de Atividade
                   </DrawerTitle>
-                  <DrawerDescription className="text-xs text-muted-foreground">
+                  <DrawerDescription className="text-xs text-muted-foreground text-center">
                     Personalize a visualização por categoria, período ou operador.
                   </DrawerDescription>
                 </DrawerHeader>
 
                 {filterFields}
 
-                <DrawerFooter className="px-0 pt-3 pb-0 flex flex-row items-center justify-end gap-2">
+                <div className="shrink-0 pt-3 mt-4 border-t border-border w-full flex flex-col gap-2">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearFilters}
-                    className="text-xs h-9"
-                  >
-                    Limpar Filtros
-                  </Button>
-                  <Button
-                    size="sm"
                     onClick={() => {
                       setIsFilterDrawerOpen(false);
                       setPage(1);
                     }}
-                    className="text-xs h-9 px-4"
+                    className="h-11 w-full rounded-full font-medium"
                   >
                     Aplicar Filtros
                   </Button>
-                </DrawerFooter>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleClearFilters}
+                    className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Limpar Filtros
+                  </Button>
+                </div>
               </DrawerContent>
             </Drawer>
           );

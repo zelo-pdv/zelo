@@ -605,8 +605,8 @@ function GroupForm({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="shrink-0 px-4">
-            <DrawerTitle>{isEdit ? "Editar grupo" : "Novo grupo"}</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center">{isEdit ? "Editar grupo" : "Novo grupo"}</DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">

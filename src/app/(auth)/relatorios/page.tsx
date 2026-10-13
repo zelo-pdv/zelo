@@ -18,7 +18,6 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import {
   Dialog,
@@ -982,37 +981,36 @@ export default function RelatoriosPage() {
               showSwipeHandle
             >
               <DrawerContent className="max-h-[85vh] p-4 sm:p-6 overflow-y-auto">
-                <DrawerHeader className="px-0 pt-0 text-left">
-                  <DrawerTitle className="text-base font-bold text-foreground">
+                <DrawerHeader className="px-0 pt-0 text-center">
+                  <DrawerTitle className="text-base font-bold text-foreground text-center">
                     Filtros do Relatório
                   </DrawerTitle>
-                  <DrawerDescription className="text-xs text-muted-foreground">
+                  <DrawerDescription className="text-xs text-muted-foreground text-center">
                     Ajuste o período e filtros específicos para o relatório selecionado.
                   </DrawerDescription>
                 </DrawerHeader>
 
                 {filterFields}
 
-                <DrawerFooter className="px-0 pt-3 pb-0 flex flex-row items-center justify-end gap-2">
+                <div className="shrink-0 pt-3 mt-4 border-t border-border w-full flex flex-col gap-2">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearFilters}
-                    className="text-xs h-9"
-                  >
-                    Limpar Filtros
-                  </Button>
-                  <Button
-                    size="sm"
                     onClick={() => {
                       setIsFilterDrawerOpen(false);
                       fetchReport();
                     }}
-                    className="text-xs h-9 px-4"
+                    className="h-11 w-full rounded-full font-medium"
                   >
                     Aplicar Filtros
                   </Button>
-                </DrawerFooter>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleClearFilters}
+                    className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Limpar Filtros
+                  </Button>
+                </div>
               </DrawerContent>
             </Drawer>
           );

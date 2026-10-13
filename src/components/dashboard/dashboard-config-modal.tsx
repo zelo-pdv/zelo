@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -106,11 +107,21 @@ export function DashboardConfigModal({
     return (
       <Drawer open={isOpen} onOpenChange={(val) => !val && onClose()} blur>
         <DrawerContent className="p-4 max-h-[85vh] overflow-y-auto">
-          <DrawerHeader className="px-0">
-            <DrawerTitle>Configurações do Dashboard</DrawerTitle>
-            <DrawerDescription>Personalize a exibição do seu painel</DrawerDescription>
+          <DrawerHeader className="px-0 text-center">
+            <DrawerTitle className="text-center">Configurações do Dashboard</DrawerTitle>
+            <DrawerDescription className="text-center">Personalize a exibição do seu painel</DrawerDescription>
           </DrawerHeader>
           {content}
+          <div className="pt-4 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="h-10 w-full rounded-full text-sm font-medium"
+            >
+              Fechar
+            </Button>
+          </div>
         </DrawerContent>
       </Drawer>
     );

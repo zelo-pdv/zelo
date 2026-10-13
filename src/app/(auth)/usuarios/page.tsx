@@ -188,36 +188,39 @@ export default function UsuariosPage() {
     });
   }, [users, groups, lojaOwnerId]);
 
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const user = users.find((u) => u.id === id);
+      if (!user) return;
+      const updated = await usersService.update(id, {
+        active: !user.active,
+      });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === id ? { ...u, active: updated.active } : u,
+        ),
+      );
+      toast.success("Status atualizado!");
+      notifyLocalSync("users");
+
+      if (currentUser && updated.id === currentUser.sub) {
+        window.location.reload();
+      }
+    } catch {
+      toast.error("Erro ao atualizar status.");
+    }
+  };
+
   const columns = useMemo(
     () =>
       getUserColumns({
-        onToggle: async (id) => {
-          try {
-            const user = users.find((u) => u.id === id);
-            if (!user) return;
-            const updated = await usersService.update(id, {
-              active: !user.active,
-            });
-            setUsers((prev) =>
-              prev.map((u) =>
-                u.id === id ? { ...u, active: updated.active } : u,
-              ),
-            );
-            toast.success("Status atualizado!");
-            notifyLocalSync("users");
-
-            if (currentUser && updated.id === currentUser.sub) {
-              window.location.reload();
-            }
-          } catch {
-            toast.error("Erro ao atualizar status.");
-          }
-        },
+        onToggle: handleToggleStatus,
         onEdit: (u) => setEditing(u as AppUser),
         onDelete: (u) => setDeleting(u as AppUser),
         onChangePassword: (u) => setPasswordResetting(u as AppUser),
         currentUserId: currentUser?.sub,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [users, currentUser],
   );
 
@@ -238,6 +241,11 @@ export default function UsuariosPage() {
         onCreateClick={() => setCreating(true)}
         onExportClick={handleExport}
         isExporting={isExporting}
+        onEdit={(u) => setEditing(u as AppUser)}
+        onChangePassword={(u) => setPasswordResetting(u as AppUser)}
+        onToggleActive={handleToggleStatus}
+        onDelete={(u) => setDeleting(u as AppUser)}
+        currentUserId={currentUser?.sub}
       />
 
       <MobileActionFab 
@@ -661,8 +669,8 @@ function UserForm({
     return (
       <Drawer open={open} onOpenChange={onOpenChange} blur>
         <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="shrink-0 px-4">
-            <DrawerTitle>{isEdit ? "Editar usuário" : "Novo usuário"}</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center">{isEdit ? "Editar usuário" : "Novo usuário"}</DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -860,9 +868,9 @@ function ChangePasswordDialog({
     return (
       <Drawer open={!!user} onOpenChange={(o) => !o && onClose()} blur>
         <DrawerContent className="p-4">
-          <DrawerHeader className="px-0">
-            <DrawerTitle>Trocar Senha</DrawerTitle>
-            <p className="text-sm text-muted-foreground">
+          <DrawerHeader className="px-0 text-center">
+            <DrawerTitle className="text-center">Trocar Senha</DrawerTitle>
+            <p className="text-sm text-muted-foreground text-center">
               Defina uma nova senha para o usuário <strong>{user?.name}</strong>
             </p>
           </DrawerHeader>

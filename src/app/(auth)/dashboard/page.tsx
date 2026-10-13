@@ -26,11 +26,15 @@ function StatCard({
   value,
   hint,
   tone = "default",
+  icon,
+  iconSolid = true,
 }: {
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "warn" | "success" | "pending";
+  icon?: string;
+  iconSolid?: boolean;
 }) {
   return (
     <Card
@@ -41,8 +45,8 @@ function StatCard({
         tone === "warn" && "border-l-4 border-l-destructive/60",
         tone === "success" && "border-l-4 border-l-emerald-500/60",
       )}>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex flex-col min-w-0">
+      <CardContent className="p-4 md:p-5 flex items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 flex-1">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {label}
           </div>
@@ -50,9 +54,20 @@ function StatCard({
             {value}
           </div>
           {hint && (
-            <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+            <div className="mt-1 text-xs text-muted-foreground truncate">{hint}</div>
           )}
         </div>
+        {icon && (
+          <div
+            className="shrink-0 flex items-center justify-center size-12 sm:size-14 rounded-full bg-zinc-100 dark:bg-zinc-800/80 text-zinc-400 dark:text-zinc-500 select-none pointer-events-none"
+            aria-hidden="true">
+            <BoxIcon
+              name={icon}
+              className="text-2xl sm:text-[28px] text-current"
+              solid={iconSolid}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -80,11 +95,7 @@ interface SalesPeriodChartData {
 }
 
 // Gráfico de vendas dinâmico (Hoje, Semana, Mês) em SVG puro
-function SalesPeriodChart({
-  data,
-}: {
-  data: SalesPeriodChartData;
-}) {
+function SalesPeriodChart({ data }: { data: SalesPeriodChartData }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const count = data.items.length;
@@ -686,7 +697,7 @@ export default function Dashboard() {
           <Button
             variant="outline"
             onClick={() => setIsConfigOpen(true)}
-            className="h-10 px-3 sm:px-4 rounded-full shadow-xs gap-2 font-medium shrink-0 cursor-pointer"
+            className="size-11 rounded-xl p-0 flex items-center justify-center border-border/70 bg-white dark:bg-card shadow-xs shrink-0 cursor-pointer sm:size-auto sm:h-10 sm:px-4 sm:rounded-full sm:bg-background sm:border-border gap-2 font-medium"
             aria-label="Configurações do Dashboard">
             <BoxIcon name="cog" className="text-lg text-foreground" />
             <span className="hidden sm:inline text-sm">Configurações</span>
@@ -737,9 +748,7 @@ export default function Dashboard() {
       <div
         className={cn(
           "flex overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory gap-3 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:overflow-visible",
-          showLowStockCard
-            ? "sm:grid-cols-2 lg:grid-cols-3"
-            : "sm:grid-cols-2",
+          showLowStockCard ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2",
           "[&>div]:min-w-[85vw] [&>div]:snap-center sm:[&>div]:min-w-0",
         )}>
         <StatCard
@@ -753,12 +762,14 @@ export default function Dashboard() {
           value={currency(stats.soldInPeriod)}
           hint={`${stats.countInPeriod} venda${stats.countInPeriod === 1 ? "" : "s"} no período`}
           tone="default"
+          icon="cart"
         />
         <StatCard
           label="A receber"
           value={currency(stats.pending)}
           hint={`${stats.pendingCount} venda${stats.pendingCount === 1 ? "" : "s"} pendente${stats.pendingCount === 1 ? "" : "s"}`}
           tone="pending"
+          icon="time-five"
         />
         {showLowStockCard && (
           <StatCard
@@ -766,6 +777,7 @@ export default function Dashboard() {
             value={`${stats.low.length} produto${stats.low.length === 1 ? "" : "s"}`}
             hint={stats.low.length ? "Reponha em breve" : "Tudo em ordem"}
             tone={stats.low.length ? "warn" : "success"}
+            icon="package"
           />
         )}
       </div>
@@ -774,67 +786,63 @@ export default function Dashboard() {
       <SalesPeriodChart data={chartData} />
 
       {/* Item #7: Ocultar seção de Estoque Baixo se configurado ou se controle de estoque estiver desativado */}
-      {showLowStockCard &&
-        products.length > 0 &&
-        stats.low.length > 0 && (
-          <section className="mt-8">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                Produtos com estoque baixo
-              </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs font-medium gap-1.5 shrink-0"
-                onClick={async () => {
-                  setIsExportingList(true);
-                  await handleExportLowStockPdf(
-                    stats.low,
-                    productsSettings.globalLowStockThreshold ?? 5,
-                  );
-                  setIsExportingList(false);
-                }}
-                disabled={isExportingList}>
-                <BoxIcon
-                  name={isExportingList ? "loader-alt" : "download"}
-                  className={cn("text-sm", isExportingList && "animate-spin")}
-                />
-                <span className="hidden sm:inline">Gerar Lista (PDF)</span>
-                <span className="sm:hidden">PDF</span>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {stats.low.slice(0, 4).map((p) => (
-                <Card key={p.id} className="border-border bg-card">
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground">
-                      <BoxIcon
-                        name="package"
-                        className="text-xl text-foreground"
-                      />
+      {showLowStockCard && products.length > 0 && stats.low.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              Produtos com estoque baixo
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs font-medium gap-1.5 shrink-0"
+              onClick={async () => {
+                setIsExportingList(true);
+                await handleExportLowStockPdf(
+                  stats.low,
+                  productsSettings.globalLowStockThreshold ?? 5,
+                );
+                setIsExportingList(false);
+              }}
+              disabled={isExportingList}>
+              <BoxIcon
+                name={isExportingList ? "loader-alt" : "download"}
+                className={cn("text-sm", isExportingList && "animate-spin")}
+              />
+              <span className="hidden sm:inline">Gerar Lista (PDF)</span>
+              <span className="sm:hidden">PDF</span>
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {stats.low.slice(0, 4).map((p) => (
+              <Card key={p.id} className="border-border bg-card">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-foreground">
+                    <BoxIcon
+                      name="package"
+                      className="text-xl text-foreground"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{p.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {Number(p.stock)} em estoque · mínimo{" "}
+                      {p.minStock !== null && p.minStock !== undefined
+                        ? Number(p.minStock)
+                        : (productsSettings.globalLowStockThreshold ?? 5)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">
-                        {p.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {Number(p.stock)} em estoque · mínimo{" "}
-                        {p.minStock !== null && p.minStock !== undefined
-                          ? Number(p.minStock)
-                          : (productsSettings.globalLowStockThreshold ?? 5)}
-                      </div>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-amber-500/40 text-amber-700">
-                      Repor
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-amber-500/40 text-amber-700">
+                    Repor
+                  </Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {!dashboardSettings.hideRecentSales && latest.length > 0 && (
         <section className="mt-8">

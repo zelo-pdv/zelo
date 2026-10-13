@@ -729,8 +729,8 @@ export function ProductForm({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="h-[94dvh] max-h-[94dvh] p-0 flex flex-col gap-0 overflow-hidden">
-          <DrawerHeader className="px-4 py-3.5 border-b shrink-0 text-left">
-            <DrawerTitle className="text-lg font-bold">
+          <DrawerHeader className="px-4 py-3.5 border-b shrink-0 text-center">
+            <DrawerTitle className="text-lg font-bold text-center">
               {isEdit ? "Editar Produto" : "Novo Produto"}
             </DrawerTitle>
           </DrawerHeader>

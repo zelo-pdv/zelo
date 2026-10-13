@@ -152,6 +152,12 @@ export default function ClientesPage() {
         onImportClick={can("clientes", "Adicionar") ? () => setIsImportOpen(true) : undefined}
         onExportClick={handleExport}
         isExporting={isExporting}
+        onView={setDetail}
+        onEdit={setEditing}
+        onDelete={setDeleting}
+        onToggleActive={handleToggleActive}
+        canEdit={can("clientes", "Editar")}
+        canDelete={can("clientes", "Excluir")}
       />
 
       {can("clientes", "Adicionar") && (

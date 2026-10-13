@@ -392,8 +392,8 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             blur
           >
             <DrawerContent className="p-4">
-              <DrawerHeader className="px-0">
-                <DrawerTitle>
+              <DrawerHeader className="px-0 text-center">
+                <DrawerTitle className="text-center">
                   {editingCategory ? "Editar categoria" : "Nova categoria"}
                 </DrawerTitle>
               </DrawerHeader>
@@ -505,12 +505,22 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={(val) => !val && onClose()} blur>
-        <DrawerContent className="max-h-[85vh] p-4">
-          <DrawerHeader className="px-0">
-            <DrawerTitle>Configurações de Produtos</DrawerTitle>
+        <DrawerContent className="max-h-[85vh] p-4 flex flex-col">
+          <DrawerHeader className="px-0 text-center">
+            <DrawerTitle className="text-center">Configurações de Produtos</DrawerTitle>
           </DrawerHeader>
-          <div className="overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {content}
+          </div>
+          <div className="pt-4 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="h-10 w-full rounded-full text-sm font-medium"
+            >
+              Fechar
+            </Button>
           </div>
         </DrawerContent>
       </Drawer>

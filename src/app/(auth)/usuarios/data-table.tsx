@@ -28,8 +28,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserTableData } from "./columns";
+import type { AppUser } from "./page";
 
 export function UsersDataTable({
   columns,
@@ -38,6 +42,11 @@ export function UsersDataTable({
   onCreateClick,
   onExportClick,
   isExporting,
+  onEdit,
+  onChangePassword,
+  onToggleActive,
+  onDelete,
+  currentUserId,
 }: {
   columns: ColumnDef<UserTableData>[];
   data: UserTableData[];
@@ -45,6 +54,11 @@ export function UsersDataTable({
   onCreateClick: () => void;
   onExportClick?: () => void;
   isExporting?: boolean;
+  onEdit?: (u: AppUser) => void;
+  onChangePassword?: (u: AppUser) => void;
+  onToggleActive?: (id: string) => void;
+  onDelete?: (u: AppUser) => void;
+  currentUserId?: string;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -73,7 +87,6 @@ export function UsersDataTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: { pageSize: 10 },
-      columnVisibility: { active: false },
     },
   });
 
@@ -115,7 +128,10 @@ export function UsersDataTable({
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
         <div className="flex items-center gap-2 w-full sm:flex-1">
           <div className="relative w-full sm:w-[40%] sm:max-w-[40%] min-w-0">
-            <BoxIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-muted-foreground" />
+            <BoxIcon
+              name="search"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none"
+            />
             <Input
               placeholder="Buscar usuários..."
               value={globalFilter}
@@ -123,7 +139,7 @@ export function UsersDataTable({
               autoComplete="new-password"
               name="search-table"
               id="search-table"
-              className="rounded-xl pl-9 w-full"
+              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-sm shadow-xs"
             />
           </div>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
@@ -131,10 +147,10 @@ export function UsersDataTable({
               render={
                 <Button
                   variant={activeFiltersCount > 0 ? "default" : "outline"}
-                  className="rounded-xl shrink-0 gap-1.5 text-xs sm:text-sm font-medium"
+                  className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
                   aria-label="Abrir filtros"
                 >
-                  <BoxIcon name="slider-alt" className="text-base" />
+                  <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground text-primary text-[11px] font-bold">
@@ -247,99 +263,233 @@ export function UsersDataTable({
         </div>
       </div>
 
-      <Card className="border-border/70 p-0">
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-hidden sm:overflow-x-auto">
-            <Table className="table-fixed w-full">
-              <TableHeader>
-                {table.getHeaderGroups().map((hg) => (
-                  <TableRow key={hg.id}>
-                    {hg.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className={
-                          header.column.id === "name"
-                            ? undefined
-                            : "hidden sm:table-cell"
-                        }
+      {/* Paginação unificada acima da listagem */}
+      <TablePagination
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalFiltered={totalFiltered}
+        pageCount={table.getPageCount()}
+        canPreviousPage={table.getCanPreviousPage()}
+        canNextPage={table.getCanNextPage()}
+        onPreviousPage={() => table.previousPage()}
+        onNextPage={() => table.nextPage()}
+      />
+
+      {/* Listagem Mobile com visual de tabela/card */}
+      <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
+        {rows.length ? (
+          rows.map((row) => {
+            const u = row.original;
+            const isSelfOrFirst = u.id === currentUserId || u.isFirstUser;
+            const hasMobileActions = onEdit || onChangePassword || onToggleActive || onDelete;
+            const initial = u.name.charAt(0).toUpperCase() || "U";
+
+            return (
+              <div
+                key={row.id}
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
+              >
+                {/* Avatar / Inicial do Usuário */}
+                <div className="h-12 w-12 rounded-2xl shrink-0 bg-primary/10 text-primary font-bold flex items-center justify-center text-lg">
+                  {initial}
+                </div>
+
+                {/* Dados do Usuário */}
+                <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-foreground text-sm line-clamp-1 truncate leading-tight">
+                      {u.name}
+                    </span>
+                    {!u.active && (
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4"
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {rows.length ? (
-                  rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
+                        Inativo
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{u.groupLabel}</span>
+                    <span className="text-muted-foreground/40 font-light select-none">
+                      ·
+                    </span>
+                    <span className="truncate">{u.email}</span>
+                  </div>
+
+                  {u.discountLimitMode && u.discountLimitMode !== "INHERIT" && (
+                    <div className="mt-0.5">
+                      <span className="text-[11px] text-muted-foreground">
+                        Desconto:{" "}
+                        {u.discountLimitMode === "UNLIMITED"
+                          ? "Ilimitado"
+                          : `${u.maxDiscountPercentage != null ? `${u.maxDiscountPercentage}%` : ""}${u.maxDiscountPercentage != null && u.maxDiscountValue != null ? " / " : ""}${u.maxDiscountValue != null ? `R$ ${Number(u.maxDiscountValue).toFixed(2).replace(".", ",")}` : ""}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Menu de Ações (3 pontos) */}
+                {hasMobileActions && (
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Ações do usuário"
+                        >
+                          <BoxIcon
+                            name="dots-vertical-rounded"
+                            className="text-lg"
+                          />
+                        </Button>
+                      }
+                    />
+                    <PopoverContent className="w-52 p-1.5" align="end">
+                      {onEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(u);
+                          }}
+                        >
+                          <BoxIcon name="pencil" className="mr-2 text-base" />
+                          Editar usuário
+                        </Button>
+                      )}
+
+                      {onChangePassword && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChangePassword(u);
+                          }}
+                        >
+                          <BoxIcon name="key" className="mr-2 text-base" />
+                          Trocar senha
+                        </Button>
+                      )}
+
+                      {onToggleActive && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleActive(u.id);
+                          }}
+                        >
+                          <BoxIcon name="power-off" className="mr-2 text-base" />
+                          {u.active ? "Bloquear acesso" : "Ativar acesso"}
+                        </Button>
+                      )}
+
+                      {!isSelfOrFirst && onDelete && (
+                        <>
+                          <Separator className="my-1" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 w-full justify-start px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(u);
+                            }}
+                          >
+                            <BoxIcon name="trash" className="mr-2 text-base" />
+                            Remover usuário
+                          </Button>
+                        </>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Nenhum usuário encontrado.
+          </div>
+        )}
+      </div>
+
+      {/* Tabela Desktop */}
+      <div className="hidden md:block">
+        <Card className="border-border/70 p-0">
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-hidden sm:overflow-x-auto">
+              <Table className="table-fixed w-full">
+                <TableHeader>
+                  {table.getHeaderGroups().map((hg) => (
+                    <TableRow key={hg.id}>
+                      {hg.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
                           className={
-                            cell.column.id === "name"
+                            header.column.id === "name"
                               ? undefined
                               : "hidden sm:table-cell"
                           }
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-sm text-muted-foreground"
-                    >
-                      Nenhum usuário encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <div className="text-xs text-muted-foreground">
-          {totalFiltered === 0 ? 0 : pageIndex * pageSize + 1}–
-          {Math.min((pageIndex + 1) * pageSize, totalFiltered)} de{" "}
-          {totalFiltered}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-          >
-            <BoxIcon name="chevron-left" className="text-base" />
-          </Button>
-          <div className="text-xs tabular-nums text-muted-foreground">
-            {pageIndex + 1} / {table.getPageCount() || 1}
-          </div>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-          >
-            <BoxIcon name="chevron-right" className="text-base" />
-          </Button>
-        </div>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {rows.length ? (
+                    rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={
+                              cell.column.id === "name"
+                                ? undefined
+                                : "hidden sm:table-cell"
+                            }
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-sm text-muted-foreground"
+                      >
+                        Nenhum usuário encontrado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

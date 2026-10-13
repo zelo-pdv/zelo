@@ -52,10 +52,22 @@ export function VariantPicker({
     return (
       <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
         <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader className="text-left">
-            <DrawerTitle>Selecionar Variação</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center">Selecionar Variação</DrawerTitle>
           </DrawerHeader>
-          {Content}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {Content}
+            <div className="shrink-0 pt-3 pb-6 px-4 border-t border-border w-full flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onClose}
+                className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DrawerContent>
       </Drawer>
     );

@@ -264,14 +264,28 @@ export default function HistoricoPage() {
 
   return (
     <div className="w-full px-4">
-      <SalesDataTable columns={columns} data={sortedSales} />
+      <SalesDataTable
+        columns={columns}
+        data={sortedSales}
+        onView={setDetail}
+        onVoucher={(sale) => {
+          addVoucher({
+            saleId: sale.id,
+            code: voucherCode(sale.id),
+            sale,
+          });
+          setVoucherState({ sale });
+        }}
+        onEdit={can("historico", "Editar") ? handleEditSale : undefined}
+        onCancel={can("historico", "Editar") ? (sale) => setSaleToCancel(sale) : undefined}
+      />
 
       {/* Modal/Drawer de Detalhes da Venda */}
       {isMobile ? (
         <Drawer open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
           <DrawerContent className="max-h-[90vh] p-4">
-            <DrawerHeader className="px-0">
-              <DrawerTitle>Detalhes da venda</DrawerTitle>
+            <DrawerHeader className="px-0 text-center">
+              <DrawerTitle className="text-center font-semibold">Detalhes da venda</DrawerTitle>
             </DrawerHeader>
             {detail && (
               <div className="space-y-3 overflow-y-auto min-h-0 flex-1 py-2">
@@ -441,6 +455,14 @@ export default function HistoricoPage() {
                   }}
                 >
                   <BoxIcon name="receipt" className="mr-2 text-base" /> Ver comprovante
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setDetail(null)}
+                  className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Fechar
                 </Button>
               </div>
             )}

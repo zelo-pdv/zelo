@@ -252,8 +252,8 @@ export default function ClientDetail({
     return (
       <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()} blur>
         <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="shrink-0 px-4">
-            <DrawerTitle>Detalhes do cliente</DrawerTitle>
+          <DrawerHeader className="shrink-0 px-4 text-center">
+            <DrawerTitle className="text-center font-semibold">Detalhes do cliente</DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -261,8 +261,29 @@ export default function ClientDetail({
                 <div className="pb-4">{DetailContent}</div>
               </ScrollArea>
             </div>
-            <div className="shrink-0 pt-4 mt-2 border-t border-border">
-              {ActionButtons}
+            <div className="shrink-0 pt-3 mt-2 border-t border-border w-full flex flex-col gap-2">
+              {activeClient.phone && (
+                <Button
+                  className="h-11 w-full rounded-full font-medium"
+                  render={
+                    <Link
+                      href={`https://wa.me/${activeClient.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá, ${activeClient.name.split(" ")[0]}!`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <BoxIcon name="message-rounded-dots" className="mr-1.5 text-base" /> Conversar no WhatsApp
+                    </Link>
+                  }
+                />
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onClose}
+                className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Fechar
+              </Button>
             </div>
           </div>
         </DrawerContent>

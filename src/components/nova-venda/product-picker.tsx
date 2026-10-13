@@ -203,12 +203,22 @@ export function ProductPicker({
       <>
         <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
           <DrawerContent className="h-[90vh]">
-            <DrawerHeader className="flex-row items-center gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <DrawerTitle>Produtos</DrawerTitle>
-              </div>
+            <DrawerHeader className="shrink-0 px-4 text-center">
+              <DrawerTitle className="text-center">Produtos</DrawerTitle>
             </DrawerHeader>
-            {PickerContent}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {PickerContent}
+              <div className="shrink-0 pt-3 pb-6 px-4 border-t border-border w-full flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClose}
+                  className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
           </DrawerContent>
         </Drawer>
         <BarcodeScanner

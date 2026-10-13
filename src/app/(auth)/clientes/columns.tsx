@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { currency } from "@/lib/format";
 import { ClientWithAddress } from "@/types";
 import { maskPhone } from "@/lib/masks";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export type ClientTableData = ClientWithAddress & {
   totalSpent: number;
@@ -139,58 +146,80 @@ export function getClientColumns({
         const c = row.original;
         const active = c.active ?? true;
         const isDefaultClient = c.name.trim().toLowerCase() === "consumidor final";
+        const canEdit = can("clientes", "Editar");
+        const canDelete = can("clientes", "Excluir");
+
         return (
-          <div className="flex justify-end gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => onView(c)}
-              aria-label="Ver detalhes"
-              title="Ver detalhes"
-            >
-              <BoxIcon name="show" className="text-base" />
-            </Button>
-            {can("clientes", "Editar") && !isDefaultClient && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className={
-                  !active
-                    ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
-                    : "h-8 w-8 text-muted-foreground hover:text-foreground"
+          <div className="flex justify-end">
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                    aria-label="Ações do cliente"
+                  >
+                    <BoxIcon name="dots-vertical-rounded" className="text-base" />
+                  </Button>
                 }
-                onClick={() => onToggleActive(c)}
-                aria-label={!active ? "Ativar cliente" : "Desativar cliente"}
-                title={!active ? "Ativar cliente" : "Desativar cliente"}
-              >
-                <BoxIcon name="power-off" className="text-base" />
-              </Button>
-            )}
-            {can("clientes", "Editar") && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8"
-                onClick={() => onEdit(c)}
-                aria-label="Editar"
-                title="Editar cliente"
-              >
-                <BoxIcon name="pencil" className="text-base" />
-              </Button>
-            )}
-            {can("clientes", "Excluir") && !isDefaultClient && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-destructive"
-                onClick={() => onDelete(c)}
-                aria-label="Excluir"
-                title="Excluir cliente"
-              >
-                <BoxIcon name="trash" className="text-base" />
-              </Button>
-            )}
+              />
+              <PopoverContent className="w-52 p-1.5" align="end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                  onClick={() => onView(c)}
+                >
+                  <BoxIcon name="show" className="mr-2 text-base" />
+                  Ver detalhes
+                </Button>
+
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                    onClick={() => onEdit(c)}
+                  >
+                    <BoxIcon name="pencil" className="mr-2 text-base" />
+                    Editar cliente
+                  </Button>
+                )}
+
+                {canEdit && !isDefaultClient && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 w-full justify-start px-3 text-xs cursor-pointer",
+                      !active
+                        ? "text-emerald-600 hover:text-emerald-700"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => onToggleActive(c)}
+                  >
+                    <BoxIcon name="power-off" className="mr-2 text-base" />
+                    {active ? "Desativar cliente" : "Ativar cliente"}
+                  </Button>
+                )}
+
+                {canDelete && !isDefaultClient && (
+                  <>
+                    <Separator className="my-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-start px-3 text-xs text-destructive hover:text-destructive cursor-pointer"
+                      onClick={() => onDelete(c)}
+                    >
+                      <BoxIcon name="trash" className="mr-2 text-base" />
+                      Excluir cliente
+                    </Button>
+                  </>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
         );
       },

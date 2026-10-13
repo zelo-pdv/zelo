@@ -476,8 +476,8 @@ function StockEntry({
     return (
       <Drawer open={!!product} onOpenChange={(open) => !open && onClose()} blur>
         <DrawerContent className="p-4">
-          <DrawerHeader className="px-0">
-            <DrawerTitle>Entrada de estoque</DrawerTitle>
+          <DrawerHeader className="px-0 text-center">
+            <DrawerTitle className="text-center">Entrada de estoque</DrawerTitle>
           </DrawerHeader>
           {ContentBody}
           <div className="flex flex-col gap-2 pt-4 w-full">
