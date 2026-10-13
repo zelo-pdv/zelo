@@ -4,7 +4,6 @@ import { useState } from "react";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useHasScrolled } from "@/hooks/use-has-scrolled";
 
 interface MobileActionFabProps {
   onAdd: () => void;
@@ -17,7 +16,6 @@ interface MobileActionFabProps {
 export function MobileActionFab({ onAdd, onExport, onConfig, onImport, isExporting }: MobileActionFabProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
-  const hasScrolled = useHasScrolled(200);
 
   if (!isMobile) return null;
 
@@ -33,17 +31,16 @@ export function MobileActionFab({ onAdd, onExport, onConfig, onImport, isExporti
       <div
         className={cn(
           "fixed right-4 z-50 flex flex-col-reverse items-end gap-3 pointer-events-none transition-all duration-300 ease-in-out",
-          hasScrolled
-            ? "bottom-[calc(140px+env(safe-area-inset-bottom))]"
-            : "bottom-[calc(80px+env(safe-area-inset-bottom))]"
+          "bottom-[calc(84px+env(safe-area-inset-bottom))]"
         )}
       >
         {/* Main FAB Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label="Ações rápidas"
           className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 pointer-events-auto",
-            isOpen ? "bg-red-500 rotate-45" : "bg-primary"
+            "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl shadow-blue-500/25 transition-all duration-300 pointer-events-auto cursor-pointer active:scale-95",
+            isOpen ? "bg-rose-500 rotate-45" : "bg-blue-600 hover:bg-blue-700"
           )}
         >
           <BoxIcon name="plus" className="text-2xl" />

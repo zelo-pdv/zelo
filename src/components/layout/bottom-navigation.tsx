@@ -5,7 +5,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { NAV } from "@/lib/navigation-data";
 import { usePermissions } from "@/components/auth/permissions-provider";
-
 import { createBoxIcon } from "@/components/ui/box-icon";
 
 export function BottomNavigation() {
@@ -32,30 +31,25 @@ export function BottomNavigation() {
     return null;
   }
 
-  const isActive = (to: string) =>
-    to === "/" ? pathname === "/" : pathname.startsWith(to);
-
-  // Ajusta o espaçamento/largura máxima dependendo de se há 2, 3, 4 ou 5 itens
-  const getMaxWidthClass = (count: number) => {
-    switch (count) {
-      case 2:
-        return "max-w-xs";
-      case 3:
-        return "max-w-sm";
-      case 4:
-        return "max-w-md";
-      default:
-        return "max-w-lg";
+  const isActive = (to: string) => {
+    if (to === "/dashboard") {
+      return pathname === "/dashboard" || pathname === "/";
     }
+    if (to === "/mais") {
+      return (
+        pathname === "/mais" ||
+        ["/historico", "/usuarios", "/registros", "/configuracoes", "/relatorios"].some((p) =>
+          pathname.startsWith(p)
+        )
+      );
+    }
+    return pathname.startsWith(to);
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/80 backdrop-blur-lg md:hidden">
+    <nav className="fixed inset-x-0 bottom-[max(env(safe-area-inset-bottom),1rem)] z-40 flex justify-center px-4 pointer-events-none md:hidden">
       <div
-        className={cn(
-          "mx-auto grid pb-[max(env(safe-area-inset-bottom),0.25rem)] pt-1 transition-all",
-          getMaxWidthClass(visibleNav.length),
-        )}
+        className="pointer-events-auto grid items-center p-1.5 rounded-full bg-[#E9ECF0]/90 dark:bg-[#1C1E22]/90 backdrop-blur-2xl border border-white/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-[calc(100%-1rem)] max-w-[430px]"
         style={{
           gridTemplateColumns: `repeat(${visibleNav.length}, minmax(0, 1fr))`,
         }}
@@ -63,29 +57,42 @@ export function BottomNavigation() {
         {visibleNav.map((n) => {
           const Icon = n.icon;
           const active = isActive(n.to);
+          const isVender = n.to === "/nova-venda";
+
           return (
-            <Link
-              key={n.to}
-              href={n.to}
-              className={cn(
-                "flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium transition-colors",
-                active
-                  ? "text-zinc-900 dark:text-zinc-50 font-semibold"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon
-                active={active}
+            <div key={n.to} className="flex items-center justify-center w-full">
+              <Link
+                href={n.to}
+                aria-label={n.label || n.short}
+                title={n.label || n.short}
                 className={cn(
-                  "text-xl",
-                  active ? "text-black dark:text-white" : "text-muted-foreground",
+                  "relative flex items-center justify-center transition-all duration-200 select-none group",
+                  isVender
+                    ? "w-11 h-11 rounded-full bg-[#0051FF] dark:bg-[#1A66FF] text-white shadow-md shadow-blue-500/25 active:scale-95"
+                    : active
+                    ? "w-14 h-11 rounded-full bg-white dark:bg-[#2A2C30] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
+                    : "w-11 h-11 rounded-full bg-transparent"
                 )}
-              />
-              {n.short}
-            </Link>
+              >
+                <Icon
+                  active={active}
+                  className={cn(
+                    "text-2xl transition-all duration-200",
+                    isVender
+                      ? "text-white"
+                      : active
+                      ? "text-black dark:text-white"
+                      : "text-black/85 dark:text-white/85 group-hover:text-black dark:group-hover:text-white"
+                  )}
+                />
+              </Link>
+            </div>
           );
         })}
       </div>
     </nav>
   );
 }
+
+
+

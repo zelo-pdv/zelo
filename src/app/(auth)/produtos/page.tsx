@@ -211,6 +211,16 @@ export default function ProdutosPage() {
         onImportClick={() => setIsImportOpen(true)}
         onExportClick={handleExport}
         isExporting={isExporting}
+        onStock={setStockDialog}
+        onEdit={setEditing}
+        onDelete={setDeleting}
+        onToggleActive={handleToggleActive}
+        trackStock={productsSettings.trackStock ?? false}
+        globalLowStockThreshold={productsSettings.globalLowStockThreshold}
+        categoryLowStockThresholds={productsSettings.categoryLowStockThresholds}
+        canStock={(productsSettings.trackStock ?? false) && can("produtos", "Editar")}
+        canEdit={can("produtos", "Editar")}
+        canDelete={can("produtos", "Excluir")}
       />
 
       <MobileActionFab 

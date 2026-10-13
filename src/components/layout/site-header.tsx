@@ -36,7 +36,12 @@ export function SiteHeader() {
   const isSubPage = ["/historico", "/usuarios", "/registros", "/configuracoes"].some(p => pathname.startsWith(p));
 
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header
+      className={cn(
+        "flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)",
+        pathname.startsWith("/produtos") && "border-b-0 md:border-b"
+      )}
+    >
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         {isSubPage && (
           <Link href="/mais" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "md:hidden h-8 w-8 -ml-2 mr-1")}>
@@ -52,7 +57,15 @@ export function SiteHeader() {
             />
           </div>
         )}
-        <h1 className="text-base font-medium">{pageTitle}</h1>
+        <h1
+          className={cn(
+            "text-base font-medium",
+            pathname.startsWith("/produtos") &&
+              "text-2xl font-bold tracking-tight text-foreground md:text-base md:font-medium"
+          )}
+        >
+          {pageTitle}
+        </h1>
         <div className="ml-auto flex items-center gap-2">
           <ModeToggle />
         </div>

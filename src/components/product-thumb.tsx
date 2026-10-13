@@ -55,7 +55,13 @@ export function ProductThumb({ name, image, className, forceShow }: ProductThumb
         className
       )}
     >
-      <BoxIcon name="image-alt" className="text-lg text-muted-foreground" />
+      <BoxIcon
+        name="image-alt"
+        className={cn(
+          "text-lg text-muted-foreground",
+          className?.includes("text-") && "text-[inherit]"
+        )}
+      />
     </div>
   );
 }
