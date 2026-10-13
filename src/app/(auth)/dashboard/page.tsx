@@ -58,25 +58,38 @@ function StatCard({
   );
 }
 
-// Item #12: Gráfico de vendas dos últimos 7 dias em SVG puro
-function SalesWeekChart({
+interface SalesPeriodChartItem {
+  id: string;
+  label: string;
+  subLabel: string;
+  total: number;
+  count: number;
+  isCurrent: boolean;
+}
+
+interface SalesPeriodChartData {
+  title: string;
+  subtitle: string;
+  badgeTotalLabel: string;
+  badgeAvgLabel: string;
+  avgSuffix: string;
+  items: SalesPeriodChartItem[];
+  maxTotal: number;
+  sumTotal: number;
+  avgTotal: number;
+}
+
+// Gráfico de vendas dinâmico (Hoje, Semana, Mês) em SVG puro
+function SalesPeriodChart({
   data,
 }: {
-  data: {
-    days: {
-      dateStr: string;
-      label: string;
-      shortDate: string;
-      total: number;
-      count: number;
-      isToday: boolean;
-    }[];
-    maxTotal: number;
-    sumTotal: number;
-  };
+  data: SalesPeriodChartData;
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const avg = data.sumTotal / 7;
+
+  const count = data.items.length;
+  const slotWidth = 660 / (count || 1);
+  const barWidth = Math.min(56, Math.max(38, slotWidth * 0.58));
 
   return (
     <Card className="mt-6 border-border/70">
@@ -88,25 +101,28 @@ function SalesWeekChart({
                 name="trending-up"
                 className="text-base text-foreground"
               />
-              <h2 className="text-base font-semibold">
-                Vendas nos últimos 7 dias
-              </h2>
+              <h2 className="text-base font-semibold">{data.title}</h2>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Volume diário de vendas finalizadas e pagas
+              {data.subtitle}
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 text-xs">
             <div className="bg-muted/50 rounded-lg px-3 py-1.5 border border-border/60">
-              <span className="text-muted-foreground">Total 7 dias: </span>
+              <span className="text-muted-foreground">
+                {data.badgeTotalLabel}:{" "}
+              </span>
               <span className="font-semibold text-foreground">
                 {currency(data.sumTotal)}
               </span>
             </div>
             <div className="hidden sm:block bg-muted/50 rounded-lg px-3 py-1.5 border border-border/60">
-              <span className="text-muted-foreground">Média: </span>
+              <span className="text-muted-foreground">
+                {data.badgeAvgLabel}:{" "}
+              </span>
               <span className="font-semibold text-foreground">
-                {currency(avg)}/dia
+                {currency(data.avgTotal)}
+                {data.avgSuffix}
               </span>
             </div>
           </div>
@@ -118,7 +134,7 @@ function SalesWeekChart({
             <svg
               viewBox="0 0 700 200"
               className="w-full h-44 overflow-visible"
-              aria-label="Gráfico de vendas dos últimos 7 dias">
+              aria-label={`Gráfico de vendas - ${data.title}`}>
               <defs>
                 <linearGradient
                   id="barGradientPrimary"
@@ -201,10 +217,8 @@ function SalesWeekChart({
                 strokeOpacity="0.12"
               />
 
-              {/* Barras e rótulos para cada dia */}
-              {data.days.map((d, i) => {
-                const barWidth = 56;
-                const slotWidth = 660 / 7;
+              {/* Barras e rótulos */}
+              {data.items.map((d, i) => {
                 const x = 20 + i * slotWidth + (slotWidth - barWidth) / 2;
                 const maxHeight = 105;
                 const barHeight =
@@ -216,10 +230,12 @@ function SalesWeekChart({
 
                 return (
                   <g
-                    key={d.dateStr}
+                    key={d.id}
                     onMouseEnter={() => setHoveredIdx(i)}
                     onMouseLeave={() => setHoveredIdx(null)}
                     className="cursor-pointer">
+                    <title>{`${d.label} (${d.subLabel}): ${currency(d.total)} · ${d.count} ${d.count === 1 ? "venda" : "vendas"}`}</title>
+
                     {/* Área de toque/hover maior */}
                     <rect
                       x={x - 8}
@@ -240,7 +256,7 @@ function SalesWeekChart({
                       fill={
                         isHovered
                           ? "url(#barGradientHover)"
-                          : d.isToday
+                          : d.isCurrent
                             ? "url(#barGradientPrimary)"
                             : "url(#barGradientRegular)"
                       }
@@ -255,7 +271,7 @@ function SalesWeekChart({
                         textAnchor="middle"
                         className={cn(
                           "text-[11px] font-semibold transition-all duration-200",
-                          isHovered || d.isToday
+                          isHovered || d.isCurrent
                             ? "fill-foreground font-bold"
                             : "fill-muted-foreground",
                         )}>
@@ -263,27 +279,27 @@ function SalesWeekChart({
                       </text>
                     )}
 
-                    {/* Rótulo do dia */}
+                    {/* Rótulo principal */}
                     <text
                       x={x + barWidth / 2}
                       y="160"
                       textAnchor="middle"
                       className={cn(
                         "text-[12px] transition-colors",
-                        d.isToday
+                        d.isCurrent
                           ? "fill-primary font-bold"
                           : "fill-foreground font-medium",
                       )}>
-                      {d.isToday ? "Hoje" : d.label}
+                      {d.label}
                     </text>
 
-                    {/* Data resumida */}
+                    {/* Rótulo secundário (data/período) */}
                     <text
                       x={x + barWidth / 2}
                       y="178"
                       textAnchor="middle"
                       className="text-[10px] fill-muted-foreground font-normal">
-                      {d.shortDate}
+                      {d.subLabel}
                     </text>
                   </g>
                 );
@@ -301,7 +317,6 @@ export default function Dashboard() {
   const { can, user } = usePermissions();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const dashboardSettings = useSettingsStore((s) => s.dashboard) ?? {
-    defaultPeriod: "today",
     hideLowStockCard: false,
     hideRecentSales: false,
   };
@@ -311,15 +326,7 @@ export default function Dashboard() {
     hideCostPrice: false,
   };
 
-  const [period, setPeriod] = useState<DashboardPeriod>(
-    dashboardSettings.defaultPeriod || "today",
-  );
-
-  useEffect(() => {
-    if (dashboardSettings.defaultPeriod) {
-      setPeriod(dashboardSettings.defaultPeriod);
-    }
-  }, [dashboardSettings.defaultPeriod]);
+  const [period, setPeriod] = useState<DashboardPeriod>("today");
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<ProductFrontend[]>([]);
@@ -372,7 +379,7 @@ export default function Dashboard() {
     if (period === "today") {
       periodStart.setHours(0, 0, 0, 0);
     } else if (period === "week") {
-      periodStart.setDate(now.getDate() - 7);
+      periodStart.setDate(now.getDate() - 6);
       periodStart.setHours(0, 0, 0, 0);
     } else if (period === "month") {
       periodStart.setDate(1);
@@ -430,56 +437,201 @@ export default function Dashboard() {
     productsSettings.categoryLowStockThresholds,
   ]);
 
-  // Item #12: Dados dos últimos 7 dias para o gráfico
-  const last7DaysData = useMemo(() => {
-    const days: {
-      dateStr: string;
-      label: string;
-      shortDate: string;
-      total: number;
-      count: number;
-      isToday: boolean;
-    }[] = [];
-
+  // Gráfico de vendas dinâmico conforme o período selecionado (Hoje, Semana, Mês)
+  const chartData = useMemo<SalesPeriodChartData>(() => {
     const now = new Date();
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const dateStr = `${year}-${month}-${day}`;
+    if (period === "today") {
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      const todayEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999,
+      );
 
-      const dayOfWeek = d.toLocaleDateString("pt-BR", { weekday: "short" });
-      const label = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1, 3);
-      const shortDate = `${day}/${month}`;
-
-      const daySales = sales.filter((s) => {
+      const todaySales = sales.filter((s) => {
         if (s.status !== "PAGO") return false;
-        const sDate = new Date(s.date);
-        return (
-          sDate.getFullYear() === year &&
-          sDate.getMonth() === d.getMonth() &&
-          sDate.getDate() === d.getDate()
-        );
+        const d = new Date(s.date);
+        return d >= todayStart && d <= todayEnd;
       });
 
-      const total = daySales.reduce((acc, s) => acc + Number(s.total), 0);
-      days.push({
-        dateStr,
-        label,
-        shortDate,
-        total,
-        count: daySales.length,
-        isToday: i === 0,
+      const currentHour = now.getHours();
+
+      const blocks = [
+        { start: 0, end: 3, label: "00h - 03h", subLabel: "Madrugada" },
+        { start: 3, end: 6, label: "03h - 06h", subLabel: "Madrugada" },
+        { start: 6, end: 9, label: "06h - 09h", subLabel: "Início do dia" },
+        { start: 9, end: 12, label: "09h - 12h", subLabel: "Manhã" },
+        { start: 12, end: 15, label: "12h - 15h", subLabel: "Tarde" },
+        { start: 15, end: 18, label: "15h - 18h", subLabel: "Tarde" },
+        { start: 18, end: 21, label: "18h - 21h", subLabel: "Noite" },
+        { start: 21, end: 24, label: "21h - 24h", subLabel: "Noite" },
+      ];
+
+      const items: SalesPeriodChartItem[] = blocks.map((b) => {
+        const blockSales = todaySales.filter((s) => {
+          const hour = new Date(s.date).getHours();
+          return hour >= b.start && hour < b.end;
+        });
+        const total = blockSales.reduce((acc, s) => acc + Number(s.total), 0);
+        const isCurrent = currentHour >= b.start && currentHour < b.end;
+        return {
+          id: `hour-${b.start}-${b.end}`,
+          label: b.label,
+          subLabel: b.subLabel,
+          total,
+          count: blockSales.length,
+          isCurrent,
+        };
       });
+
+      const sumTotal = items.reduce((acc, item) => acc + item.total, 0);
+      const maxTotal = Math.max(...items.map((i) => i.total), 1);
+      const totalCount = todaySales.length;
+      const avgTotal = totalCount > 0 ? sumTotal / totalCount : 0;
+
+      return {
+        title: "Vendas de hoje",
+        subtitle: "Volume de vendas por faixa de horário",
+        badgeTotalLabel: "Total hoje",
+        badgeAvgLabel: "Ticket médio",
+        avgSuffix: "",
+        items,
+        maxTotal,
+        sumTotal,
+        avgTotal,
+      };
     }
 
-    const maxTotal = Math.max(...days.map((d) => d.total), 1);
-    const sumTotal = days.reduce((acc, d) => acc + d.total, 0);
+    if (period === "week") {
+      const days: SalesPeriodChartItem[] = [];
 
-    return { days, maxTotal, sumTotal };
-  }, [sales]);
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - i,
+        );
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+
+        const dayOfWeek = d.toLocaleDateString("pt-BR", { weekday: "short" });
+        const label =
+          i === 0
+            ? "Hoje"
+            : dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1, 3);
+        const shortDate = `${day}/${month}`;
+
+        const daySales = sales.filter((s) => {
+          if (s.status !== "PAGO") return false;
+          const sDate = new Date(s.date);
+          return (
+            sDate.getFullYear() === year &&
+            sDate.getMonth() === d.getMonth() &&
+            sDate.getDate() === d.getDate()
+          );
+        });
+
+        const total = daySales.reduce((acc, s) => acc + Number(s.total), 0);
+        days.push({
+          id: dateStr,
+          label,
+          subLabel: shortDate,
+          total,
+          count: daySales.length,
+          isCurrent: i === 0,
+        });
+      }
+
+      const sumTotal = days.reduce((acc, d) => acc + d.total, 0);
+      const maxTotal = Math.max(...days.map((d) => d.total), 1);
+      const avgTotal = sumTotal / 7;
+
+      return {
+        title: "Vendas nos últimos 7 dias",
+        subtitle: "Volume diário de vendas finalizadas e pagas",
+        badgeTotalLabel: "Total 7 dias",
+        badgeAvgLabel: "Média",
+        avgSuffix: "/dia",
+        items: days,
+        maxTotal,
+        sumTotal,
+        avgTotal,
+      };
+    }
+
+    // period === "month"
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const monthStr = String(month + 1).padStart(2, "0");
+    const todayDate = now.getDate();
+
+    const weekRanges = [
+      { start: 1, end: 7, label: "Semana 1" },
+      { start: 8, end: 14, label: "Semana 2" },
+      { start: 15, end: 21, label: "Semana 3" },
+      { start: 22, end: 28, label: "Semana 4" },
+    ];
+    if (lastDay > 28) {
+      weekRanges.push({ start: 29, end: lastDay, label: "Semana 5" });
+    }
+
+    const items: SalesPeriodChartItem[] = weekRanges.map((w) => {
+      const weekSales = sales.filter((s) => {
+        if (s.status !== "PAGO") return false;
+        const sDate = new Date(s.date);
+        if (sDate.getFullYear() !== year || sDate.getMonth() !== month)
+          return false;
+        const day = sDate.getDate();
+        return day >= w.start && day <= w.end;
+      });
+
+      const total = weekSales.reduce((acc, s) => acc + Number(s.total), 0);
+      const isCurrent = todayDate >= w.start && todayDate <= w.end;
+      const startStr = String(w.start).padStart(2, "0");
+      const endStr = String(w.end).padStart(2, "0");
+
+      return {
+        id: `week-${w.start}-${w.end}`,
+        label: w.label,
+        subLabel: `${startStr} a ${endStr}/${monthStr}`,
+        total,
+        count: weekSales.length,
+        isCurrent,
+      };
+    });
+
+    const sumTotal = items.reduce((acc, w) => acc + w.total, 0);
+    const maxTotal = Math.max(...items.map((w) => w.total), 1);
+    const avgTotal = todayDate > 0 ? sumTotal / todayDate : 0;
+
+    return {
+      title: "Vendas deste mês",
+      subtitle: "Volume de vendas por semana no mês atual",
+      badgeTotalLabel: "Total no mês",
+      badgeAvgLabel: "Média",
+      avgSuffix: "/dia",
+      items,
+      maxTotal,
+      sumTotal,
+      avgTotal,
+    };
+  }, [sales, period]);
 
   // Ordenar as vendas pela data mais recente
   const sortedSales = useMemo(() => {
@@ -618,8 +770,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Item #12: Gráfico de vendas dos últimos 7 dias */}
-      <SalesWeekChart data={last7DaysData} />
+      {/* Gráfico de vendas dinâmico conforme o período selecionado */}
+      <SalesPeriodChart data={chartData} />
 
       {/* Item #7: Ocultar seção de Estoque Baixo se configurado ou se controle de estoque estiver desativado */}
       {showLowStockCard &&

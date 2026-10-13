@@ -30,7 +30,6 @@ export function DashboardConfigModal({
   const productsSettings = useSettingsStore((s) => s.products);
   const trackStock = productsSettings?.trackStock ?? true;
   const dashboard = useSettingsStore((s) => s.dashboard) ?? {
-    defaultPeriod: "today",
     recentSalesCount: 5,
     hideLowStockCard: false,
     hideRecentSales: false,
@@ -39,33 +38,6 @@ export function DashboardConfigModal({
 
   const content = (
     <div className="space-y-4 pt-4">
-      {/* Período de referência padrão dos cards */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
-        <div className="space-y-0.5 pr-4">
-          <Label className="text-sm font-medium">
-            Período padrão dos cards
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Define o período padrão exibido nos cards de métricas do dashboard ao entrar no sistema.
-          </p>
-        </div>
-        <div className="shrink-0">
-          <select
-            value={dashboard.defaultPeriod || "today"}
-            onChange={(e) => {
-              const val = e.target.value as "today" | "week" | "month";
-              setDashboardSettings({ defaultPeriod: val });
-              toast.success("Período padrão do dashboard atualizado");
-            }}
-            className="h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-          >
-            <option value="today">Hoje (Dia atual)</option>
-            <option value="week">Últimos 7 dias</option>
-            <option value="month">Este mês</option>
-          </select>
-        </div>
-      </div>
-
       {/* Ocultar seção de Estoque Baixo */}
       <div
         className={cn(

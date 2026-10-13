@@ -141,7 +141,7 @@ export const defaultSalesSettings: SalesSettings = {
 export type DashboardPeriod = "today" | "week" | "month";
 
 export interface DashboardSettings {
-  defaultPeriod: DashboardPeriod;
+  defaultPeriod?: DashboardPeriod;
   recentSalesCount?: number;
   hideLowStockCard: boolean;
   hideRecentSales?: boolean;
