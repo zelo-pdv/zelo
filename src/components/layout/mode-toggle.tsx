@@ -24,7 +24,7 @@ export function ModeToggle({
       <div className="inline-flex items-center">
         <div
           className={cn(
-            "relative inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground",
+            "relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-white dark:bg-card shadow-xs md:size-8 md:rounded-lg md:border-border md:bg-background md:shadow-none text-foreground",
             className
           )}
         />
@@ -39,7 +39,7 @@ export function ModeToggle({
         theme={resolvedTheme === "dark" ? "dark" : "light"}
         onThemeChange={setTheme}
         className={cn(
-          "relative inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors cursor-pointer select-none outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+          "relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-white dark:bg-card shadow-xs hover:bg-muted text-foreground transition-colors cursor-pointer select-none outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:size-8 md:rounded-lg md:border-border md:bg-background md:shadow-none",
           className
         )}
       />

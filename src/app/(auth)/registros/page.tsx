@@ -331,7 +331,6 @@ export default function RegistrosPage() {
         <div className="relative animate-in fade-in duration-200">
           <BoxIcon name="search" className="absolute left-3 top-2.5 text-muted-foreground text-sm" />
           <Input
-            autoFocus
             placeholder="Buscar por nome do cliente, produto, número #venda ou operador..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

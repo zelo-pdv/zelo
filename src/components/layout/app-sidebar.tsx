@@ -91,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                       className={
                         active
-                          ? "bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-50"
+                          ? "bg-white text-zinc-900 font-semibold shadow-xs dark:bg-[#2A2C30] dark:text-zinc-50"
                           : "text-muted-foreground hover:text-foreground"
                       }
                     ></SidebarMenuButton>
@@ -128,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                       className={
                         active
-                          ? "bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-50"
+                          ? "bg-white text-zinc-900 font-semibold shadow-xs dark:bg-[#2A2C30] dark:text-zinc-50"
                           : "text-muted-foreground hover:text-foreground"
                       }
                     ></SidebarMenuButton>

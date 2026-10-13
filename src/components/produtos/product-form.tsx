@@ -236,7 +236,6 @@ export function ProductForm({
                   onChange={handleNameChange}
                   placeholder="Ex: Perfume Floratta"
                   required
-                  autoFocus
                 />
               </div>
 

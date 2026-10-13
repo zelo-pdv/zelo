@@ -46,6 +46,7 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  initialFocus = false,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left";
@@ -55,6 +56,7 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Popup
+        initialFocus={initialFocus}
         data-slot="sheet-content"
         data-side={side}
         className={cn(
