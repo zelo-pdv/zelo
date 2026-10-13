@@ -780,7 +780,6 @@ export default function NovaVenda() {
             <Button
               variant="destructive"
               onClick={() => {
-                console.log('CLEAR CART CLICKED');
                 clear();
                 setShowClearConfirm(false);
                 toast.info("Carrinho esvaziado.");

@@ -1,0 +1,64 @@
+# Zelo — Sistema de Gestão Comercial, Catálogo e PDV
+
+> Zelo é um sistema de gestão comercial e caderno de pedidos digital desenvolvido para revendedores autônomos, pequenos comerciantes e microempresas. Combina agilidade no celular com poder no computador, oferecendo controle de estoque flexível, Ponto de Venda (PDV) rápido, emissão de comprovantes e gestão simplificada de clientes e cobranças.
+
+## Informações Gerais
+- Nome: Zelo
+- Tipo de Solução: Software como Serviço (SaaS) / Web App & PWA
+- Idioma Principal: Português (Brasil)
+- Segmento: Gestão Comercial, Varejo, Vendas Diretas, Revenda e Pequenos Negócios
+- Plataformas Suportadas: Web Desktop, Navegadores Mobile, PWA (instalável no Android e iOS)
+
+## Público-Alvo
+- Revendedores autônomos de cosméticos, vestuário, perfumaria e catálogos.
+- Pequenos lojistas, mercearias, quiosques e comércios locais.
+- Vendedores que buscam substituir anotações em papel ("caderno de fiado" ou "caderno de pedidos") por um sistema ágil no bolso.
+
+## Módulos e Funcionalidades Principais
+
+### 1. Ponto de Venda (PDV) / Nova Venda (`/nova-venda`)
+- Interface ágil com fluxo simplificado de adição de produtos e finalização de venda.
+- Leitor de código de barras e QR Code integrado utilizando a câmera do próprio celular.
+- Atribuição de cliente à venda com cliente padrão automático ("Consumidor Final").
+- Controle de descontos monetários ou percentuais com limites definidos por regras de acesso (RBAC).
+- Suporte a múltiplas formas de pagamento: Dinheiro, Pix, Cartão de Crédito, Cartão de Débito e Fiado/A Prazo.
+
+### 2. Catálogo de Produtos e Controle de Estoque (`/produtos`)
+- Cadastro completo com fotos, descrição, código interno e código de barras (EAN-13).
+- Gestão de produtos simples e com variações dinâmicas (tamanho, cor, aroma, peso).
+- Controle de estoque flexível: pode operar com rastreamento de quantidade ativo ou desativado.
+- Definição de limites de estoque baixo globais ou personalizados por categoria.
+- Alertas visuais automáticos de itens com reposição necessária.
+
+### 3. Gestão de Clientes e Cobranças (`/clientes`)
+- Cadastro com nome, telefone (WhatsApp) e anotações personalizadas.
+- Busca e autopreenchimento de endereço via CEP (integração ViaCEP).
+- Histórico completo de vendas e status de pagamentos por cliente.
+- Proteção de integridade para registros padrão essenciais.
+
+### 4. Histórico de Vendas e Comprovantes (`/historico`)
+- Listagem cronológica de vendas com filtros por data, status (Pago, Pendente, Cancelado) e cliente.
+- Cancelamento de venda com opção de estorno automático de estoque.
+- Emissão de comprovantes digitais otimizados para compartilhamento no WhatsApp e download em imagem ou PDF.
+
+### 5. Equipe e Controle de Acesso RBAC (`/usuarios`)
+- Grupos de permissões granulares por módulo (Dashboard, Nova Venda, Produtos, Clientes, Histórico, Usuários, Configurações) e ação (Visualizar, Adicionar, Editar, Excluir).
+- Limites de desconto configuráveis por operador para prevenir concessão indevida de descontos.
+
+### 6. Relatórios e Auditoria (`/relatorios`, `/registros`)
+- Indicadores de faturamento diário, semanal e mensal, ticket médio e produtos mais vendidos.
+- Logs de auditoria transparentes para rastreabilidade de alterações em produtos, estoque, vendas e configurações.
+
+## Segurança e Privacidade
+- Arquitetura Multi-tenant com estrito isolamento lógico de dados por loja (`lojaId`).
+- Autenticação stateless via tokens JWT protegidos em cookies HTTP-only (`SameSite=Lax`).
+- Criptografia de senhas com algoritmo bcrypt e salt seguro.
+- Totalmente aderente à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
+- Ausência total de cookies de rastreamento publicitário de terceiros.
+- Opção na "Zona de Perigo" para exclusão controlada de dados ou cancelamento de conta com validação de senha.
+
+## URLs Públicas Oficiais
+- Início: https://zelo.com.br/
+- Login: https://zelo.com.br/login
+- Cadastro de Loja: https://zelo.com.br/cadastro
+- Política de Privacidade: https://zelo.com.br/privacidade

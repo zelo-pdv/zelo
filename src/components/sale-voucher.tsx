@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { toast } from "sonner";
-import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -215,6 +214,7 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
     }
 
     try {
+      const { toPng } = await import("html-to-image");
       return await toPng(el, {
         pixelRatio: 2,
         cacheBust: true,

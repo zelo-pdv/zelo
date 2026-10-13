@@ -97,7 +97,7 @@ export function LoginForm() {
           <div className="relative flex items-center justify-center">
             <Image
               src="/zelo-white.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={260}
               height={260}
               priority
@@ -128,14 +128,14 @@ export function LoginForm() {
           <div className="flex lg:hidden flex-col items-center mb-8 gap-3">
             <Image
               src="/zelo-black.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={96}
               height={96}
               className="object-contain dark:hidden"
             />
             <Image
               src="/zelo-white.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={96}
               height={96}
               className="object-contain hidden dark:block"
@@ -246,6 +246,15 @@ export function LoginForm() {
                   Cadastre-se grátis
                 </Link>
               </p>
+            </div>
+
+            <div className="pt-4 text-center text-xs text-muted-foreground border-t border-border/40">
+              <Link
+                href="/privacidade"
+                className="hover:underline transition-colors hover:text-foreground"
+              >
+                Política de Privacidade & LGPD
+              </Link>
             </div>
           </form>
         </div>

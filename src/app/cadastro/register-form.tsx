@@ -78,7 +78,7 @@ export function RegisterForm() {
           <div className="relative flex items-center justify-center">
             <Image
               src="/zelo-white.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={260}
               height={260}
               priority
@@ -109,14 +109,14 @@ export function RegisterForm() {
           <div className="flex lg:hidden flex-col items-center mb-6 gap-3">
             <Image
               src="/zelo-black.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={88}
               height={88}
               className="object-contain dark:hidden"
             />
             <Image
               src="/zelo-white.png"
-              alt="Zelo Logo"
+              alt="Zelo - Gestão e PDV para Revendedores"
               width={88}
               height={88}
               className="object-contain hidden dark:block"
@@ -276,7 +276,7 @@ export function RegisterForm() {
 
             <div className="pt-3 text-center">
               <p className="text-sm text-muted-foreground">
-                Já possui uma conta?{" "}
+                Já tem uma conta?{" "}
                 <Link
                   href="/login"
                   className="font-semibold text-primary hover:underline transition-colors"
@@ -284,6 +284,17 @@ export function RegisterForm() {
                   Entrar
                 </Link>
               </p>
+            </div>
+
+            <div className="pt-4 text-center text-xs text-muted-foreground border-t border-border/40">
+              <span>Ao criar uma conta, você declara estar de acordo com a nossa </span>
+              <Link
+                href="/privacidade"
+                className="underline hover:text-foreground transition-colors font-medium"
+              >
+                Política de Privacidade
+              </Link>
+              .
             </div>
           </form>
         </div>

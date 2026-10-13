@@ -351,7 +351,7 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    console.log("SALE ERROR:", error);
+    console.error("Erro ao registrar venda:", error);
     // Tratamento de erros lançados dentro da transação
     if (error instanceof Error && (error.message.includes("Quantidade inválida") || error.message.includes("Desconto inválido") || error.message.includes("Produto não encontrado") || error.message.includes("Estoque insuficiente"))) {
       return NextResponse.json({ error: error.message }, { status: 400 });

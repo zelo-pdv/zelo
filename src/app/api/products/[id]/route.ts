@@ -11,7 +11,6 @@ export async function PATCH(
   const auth = await requirePermission("produtos", "Editar");
 
   if (!auth.authorized) {
-    console.log("Usuário não autorizado para editar produtos.");
     return auth.response;
   }
 

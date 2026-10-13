@@ -31,8 +31,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("LOGIN ATTEMPT - EMAIL:", email, "USER FOUND:", !!user);
-
     let senhaValida = false;
     if (user) {
       senhaValida = await bcrypt.compare(password, user.password);

@@ -7,14 +7,9 @@ export function PWAUpdater() {
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       // Registrar o Service Worker de forma segura
-      navigator.serviceWorker.register("/sw.js").then(
-        function (registration) {
-          console.log("Service Worker registration successful with scope: ", registration.scope);
-        },
-        function (err) {
-          console.log("Service Worker registration failed: ", err);
-        }
-      );
+      navigator.serviceWorker.register("/sw.js").catch(function (err) {
+        console.error("Falha ao registrar Service Worker:", err);
+      });
 
       // Ouvir atualizações
       navigator.serviceWorker.addEventListener("controllerchange", () => {
