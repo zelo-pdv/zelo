@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { BoxIcon } from "@/components/ui/box-icon"
+import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
@@ -13,19 +13,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       icons={{
         success: (
-          <BoxIcon name="check-circle" solid className="text-base text-current" />
+          <CircleCheckIcon className="size-4" />
         ),
         info: (
-          <BoxIcon name="info-circle" solid className="text-base text-current" />
+          <InfoIcon className="size-4" />
         ),
         warning: (
-          <BoxIcon name="error" solid className="text-base text-current" />
+          <TriangleAlertIcon className="size-4" />
         ),
         error: (
-          <BoxIcon name="x-circle" solid className="text-base text-current" />
+          <OctagonXIcon className="size-4" />
         ),
         loading: (
-          <BoxIcon name="loader-alt" className="text-base bx-spin text-current" />
+          <Loader2Icon className="size-4 animate-spin" />
         ),
       }}
       style={

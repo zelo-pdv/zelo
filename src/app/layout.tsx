@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Outfit, Noto_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "boxicons/css/boxicons.min.css";
@@ -7,6 +7,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PWAUpdater } from "@/components/pwa-updater";
 import { ThemeColorUpdater } from "@/components/theme-color-updater";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+const notoSansHeading = Noto_Sans({subsets:['latin'],variable:'--font-heading'});
+
+const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -143,7 +149,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br" suppressHydrationWarning>
+    <html lang="pt-br" suppressHydrationWarning className={cn("font-sans", outfit.variable, notoSansHeading.variable)}>
       <head>
         <script
           type="application/ld+json"
@@ -157,7 +163,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
           <PWAUpdater />
           <ThemeColorUpdater />
           <Toaster position="top-right" richColors />
