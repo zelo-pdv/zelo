@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Zelo: Gestão de vendas e pedidos para revendedores. Seu caderno digital inteligente de vendas.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#ffffff',
+    background_color: '#DCEBFE',
+    theme_color: '#DCEBFE',
     icons: [
       {
         src: '/android-chrome-192x192.png',

@@ -14,7 +14,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#DCEBFE",
+  "background_color": "#DCEBFE",
   "display": "standalone"
 }
