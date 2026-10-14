@@ -118,7 +118,7 @@ export function LoginForm() {
       </div>
 
       {/* Lado Direito - Formulário */}
-      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12 lg:px-12 relative overflow-hidden bg-background">
+      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12 lg:px-12 relative overflow-hidden bg-background lg:bg-slate-50/50 dark:lg:bg-background">
         <div className="absolute top-4 right-4 z-20">
           <ModeToggle />
         </div>
@@ -167,7 +167,7 @@ export function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  className="h-12 px-4 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs"
+                  className="h-12 px-4 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm"
                 />
               </div>
 
@@ -187,7 +187,7 @@ export function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
-                    className="h-12 px-4 pr-12 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs"
+                    className="h-12 px-4 pr-12 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm"
                   />
                   <button
                     type="button"

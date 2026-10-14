@@ -99,7 +99,7 @@ export function RegisterForm() {
       </div>
 
       {/* Lado Direito - Formulário */}
-      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12 lg:px-12 relative overflow-hidden bg-background">
+      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12 lg:px-12 relative overflow-hidden bg-background lg:bg-slate-50/50 dark:lg:bg-background">
         <div className="absolute top-4 right-4 z-20">
           <ModeToggle />
         </div>
@@ -146,7 +146,7 @@ export function RegisterForm() {
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
                   disabled={loading}
-                  className="h-11 px-3.5 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                  className="h-11 px-3.5 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
                 />
               </div>
 
@@ -161,7 +161,7 @@ export function RegisterForm() {
                   value={storeName}
                   onChange={(e) => setStoreName(e.target.value)}
                   disabled={loading}
-                  className="h-11 px-3.5 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                  className="h-11 px-3.5 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
                 />
               </div>
             </div>
@@ -179,7 +179,7 @@ export function RegisterForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="h-11 px-3.5 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                className="h-11 px-3.5 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
               />
             </div>
 
@@ -196,7 +196,7 @@ export function RegisterForm() {
                 onChange={(e) => setPhone(maskPhone(e.target.value))}
                 maxLength={15}
                 disabled={loading}
-                className="h-11 px-3.5 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                className="h-11 px-3.5 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
               />
             </div>
 
@@ -214,7 +214,7 @@ export function RegisterForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
-                    className="h-11 px-3.5 pr-10 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                    className="h-11 px-3.5 pr-10 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
                   />
                   <button
                     type="button"
@@ -241,7 +241,7 @@ export function RegisterForm() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={loading}
-                    className="h-11 px-3.5 pr-10 rounded-xl border-border/70 bg-card focus-visible:ring-primary/30 focus-visible:border-primary shadow-xs text-sm"
+                    className="h-11 px-3.5 pr-10 rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary/30 focus-visible:border-primary shadow-sm text-sm"
                   />
                   <button
                     type="button"
