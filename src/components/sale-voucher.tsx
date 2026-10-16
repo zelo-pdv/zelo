@@ -487,7 +487,7 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
   const ActionButtons = (
     <div className="space-y-2">
       <Button
-        className="h-12 w-full rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+        className="h-12 w-full rounded-full shadow-md shadow-primary/20"
         onClick={shareWhatsapp}
         disabled={!!busy}
       >

@@ -155,7 +155,7 @@ export function ClientsDataTable({
             <PopoverTrigger
               render={
                 <Button
-                  variant={activeFiltersCount > 0 ? "default" : "outline"}
+                  variant="outline"
                   className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
                   aria-label="Abrir filtros">
                   <BoxIcon name="slider-alt" className="text-lg" />
@@ -193,7 +193,7 @@ export function ClientsDataTable({
                     type="button"
                     variant={activeFilter === "Ativos" ? "default" : "outline"}
                     size="sm"
-                    className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
+                    className="h-8 text-xs text-emerald-400"
                     onClick={() => setActiveFilter("Ativos")}>
                     Ativos
                   </Button>

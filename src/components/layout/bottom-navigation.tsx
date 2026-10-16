@@ -68,7 +68,7 @@ export function BottomNavigation() {
                 className={cn(
                   "relative flex items-center justify-center transition-all duration-200 select-none group",
                   isVender
-                    ? "w-11 h-11 rounded-full bg-[#0051FF] dark:bg-[#1A66FF] text-white shadow-md shadow-blue-500/25 active:scale-95"
+                    ? "w-11 h-11 rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/25 active:scale-95"
                     : active
                     ? "w-14 h-11 rounded-full bg-white dark:bg-[#2A2C30] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
                     : "w-11 h-11 rounded-full bg-transparent"
@@ -79,7 +79,7 @@ export function BottomNavigation() {
                   className={cn(
                     "text-2xl transition-all duration-200",
                     isVender
-                      ? "text-white"
+                      ? "text-primary-foreground"
                       : active
                       ? "text-black dark:text-white"
                       : "text-black/85 dark:text-white/85 group-hover:text-black dark:group-hover:text-white"

@@ -25,7 +25,7 @@ export function ThemeColorUpdater() {
           '[data-slot="dialog-overlay"][data-blur]:not([data-closed]):not([data-ending-style])',
           '[data-slot="drawer-popup"][data-blur]:not([data-closed]):not([data-ending-style])',
           '[data-slot="dialog-content"][data-blur]:not([data-closed]):not([data-ending-style])',
-        ].join(", ")
+        ].join(", "),
       );
 
       const isFormOpen = Boolean(activeFormOverlay);
@@ -34,18 +34,20 @@ export function ThemeColorUpdater() {
       // - Modo dark: #000000 (preto profundo igual ao fundo escurecido com desfoque)
       // - Modo light: #999999 (cinza suave equivalente ao desfoque bg-black/40 sobre branco)
       // Quando fechado ou componente sem desfoque (ex: filtros, detalhes, comprovantes):
-      // - Modo dark: #18161a (cor real de fundo do app em dark mode, oklch(0.145 0 0))
+      // - Modo dark: #0C090C (cor real de fundo do app em dark mode, oklch(0.145 0 0))
       // - Modo light: #ffffff (cor de fundo branca do app em light mode)
       const color = isFormOpen
         ? isDark
           ? "#000000"
           : "#999999"
         : isDark
-          ? "#18161a"
+          ? "#0C090C"
           : "#ffffff";
 
       // Atualiza meta[name="theme-color"]
-      const existingMetas = document.querySelectorAll('meta[name="theme-color"]');
+      const existingMetas = document.querySelectorAll(
+        'meta[name="theme-color"]',
+      );
       if (existingMetas.length > 1) {
         existingMetas.forEach((el, index) => {
           if (index > 0) el.remove();
@@ -67,14 +69,11 @@ export function ThemeColorUpdater() {
       // No modo light mantém "default" (ícones escuros legíveis no branco e no cinza desfoque)
       // No modo dark utiliza "black-translucent" (ícones claros no fundo escuro)
       let appleMeta = document.querySelector(
-        'meta[name="apple-mobile-web-app-status-bar-style"]'
+        'meta[name="apple-mobile-web-app-status-bar-style"]',
       );
       if (!appleMeta) {
         appleMeta = document.createElement("meta");
-        appleMeta.setAttribute(
-          "name",
-          "apple-mobile-web-app-status-bar-style"
-        );
+        appleMeta.setAttribute("name", "apple-mobile-web-app-status-bar-style");
         document.head.appendChild(appleMeta);
       }
       const appleContent = isDark ? "black-translucent" : "default";
@@ -122,4 +121,3 @@ export function ThemeColorUpdater() {
 
   return null;
 }
-

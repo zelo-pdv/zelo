@@ -166,10 +166,9 @@ export function ProductsDataTable({
             <PopoverTrigger
               render={
                 <Button
-                  variant={activeFiltersCount > 0 ? "default" : "outline"}
+                  variant="outline"
                   className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
-                  aria-label="Abrir filtros"
-                >
+                  aria-label="Abrir filtros">
                   <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
@@ -182,7 +181,9 @@ export function ProductsDataTable({
             />
             <PopoverContent align="end" className="w-80 p-4 space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
-                <span className="font-semibold text-sm">Filtros de Produtos</span>
+                <span className="font-semibold text-sm">
+                  Filtros de Produtos
+                </span>
               </div>
 
               {/* Status de Cadastro */}
@@ -196,26 +197,25 @@ export function ProductsDataTable({
                     variant={statusFilter === "Todos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter("Todos")}
-                  >
+                    onClick={() => setStatusFilter("Todos")}>
                     Todos
                   </Button>
                   <Button
                     type="button"
                     variant={statusFilter === "Ativos" ? "default" : "outline"}
                     size="sm"
-                    className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
-                    onClick={() => setStatusFilter("Ativos")}
-                  >
+                    className="h-8 text-xs text-emerald-400"
+                    onClick={() => setStatusFilter("Ativos")}>
                     Ativos
                   </Button>
                   <Button
                     type="button"
-                    variant={statusFilter === "Inativos" ? "default" : "outline"}
+                    variant={
+                      statusFilter === "Inativos" ? "default" : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs text-muted-foreground"
-                    onClick={() => setStatusFilter("Inativos")}
-                  >
+                    onClick={() => setStatusFilter("Inativos")}>
                     Inativos
                   </Button>
                 </div>
@@ -230,10 +230,11 @@ export function ProductsDataTable({
                   value={categoryFilter}
                   onChange={(e) => {
                     const val = e.target.value;
-                    table.getColumn("category")?.setFilterValue(val === "Todas" ? undefined : val);
+                    table
+                      .getColumn("category")
+                      ?.setFilterValue(val === "Todas" ? undefined : val);
                   }}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-                >
+                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
                   <option value="Todas">Todas as categorias</option>
                   {categories.map((c) => (
                     <option key={c} value={c}>
@@ -250,8 +251,7 @@ export function ProductsDataTable({
                   size="sm"
                   className="w-full text-xs font-medium"
                   onClick={clearAllFilters}
-                  disabled={activeFiltersCount === 0}
-                >
+                  disabled={activeFiltersCount === 0}>
                   Limpar dados
                 </Button>
               </div>
@@ -266,8 +266,7 @@ export function ProductsDataTable({
               variant="outline"
               size="sm"
               onClick={onConfigClick}
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="cog" className="text-base" />
               <span>Configurações</span>
             </Button>
@@ -279,8 +278,7 @@ export function ProductsDataTable({
               variant="outline"
               size="sm"
               onClick={onImportClick}
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="upload" className="text-base" />
               <span>Importar</span>
             </Button>
@@ -293,8 +291,7 @@ export function ProductsDataTable({
               size="sm"
               onClick={onExportClick}
               disabled={isExporting}
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="download" className="text-base" />
               <span>{isExporting ? "Exportando..." : "Exportar"}</span>
             </Button>
@@ -304,8 +301,7 @@ export function ProductsDataTable({
             type="button"
             onClick={onCreateClick}
             size="sm"
-            className="rounded-full shrink-0 gap-1 cursor-pointer"
-          >
+            className="rounded-full shrink-0 gap-1 cursor-pointer">
             <BoxIcon name="plus" className="text-base" />
             <span>Adicionar</span>
           </Button>
@@ -329,8 +325,7 @@ export function ProductsDataTable({
             className="h-9 w-9 rounded-xl border border-border/70 bg-white dark:bg-card text-foreground hover:bg-muted cursor-pointer"
             disabled={!table.getCanPreviousPage()}
             onClick={() => table.previousPage()}
-            aria-label="Página anterior"
-          >
+            aria-label="Página anterior">
             <BoxIcon name="chevron-left" className="text-lg" />
           </Button>
           <div className="text-sm tabular-nums text-muted-foreground font-medium px-1">
@@ -342,8 +337,7 @@ export function ProductsDataTable({
             className="h-9 w-9 rounded-xl border border-border/70 bg-white dark:bg-card text-foreground hover:bg-muted cursor-pointer"
             disabled={!table.getCanNextPage()}
             onClick={() => table.nextPage()}
-            aria-label="Próxima página"
-          >
+            aria-label="Próxima página">
             <BoxIcon name="chevron-right" className="text-lg" />
           </Button>
         </div>
@@ -369,8 +363,7 @@ export function ProductsDataTable({
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
-              >
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
                 {/* Imagem do Produto */}
                 <ProductThumb
                   name={product.name}
@@ -388,8 +381,7 @@ export function ProductsDataTable({
                     {!product.active && (
                       <Badge
                         variant="outline"
-                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4"
-                      >
+                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4">
                         Inativo
                       </Badge>
                     )}
@@ -403,18 +395,17 @@ export function ProductsDataTable({
                           isNegative
                             ? "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
                             : isLow
-                            ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                            : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
-                        )}
-                      >
+                              ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                              : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
+                        )}>
                         <span
                           className={cn(
                             "h-1.5 w-1.5 rounded-full shrink-0",
                             isNegative
                               ? "bg-rose-500"
                               : isLow
-                              ? "bg-amber-500"
-                              : "bg-emerald-500",
+                                ? "bg-amber-500"
+                                : "bg-emerald-500",
                           )}
                         />
                         {stockNum} un.
@@ -443,8 +434,7 @@ export function ProductsDataTable({
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Ações do produto"
-                        >
+                          aria-label="Ações do produto">
                           <BoxIcon
                             name="dots-vertical-rounded"
                             className="text-lg"
@@ -461,8 +451,7 @@ export function ProductsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onStock(product);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="package" className="mr-2 text-base" />
                           Entrada de estoque
                         </Button>
@@ -476,8 +465,7 @@ export function ProductsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(product);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="pencil" className="mr-2 text-base" />
                           Editar produto
                         </Button>
@@ -496,13 +484,12 @@ export function ProductsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onToggleActive(product);
-                          }}
-                        >
+                          }}>
                           <BoxIcon
                             name="power-off"
                             className="mr-2 text-base"
                           />
-                          {product.active ?? true
+                          {(product.active ?? true)
                             ? "Desativar produto"
                             : "Ativar produto"}
                         </Button>
@@ -520,8 +507,7 @@ export function ProductsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onDelete(product);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="trash" className="mr-2 text-base" />
                           Remover produto
                         </Button>
@@ -579,8 +565,7 @@ export function ProductsDataTable({
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center text-sm text-muted-foreground"
-                      >
+                        className="h-24 text-center text-sm text-muted-foreground">
                         Nenhum produto encontrado.
                       </TableCell>
                     </TableRow>
@@ -605,8 +590,7 @@ export function ProductsDataTable({
               className="h-8 w-8 cursor-pointer"
               disabled={!table.getCanPreviousPage()}
               onClick={() => table.previousPage()}
-              aria-label="Página anterior"
-            >
+              aria-label="Página anterior">
               <BoxIcon name="chevron-left" className="text-base" />
             </Button>
             <div className="text-xs tabular-nums text-muted-foreground">
@@ -618,8 +602,7 @@ export function ProductsDataTable({
               className="h-8 w-8 cursor-pointer"
               disabled={!table.getCanNextPage()}
               onClick={() => table.nextPage()}
-              aria-label="Próxima página"
-            >
+              aria-label="Próxima página">
               <BoxIcon name="chevron-right" className="text-base" />
             </Button>
           </div>

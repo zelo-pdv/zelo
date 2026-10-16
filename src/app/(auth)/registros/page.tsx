@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,53 +131,63 @@ export default function RegistrosPage() {
     return { start: "", end: "" };
   }, [datePreset, customStartDate, customEndDate]);
 
-  const fetchLogs = useCallback(async (targetPage = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", String(targetPage));
-      params.set("limit", "40");
+  const fetchLogs = useCallback(
+    async (targetPage = 1) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set("page", String(targetPage));
+        params.set("limit", "40");
 
-      if (activeCategory !== "todos") {
-        params.set("category", activeCategory);
+        if (activeCategory !== "todos") {
+          params.set("category", activeCategory);
+        }
+
+        const { start, end } = getDateRange();
+        if (start) params.set("startDate", start);
+        if (end) params.set("endDate", end);
+
+        if (selectedUser !== "todos") {
+          params.set("userId", selectedUser);
+        }
+
+        if (saleStatus !== "todos") {
+          params.set("status", saleStatus);
+        }
+
+        if (paymentMethod !== "todos") {
+          params.set("paymentMethod", paymentMethod);
+        }
+
+        if (searchTerm.trim()) {
+          params.set("search", searchTerm.trim());
+        }
+
+        const res = await fetch(`/api/audit?${params.toString()}`);
+        if (!res.ok) throw new Error("Erro ao carregar registros.");
+
+        const data = await res.json();
+        setLogs(data.data || []);
+        if (data.users) setStoreUsers(data.users);
+        setPage(data.meta?.page || 1);
+        setTotalPages(data.meta?.totalPages || 1);
+        setTotalCount(data.meta?.total || 0);
+      } catch (error) {
+        console.error(error);
+        toast.error("Não foi possível carregar os registros de atividade.");
+      } finally {
+        setLoading(false);
       }
-
-      const { start, end } = getDateRange();
-      if (start) params.set("startDate", start);
-      if (end) params.set("endDate", end);
-
-      if (selectedUser !== "todos") {
-        params.set("userId", selectedUser);
-      }
-
-      if (saleStatus !== "todos") {
-        params.set("status", saleStatus);
-      }
-
-      if (paymentMethod !== "todos") {
-        params.set("paymentMethod", paymentMethod);
-      }
-
-      if (searchTerm.trim()) {
-        params.set("search", searchTerm.trim());
-      }
-
-      const res = await fetch(`/api/audit?${params.toString()}`);
-      if (!res.ok) throw new Error("Erro ao carregar registros.");
-
-      const data = await res.json();
-      setLogs(data.data || []);
-      if (data.users) setStoreUsers(data.users);
-      setPage(data.meta?.page || 1);
-      setTotalPages(data.meta?.totalPages || 1);
-      setTotalCount(data.meta?.total || 0);
-    } catch (error) {
-      console.error(error);
-      toast.error("Não foi possível carregar os registros de atividade.");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeCategory, getDateRange, selectedUser, saleStatus, paymentMethod, searchTerm]);
+    },
+    [
+      activeCategory,
+      getDateRange,
+      selectedUser,
+      saleStatus,
+      paymentMethod,
+      searchTerm,
+    ],
+  );
 
   useEffect(() => {
     fetchLogs(1);
@@ -216,7 +232,11 @@ export default function RegistrosPage() {
       doc.setFontSize(10);
       doc.setTextColor(100);
       const todayStr = new Date().toLocaleString("pt-BR");
-      doc.text(`Gerado em: ${todayStr} • Total de registros: ${logs.length}`, 14, 25);
+      doc.text(
+        `Gerado em: ${todayStr} • Total de registros: ${logs.length}`,
+        14,
+        25,
+      );
 
       const tableData = logs.map((log) => {
         const formatted = formatAuditLog(log);
@@ -229,7 +249,9 @@ export default function RegistrosPage() {
           dataStr,
           formatted.categoryLabel,
           formatted.title,
-          [formatted.primaryDetail, formatted.secondaryDetail].filter(Boolean).join(" - "),
+          [formatted.primaryDetail, formatted.secondaryDetail]
+            .filter(Boolean)
+            .join(" - "),
           log.user?.name || "Sistema",
         ];
       });
@@ -252,8 +274,10 @@ export default function RegistrosPage() {
     }
   };
 
-  const selectedCategoryLabel = CATEGORIES.find((c) => c.id === activeCategory)?.label || "Todos";
-  const selectedDateLabel = DATE_PRESETS.find((d) => d.id === datePreset)?.label || "Todo o período";
+  const selectedCategoryLabel =
+    CATEGORIES.find((c) => c.id === activeCategory)?.label || "Todos";
+  const selectedDateLabel =
+    DATE_PRESETS.find((d) => d.id === datePreset)?.label || "Todo o período";
 
   return (
     <div className="w-full px-3 sm:px-6 space-y-4 max-w-7xl mx-auto">
@@ -277,11 +301,10 @@ export default function RegistrosPage() {
           </div>
 
           <Button
-            variant={activeFiltersCount > 0 ? "default" : "outline"}
+            variant="outline"
             onClick={() => setIsFilterDrawerOpen(true)}
             className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
-            aria-label="Abrir filtros"
-          >
+            aria-label="Abrir filtros">
             <BoxIcon name="slider-alt" className="text-lg" />
             <span className="hidden sm:inline">Filtros</span>
             {activeFiltersCount > 0 && (
@@ -299,8 +322,7 @@ export default function RegistrosPage() {
             onClick={handleExportPdf}
             disabled={loading || logs.length === 0}
             className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900"
-            title="Baixar em PDF"
-          >
+            title="Baixar em PDF">
             <BoxIcon name="file-blank" className="text-base" />
             <span className="hidden sm:inline">Baixar PDF</span>
           </Button>
@@ -311,9 +333,11 @@ export default function RegistrosPage() {
             onClick={() => fetchLogs(page)}
             disabled={loading}
             className="h-11 w-11 rounded-xl border border-border/70 bg-white dark:bg-card text-muted-foreground hover:text-foreground shadow-xs cursor-pointer shrink-0"
-            title="Atualizar lista"
-          >
-            <BoxIcon name="refresh" className={`text-base ${loading ? "animate-spin" : ""}`} />
+            title="Atualizar lista">
+            <BoxIcon
+              name="refresh"
+              className={`text-base ${loading ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
       </div>
@@ -321,11 +345,15 @@ export default function RegistrosPage() {
       {/* Chips Rápidos de Filtros Ativos (Sem gastar espaço vertical) */}
       {(activeFiltersCount > 0 || searchTerm) && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5 pb-1">
-          <span className="text-[11px] text-muted-foreground mr-1">Filtros ativos:</span>
+          <span className="text-[11px] text-muted-foreground mr-1">
+            Filtros ativos:
+          </span>
           {activeCategory !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
               {selectedCategoryLabel}
-              <button onClick={() => setActiveCategory("todos")} className="hover:opacity-75">
+              <button
+                onClick={() => setActiveCategory("todos")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
@@ -333,7 +361,9 @@ export default function RegistrosPage() {
           {datePreset !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
               {selectedDateLabel}
-              <button onClick={() => setDatePreset("todos")} className="hover:opacity-75">
+              <button
+                onClick={() => setDatePreset("todos")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
@@ -341,15 +371,23 @@ export default function RegistrosPage() {
           {selectedUser !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
               Operador
-              <button onClick={() => setSelectedUser("todos")} className="hover:opacity-75">
+              <button
+                onClick={() => setSelectedUser("todos")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
           )}
           {saleStatus !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
-              {saleStatus === "PAGO" ? "Pagas" : saleStatus === "PENDENTE" ? "Pendentes" : "Canceladas"}
-              <button onClick={() => setSaleStatus("todos")} className="hover:opacity-75">
+              {saleStatus === "PAGO"
+                ? "Pagas"
+                : saleStatus === "PENDENTE"
+                  ? "Pendentes"
+                  : "Canceladas"}
+              <button
+                onClick={() => setSaleStatus("todos")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
@@ -357,7 +395,9 @@ export default function RegistrosPage() {
           {paymentMethod !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
               {PAYMENT_METHOD_NAMES[paymentMethod] || paymentMethod}
-              <button onClick={() => setPaymentMethod("todos")} className="hover:opacity-75">
+              <button
+                onClick={() => setPaymentMethod("todos")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
@@ -365,15 +405,16 @@ export default function RegistrosPage() {
           {searchTerm && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
               &quot;{searchTerm}&quot;
-              <button onClick={() => setSearchTerm("")} className="hover:opacity-75">
+              <button
+                onClick={() => setSearchTerm("")}
+                className="hover:opacity-75">
                 <BoxIcon name="x" className="text-xs" />
               </button>
             </span>
           )}
           <button
             onClick={handleClearFilters}
-            className="text-[11px] text-muted-foreground hover:text-red-500 underline ml-1 cursor-pointer"
-          >
+            className="text-[11px] text-muted-foreground hover:text-red-500 underline ml-1 cursor-pointer">
             Limpar tudo
           </button>
         </div>
@@ -395,7 +436,9 @@ export default function RegistrosPage() {
       <Card className="border shadow-xs overflow-hidden">
         <CardHeader className="p-3.5 sm:p-5 border-b border-border/50 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold">Histórico de Atividades</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Histórico de Atividades
+            </CardTitle>
             <CardDescription className="text-xs">
               {totalCount === 0
                 ? "Nenhum registro"
@@ -406,7 +449,10 @@ export default function RegistrosPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex flex-col items-center justify-center p-14 text-muted-foreground gap-2">
-              <BoxIcon name="loader-alt" className="animate-spin text-3xl text-primary" />
+              <BoxIcon
+                name="loader-alt"
+                className="animate-spin text-3xl text-primary"
+              />
               <span className="text-xs">Carregando atividades...</span>
             </div>
           ) : logs.length === 0 ? (
@@ -414,12 +460,19 @@ export default function RegistrosPage() {
               <div className="size-12 rounded-full bg-muted flex items-center justify-center text-xl text-muted-foreground">
                 <BoxIcon name="info-circle" />
               </div>
-              <p className="font-semibold text-sm text-foreground">Nenhuma atividade encontrada</p>
+              <p className="font-semibold text-sm text-foreground">
+                Nenhuma atividade encontrada
+              </p>
               <p className="text-xs max-w-sm">
-                Tente ajustar os filtros ou pesquisar por outro termo para localizar registros.
+                Tente ajustar os filtros ou pesquisar por outro termo para
+                localizar registros.
               </p>
               {(activeFiltersCount > 0 || searchTerm) && (
-                <Button variant="outline" size="sm" onClick={handleClearFilters} className="mt-2 text-xs">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="mt-2 text-xs">
                   Limpar filtros
                 </Button>
               )}
@@ -437,8 +490,7 @@ export default function RegistrosPage() {
                 return (
                   <div
                     key={log.id}
-                    className="p-3.5 sm:p-4 hover:bg-muted/30 transition-colors space-y-1"
-                  >
+                    className="p-3.5 sm:p-4 hover:bg-muted/30 transition-colors space-y-1">
                     {/* Conteúdo Humanizado */}
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center justify-between gap-1">
@@ -447,8 +499,7 @@ export default function RegistrosPage() {
                             {formatted.title}
                           </span>
                           <span
-                            className={`text-[10px] px-2 py-0.2 rounded-full border font-medium ${formatted.badgeClass}`}
-                          >
+                            className={`text-[10px] px-2 py-0.2 rounded-full border font-medium ${formatted.badgeClass}`}>
                             {formatted.categoryLabel}
                           </span>
                         </div>
@@ -478,12 +529,11 @@ export default function RegistrosPage() {
                               t.variant === "success"
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                 : t.variant === "danger"
-                                ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
-                                : t.variant === "warning"
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                : "bg-muted text-muted-foreground border-border"
-                            }`}
-                          >
+                                  ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
+                                  : t.variant === "warning"
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                    : "bg-muted text-muted-foreground border-border"
+                            }`}>
                             {t.text}
                           </span>
                         ))}
@@ -508,7 +558,9 @@ export default function RegistrosPage() {
           <div className="space-y-4 py-2">
             {/* Categoria */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Categoria</label>
+              <label className="text-xs font-semibold text-foreground">
+                Categoria
+              </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {CATEGORIES.map((cat) => {
                   const isSel = activeCategory === cat.id;
@@ -521,8 +573,7 @@ export default function RegistrosPage() {
                         isSel
                           ? "bg-primary text-primary-foreground border-primary shadow-xs"
                           : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-border"
-                      }`}
-                    >
+                      }`}>
                       <BoxIcon name={cat.icon} className="text-sm shrink-0" />
                       <span className="truncate">{cat.label}</span>
                     </button>
@@ -533,8 +584,14 @@ export default function RegistrosPage() {
 
             {/* Período */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Período</label>
-              <Select value={datePreset} onValueChange={(val) => { if (val) setDatePreset(val); }}>
+              <label className="text-xs font-semibold text-foreground">
+                Período
+              </label>
+              <Select
+                value={datePreset}
+                onValueChange={(val) => {
+                  if (val) setDatePreset(val);
+                }}>
                 <SelectTrigger className="h-9 text-xs w-full">
                   <SelectValue placeholder="Selecione o período" />
                 </SelectTrigger>
@@ -550,7 +607,9 @@ export default function RegistrosPage() {
               {datePreset === "personalizado" && (
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <div>
-                    <span className="text-[11px] text-muted-foreground block mb-1">Data inicial:</span>
+                    <span className="text-[11px] text-muted-foreground block mb-1">
+                      Data inicial:
+                    </span>
                     <Input
                       type="date"
                       value={customStartDate}
@@ -559,7 +618,9 @@ export default function RegistrosPage() {
                     />
                   </div>
                   <div>
-                    <span className="text-[11px] text-muted-foreground block mb-1">Data final:</span>
+                    <span className="text-[11px] text-muted-foreground block mb-1">
+                      Data final:
+                    </span>
                     <Input
                       type="date"
                       value={customEndDate}
@@ -573,13 +634,21 @@ export default function RegistrosPage() {
 
             {/* Operador / Responsável */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Quem realizou a ação</label>
-              <Select value={selectedUser} onValueChange={(val) => { if (val) setSelectedUser(val); }}>
+              <label className="text-xs font-semibold text-foreground">
+                Quem realizou a ação
+              </label>
+              <Select
+                value={selectedUser}
+                onValueChange={(val) => {
+                  if (val) setSelectedUser(val);
+                }}>
                 <SelectTrigger className="h-9 text-xs w-full">
                   <SelectValue placeholder="Todos os operadores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos" className="text-xs">Todos os operadores</SelectItem>
+                  <SelectItem value="todos" className="text-xs">
+                    Todos os operadores
+                  </SelectItem>
                   {storeUsers.map((u) => (
                     <SelectItem key={u.id} value={u.id} className="text-xs">
                       {u.name}
@@ -597,33 +666,57 @@ export default function RegistrosPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <span className="text-[11px] text-muted-foreground block mb-1">Status da Venda</span>
-                  <Select value={saleStatus} onValueChange={(val) => { if (val) setSaleStatus(val); }}>
+                  <span className="text-[11px] text-muted-foreground block mb-1">
+                    Status da Venda
+                  </span>
+                  <Select
+                    value={saleStatus}
+                    onValueChange={(val) => {
+                      if (val) setSaleStatus(val);
+                    }}>
                     <SelectTrigger className="h-9 text-xs w-full">
                       <SelectValue placeholder="Todos os status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todos" className="text-xs">Todos os status</SelectItem>
-                      <SelectItem value="PAGO" className="text-xs">Vendas Pagas</SelectItem>
-                      <SelectItem value="PENDENTE" className="text-xs">Vendas Pendentes / Fiado</SelectItem>
-                      <SelectItem value="CANCELADO" className="text-xs">Vendas Canceladas</SelectItem>
+                      <SelectItem value="todos" className="text-xs">
+                        Todos os status
+                      </SelectItem>
+                      <SelectItem value="PAGO" className="text-xs">
+                        Vendas Pagas
+                      </SelectItem>
+                      <SelectItem value="PENDENTE" className="text-xs">
+                        Vendas Pendentes / Fiado
+                      </SelectItem>
+                      <SelectItem value="CANCELADO" className="text-xs">
+                        Vendas Canceladas
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-muted-foreground block mb-1">Forma de Pagamento</span>
-                  <Select value={paymentMethod} onValueChange={(val) => { if (val) setPaymentMethod(val); }}>
+                  <span className="text-[11px] text-muted-foreground block mb-1">
+                    Forma de Pagamento
+                  </span>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={(val) => {
+                      if (val) setPaymentMethod(val);
+                    }}>
                     <SelectTrigger className="h-9 text-xs w-full">
                       <SelectValue placeholder="Todas as formas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todos" className="text-xs">Todas as formas</SelectItem>
-                      {Object.entries(PAYMENT_METHOD_NAMES).map(([key, label]) => (
-                        <SelectItem key={key} value={key} className="text-xs">
-                          {label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="todos" className="text-xs">
+                        Todas as formas
+                      </SelectItem>
+                      {Object.entries(PAYMENT_METHOD_NAMES).map(
+                        ([key, label]) => (
+                          <SelectItem key={key} value={key} className="text-xs">
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -637,15 +730,15 @@ export default function RegistrosPage() {
             <Drawer
               open={isFilterDrawerOpen}
               onOpenChange={setIsFilterDrawerOpen}
-              showSwipeHandle
-            >
+              showSwipeHandle>
               <DrawerContent className="max-h-[85vh] p-4 sm:p-6 overflow-y-auto">
                 <DrawerHeader className="px-0 pt-0 text-center">
                   <DrawerTitle className="text-base font-bold text-foreground text-center">
                     Filtrar Registros de Atividade
                   </DrawerTitle>
                   <DrawerDescription className="text-xs text-muted-foreground text-center">
-                    Personalize a visualização por categoria, período ou operador.
+                    Personalize a visualização por categoria, período ou
+                    operador.
                   </DrawerDescription>
                 </DrawerHeader>
 
@@ -657,16 +750,14 @@ export default function RegistrosPage() {
                       setIsFilterDrawerOpen(false);
                       setPage(1);
                     }}
-                    className="h-11 w-full rounded-full font-medium"
-                  >
+                    className="h-11 w-full rounded-full font-medium">
                     Aplicar Filtros
                   </Button>
                   <Button
                     type="button"
                     variant="ghost"
                     onClick={handleClearFilters}
-                    className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-                  >
+                    className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground">
                     Limpar Filtros
                   </Button>
                 </div>
@@ -678,8 +769,7 @@ export default function RegistrosPage() {
         return (
           <Dialog
             open={isFilterDrawerOpen}
-            onOpenChange={setIsFilterDrawerOpen}
-          >
+            onOpenChange={setIsFilterDrawerOpen}>
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
               <DialogHeader className="text-left">
                 <DialogTitle className="text-base font-bold text-foreground">
@@ -697,8 +787,7 @@ export default function RegistrosPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleClearFilters}
-                  className="text-xs h-9"
-                >
+                  className="text-xs h-9">
                   Limpar Filtros
                 </Button>
                 <Button
@@ -707,8 +796,7 @@ export default function RegistrosPage() {
                     setIsFilterDrawerOpen(false);
                     setPage(1);
                   }}
-                  className="text-xs h-9 px-4"
-                >
+                  className="text-xs h-9 px-4">
                   Aplicar Filtros
                 </Button>
               </DialogFooter>

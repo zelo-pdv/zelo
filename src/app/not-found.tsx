@@ -22,7 +22,7 @@ export default function NotFound() {
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link href="/dashboard">
-          <Button className="rounded-full px-6 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200">
+          <Button className="rounded-full px-6">
             <BoxIcon name="home" className="mr-2 text-base text-current" />
             Ir para o Início
           </Button>

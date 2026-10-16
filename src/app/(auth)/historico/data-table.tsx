@@ -63,7 +63,9 @@ export function SalesDataTable({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const salesSettings = useSettingsStore((s) => s.sales);
-  const paymentMethodsList = salesSettings?.paymentMethods?.length ? salesSettings.paymentMethods : Object.values(PaymentMethod);
+  const paymentMethodsList = salesSettings?.paymentMethods?.length
+    ? salesSettings.paymentMethods
+    : Object.values(PaymentMethod);
 
   // Filtra os dados com base nos filtros selecionados (Itens #18, #19, #20)
   const filteredData = useMemo(() => {
@@ -160,7 +162,15 @@ export function SalesDataTable({
 
   useEffect(() => {
     table.setPageIndex(0);
-  }, [globalFilter, statusFilter, paymentFilter, datePreset, startDate, endDate, table]);
+  }, [
+    globalFilter,
+    statusFilter,
+    paymentFilter,
+    datePreset,
+    startDate,
+    endDate,
+    table,
+  ]);
 
   const rows = table.getRowModel().rows;
   const totalFiltered = table.getFilteredRowModel().rows.length;
@@ -193,10 +203,9 @@ export function SalesDataTable({
             <PopoverTrigger
               render={
                 <Button
-                  variant={activeFiltersCount > 0 ? "default" : "outline"}
+                  variant="outline"
                   className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
-                  aria-label="Abrir filtros"
-                >
+                  aria-label="Abrir filtros">
                   <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
@@ -223,35 +232,41 @@ export function SalesDataTable({
                     variant={statusFilter === "all" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter("all")}
-                  >
+                    onClick={() => setStatusFilter("all")}>
                     Todos
                   </Button>
                   <Button
                     type="button"
-                    variant={statusFilter === SaleStatus.PAGO ? "default" : "outline"}
+                    variant={
+                      statusFilter === SaleStatus.PAGO ? "default" : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter(SaleStatus.PAGO)}
-                  >
+                    onClick={() => setStatusFilter(SaleStatus.PAGO)}>
                     Pagas
                   </Button>
                   <Button
                     type="button"
-                    variant={statusFilter === SaleStatus.PENDENTE ? "default" : "outline"}
+                    variant={
+                      statusFilter === SaleStatus.PENDENTE
+                        ? "default"
+                        : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter(SaleStatus.PENDENTE)}
-                  >
+                    onClick={() => setStatusFilter(SaleStatus.PENDENTE)}>
                     Pendentes
                   </Button>
                   <Button
                     type="button"
-                    variant={statusFilter === SaleStatus.CANCELADO ? "default" : "outline"}
+                    variant={
+                      statusFilter === SaleStatus.CANCELADO
+                        ? "default"
+                        : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter(SaleStatus.CANCELADO)}
-                  >
+                    onClick={() => setStatusFilter(SaleStatus.CANCELADO)}>
                     Canceladas
                   </Button>
                 </div>
@@ -265,8 +280,7 @@ export function SalesDataTable({
                 <select
                   value={paymentFilter}
                   onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-                >
+                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
                   <option value="all">Todas as formas</option>
                   {paymentMethodsList.map((pm) => (
                     <option key={pm} value={pm}>
@@ -287,8 +301,7 @@ export function SalesDataTable({
                     variant={datePreset === "all" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("all")}
-                  >
+                    onClick={() => setDatePreset("all")}>
                     Todos
                   </Button>
                   <Button
@@ -296,8 +309,7 @@ export function SalesDataTable({
                     variant={datePreset === "today" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("today")}
-                  >
+                    onClick={() => setDatePreset("today")}>
                     Hoje
                   </Button>
                   <Button
@@ -305,8 +317,7 @@ export function SalesDataTable({
                     variant={datePreset === "7days" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("7days")}
-                  >
+                    onClick={() => setDatePreset("7days")}>
                     7 dias
                   </Button>
                   <Button
@@ -314,8 +325,7 @@ export function SalesDataTable({
                     variant={datePreset === "30days" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("30days")}
-                  >
+                    onClick={() => setDatePreset("30days")}>
                     30 dias
                   </Button>
                   <Button
@@ -323,8 +333,7 @@ export function SalesDataTable({
                     variant={datePreset === "thisMonth" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("thisMonth")}
-                  >
+                    onClick={() => setDatePreset("thisMonth")}>
                     Este mês
                   </Button>
                   <Button
@@ -332,8 +341,7 @@ export function SalesDataTable({
                     variant={datePreset === "custom" ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setDatePreset("custom")}
-                  >
+                    onClick={() => setDatePreset("custom")}>
                     Personalizado
                   </Button>
                 </div>
@@ -373,8 +381,7 @@ export function SalesDataTable({
                   size="sm"
                   className="w-full text-xs font-medium"
                   onClick={clearAllFilters}
-                  disabled={activeFiltersCount === 0}
-                >
+                  disabled={activeFiltersCount === 0}>
                   Limpar dados
                 </Button>
               </div>
@@ -406,8 +413,7 @@ export function SalesDataTable({
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
-              >
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
                 {/* Dados da Venda */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">
@@ -428,8 +434,7 @@ export function SalesDataTable({
                           "border-amber-500/40 text-amber-700 dark:text-amber-400",
                         sale.status === "CANCELADO" &&
                           "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20 font-medium",
-                      )}
-                    >
+                      )}>
                       {sale.status === "PAGO"
                         ? "Pago"
                         : sale.status === "CANCELADO"
@@ -453,8 +458,7 @@ export function SalesDataTable({
                         isCancelled
                           ? "line-through text-muted-foreground opacity-70"
                           : "text-foreground",
-                      )}
-                    >
+                      )}>
                       {currency(sale.total)}
                     </span>
                   </div>
@@ -470,8 +474,7 @@ export function SalesDataTable({
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Ações da venda"
-                        >
+                          aria-label="Ações da venda">
                           <BoxIcon
                             name="dots-vertical-rounded"
                             className="text-lg"
@@ -488,8 +491,7 @@ export function SalesDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onView(sale);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="show" className="mr-2 text-base" />
                           Visualizar venda
                         </Button>
@@ -503,8 +505,7 @@ export function SalesDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onVoucher(sale);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="receipt" className="mr-2 text-base" />
                           Ver comprovante
                         </Button>
@@ -518,8 +519,7 @@ export function SalesDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(sale);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="pencil" className="mr-2 text-base" />
                           Editar venda
                         </Button>
@@ -535,9 +535,11 @@ export function SalesDataTable({
                             onClick={(e) => {
                               e.stopPropagation();
                               onCancel(sale);
-                            }}
-                          >
-                            <BoxIcon name="x-circle" className="mr-2 text-base" />
+                            }}>
+                            <BoxIcon
+                              name="x-circle"
+                              className="mr-2 text-base"
+                            />
                             Cancelar venda
                           </Button>
                         </>
@@ -572,8 +574,7 @@ export function SalesDataTable({
                             header.column.id === "actions"
                               ? undefined
                               : "hidden sm:table-cell"
-                          }
-                        >
+                          }>
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -597,8 +598,7 @@ export function SalesDataTable({
                               cell.column.id === "actions"
                                 ? undefined
                                 : "hidden sm:table-cell"
-                            }
-                          >
+                            }>
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
@@ -611,8 +611,7 @@ export function SalesDataTable({
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center text-sm text-muted-foreground"
-                      >
+                        className="h-24 text-center text-sm text-muted-foreground">
                         Nenhuma venda encontrada.
                       </TableCell>
                     </TableRow>

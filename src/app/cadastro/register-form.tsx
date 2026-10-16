@@ -258,7 +258,7 @@ export function RegisterForm() {
 
             <Button
               type="submit"
-              className="w-full h-11 text-base font-semibold rounded-xl shadow-lg shadow-black/10 dark:shadow-white/5 transition-all active:scale-[0.98] bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 mt-2 cursor-pointer"
+              className="w-full h-11 text-base font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2 cursor-pointer"
               disabled={loading}
             >
               {loading ? (

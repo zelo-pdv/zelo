@@ -759,7 +759,7 @@ export function OnboardingWizard({
                 type="button"
                 onClick={handleNext}
                 disabled={saving}
-                className="h-11 px-6 rounded-xl font-semibold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 cursor-pointer w-full sm:w-auto sm:ml-auto">
+                className="h-11 px-6 rounded-xl font-semibold shadow-md shadow-primary/20 cursor-pointer w-full sm:w-auto sm:ml-auto">
                 {saving ? (
                   <>
                     <BoxIcon

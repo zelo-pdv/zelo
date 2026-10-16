@@ -220,7 +220,7 @@ export function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-black/10 dark:shadow-white/5 transition-all active:scale-[0.98] bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] cursor-pointer"
               disabled={loading}
             >
               {loading ? (

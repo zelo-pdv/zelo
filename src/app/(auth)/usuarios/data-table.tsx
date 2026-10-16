@@ -146,10 +146,9 @@ export function UsersDataTable({
             <PopoverTrigger
               render={
                 <Button
-                  variant={activeFiltersCount > 0 ? "default" : "outline"}
+                  variant="outline"
                   className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
-                  aria-label="Abrir filtros"
-                >
+                  aria-label="Abrir filtros">
                   <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
@@ -162,7 +161,9 @@ export function UsersDataTable({
             />
             <PopoverContent align="end" className="w-80 p-4 space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
-                <span className="font-semibold text-sm">Filtros de Usuários</span>
+                <span className="font-semibold text-sm">
+                  Filtros de Usuários
+                </span>
               </div>
 
               {/* Status */}
@@ -176,17 +177,15 @@ export function UsersDataTable({
                     variant={statusFilter === "Todos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setStatusFilter("Todos")}
-                  >
+                    onClick={() => setStatusFilter("Todos")}>
                     Todos
                   </Button>
                   <Button
                     type="button"
                     variant={statusFilter === "Ativo" ? "default" : "outline"}
                     size="sm"
-                    className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
-                    onClick={() => setStatusFilter("Ativo")}
-                  >
+                    className="h-8 text-xs text-emerald-400"
+                    onClick={() => setStatusFilter("Ativo")}>
                     Ativo
                   </Button>
                   <Button
@@ -194,8 +193,7 @@ export function UsersDataTable({
                     variant={statusFilter === "Inativo" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs text-muted-foreground"
-                    onClick={() => setStatusFilter("Inativo")}
-                  >
+                    onClick={() => setStatusFilter("Inativo")}>
                     Inativo
                   </Button>
                 </div>
@@ -209,8 +207,7 @@ export function UsersDataTable({
                 <select
                   value={groupFilter}
                   onChange={(e) => setGroupFilter(e.target.value)}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-                >
+                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
                   <option value="Todos">Todos os grupos</option>
                   {groups.map((g) => (
                     <option key={g.id} value={g.name}>
@@ -227,8 +224,7 @@ export function UsersDataTable({
                   size="sm"
                   className="w-full text-xs font-medium"
                   onClick={clearAllFilters}
-                  disabled={activeFiltersCount === 0}
-                >
+                  disabled={activeFiltersCount === 0}>
                   Limpar dados
                 </Button>
               </div>
@@ -244,8 +240,7 @@ export function UsersDataTable({
               size="sm"
               onClick={onExportClick}
               disabled={isExporting}
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="download" className="text-base" />
               <span>{isExporting ? "Exportando..." : "Exportar"}</span>
             </Button>
@@ -255,8 +250,7 @@ export function UsersDataTable({
             type="button"
             onClick={onCreateClick}
             size="sm"
-            className="rounded-full shrink-0 gap-1 cursor-pointer"
-          >
+            className="rounded-full shrink-0 gap-1 cursor-pointer">
             <BoxIcon name="plus" className="text-base" />
             <span>Adicionar</span>
           </Button>
@@ -281,13 +275,13 @@ export function UsersDataTable({
           rows.map((row) => {
             const u = row.original;
             const isSelfOrFirst = u.id === currentUserId || u.isFirstUser;
-            const hasMobileActions = onEdit || onChangePassword || onToggleActive || onDelete;
+            const hasMobileActions =
+              onEdit || onChangePassword || onToggleActive || onDelete;
 
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
-              >
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
                 {/* Dados do Usuário */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">
@@ -297,8 +291,7 @@ export function UsersDataTable({
                     {!u.active && (
                       <Badge
                         variant="outline"
-                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4"
-                      >
+                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4">
                         Inativo
                       </Badge>
                     )}
@@ -334,8 +327,7 @@ export function UsersDataTable({
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Ações do usuário"
-                        >
+                          aria-label="Ações do usuário">
                           <BoxIcon
                             name="dots-vertical-rounded"
                             className="text-lg"
@@ -352,8 +344,7 @@ export function UsersDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(u);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="pencil" className="mr-2 text-base" />
                           Editar usuário
                         </Button>
@@ -367,8 +358,7 @@ export function UsersDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onChangePassword(u);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="key" className="mr-2 text-base" />
                           Trocar senha
                         </Button>
@@ -382,9 +372,11 @@ export function UsersDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onToggleActive(u.id);
-                          }}
-                        >
-                          <BoxIcon name="power-off" className="mr-2 text-base" />
+                          }}>
+                          <BoxIcon
+                            name="power-off"
+                            className="mr-2 text-base"
+                          />
                           {u.active ? "Bloquear acesso" : "Ativar acesso"}
                         </Button>
                       )}
@@ -399,8 +391,7 @@ export function UsersDataTable({
                             onClick={(e) => {
                               e.stopPropagation();
                               onDelete(u);
-                            }}
-                          >
+                            }}>
                             <BoxIcon name="trash" className="mr-2 text-base" />
                             Remover usuário
                           </Button>
@@ -435,8 +426,7 @@ export function UsersDataTable({
                             header.column.id === "name"
                               ? undefined
                               : "hidden sm:table-cell"
-                          }
-                        >
+                          }>
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -459,8 +449,7 @@ export function UsersDataTable({
                               cell.column.id === "name"
                                 ? undefined
                                 : "hidden sm:table-cell"
-                            }
-                          >
+                            }>
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
@@ -473,8 +462,7 @@ export function UsersDataTable({
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center text-sm text-muted-foreground"
-                      >
+                        className="h-24 text-center text-sm text-muted-foreground">
                         Nenhum usuário encontrado.
                       </TableCell>
                     </TableRow>
