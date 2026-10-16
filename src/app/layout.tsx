@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Montserrat, Outfit, Noto_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+// @ts-expect-error Next.js bundles this stylesheet, but TypeScript has no CSS declaration.
 import "./globals.css";
+// @ts-expect-error Boxicons bundles this stylesheet, but TypeScript has no CSS declaration.
 import "boxicons/css/boxicons.min.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PWAUpdater } from "@/components/pwa-updater";
@@ -26,15 +28,14 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://zelo.com.br";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Zelo | Gestão de Vendas, Catálogo e PDV",
+    default: "Zelo | Gestão de Vendas",
     template: "%s | Zelo",
   },
   description:
-    "Zelo: Gestão de vendas, estoque e pedidos para revendedores e pequenos negócios. Caderno de pedidos digital, PDV ágil e controle de cobranças sem complicação.",
+    "Zelo: Gestão de vendas, estoque e pedidos para revendedores e pequenos negócios. Caderno de pedidos digital e controle de cobranças sem complicação.",
   keywords: [
     "zelo",
     "gestão de vendas",
-    "pdv",
     "ponto de venda",
     "caderno de pedidos",
     "controle de estoque",
@@ -63,23 +64,23 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: siteUrl,
     siteName: "Zelo",
-    title: "Zelo | Gestão de Vendas, Catálogo e PDV",
+    title: "Zelo | Gestão de Vendas, Catálogo",
     description:
-      "Sistema inteligente e prático para pequenos negócios e revendedores. Caderno de pedidos digital, controle de estoque, PDV ágil e cobranças sem complicação.",
+      "Sistema inteligente e prático para pequenos negócios e revendedores. Caderno de pedidos digital, controle de estoque e cobranças sem complicação.",
     images: [
       {
         url: "/zelo.jpeg",
         width: 1200,
         height: 1200,
-        alt: "Zelo - Gestão Comercial e PDV",
+        alt: "Zelo - Gestão Comercial",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zelo | Gestão de Vendas, Catálogo e PDV",
+    title: "Zelo | Gestão de Vendas",
     description:
-      "Sistema inteligente e prático para pequenos negócios e revendedores. Caderno de pedidos digital, controle de estoque e PDV ágil.",
+      "Sistema inteligente e prático para pequenos negócios e revendedores. Caderno de pedidos digital, controle de estoque.",
     images: ["/zelo.jpeg"],
   },
   robots: {
@@ -118,7 +119,6 @@ const jsonLd = {
         priceCurrency: "BRL",
       },
       featureList: [
-        "Ponto de Venda (PDV) ágil no celular e desktop",
         "Leitor de código de barras e QR Code via câmera",
         "Controle de estoque flexível e alertas de reposição",
         "Gestão de clientes com busca automática por CEP",
@@ -166,8 +166,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
-        >
+          disableTransitionOnChange>
           {children}
           <PWAUpdater />
           <ThemeColorUpdater />

@@ -259,14 +259,14 @@ export function ProductsDataTable({
           </Popover>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {onConfigClick && (
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onConfigClick}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
             >
               <BoxIcon name="cog" className="text-base" />
               <span>Configurações</span>
@@ -279,7 +279,7 @@ export function ProductsDataTable({
               variant="outline"
               size="sm"
               onClick={onImportClick}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
             >
               <BoxIcon name="upload" className="text-base" />
               <span>Importar</span>
@@ -293,7 +293,7 @@ export function ProductsDataTable({
               size="sm"
               onClick={onExportClick}
               disabled={isExporting}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
             >
               <BoxIcon name="download" className="text-base" />
               <span>{isExporting ? "Exportando..." : "Exportar"}</span>
@@ -304,7 +304,7 @@ export function ProductsDataTable({
             type="button"
             onClick={onCreateClick}
             size="sm"
-            className="rounded-full hidden sm:flex shrink-0 gap-1 cursor-pointer"
+            className="rounded-full shrink-0 gap-1 cursor-pointer"
           >
             <BoxIcon name="plus" className="text-base" />
             <span>Adicionar</span>

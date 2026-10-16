@@ -236,7 +236,7 @@ export function UsersDataTable({
           </Popover>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {onExportClick && (
             <Button
               type="button"
@@ -244,7 +244,7 @@ export function UsersDataTable({
               size="sm"
               onClick={onExportClick}
               disabled={isExporting}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer"
             >
               <BoxIcon name="download" className="text-base" />
               <span>{isExporting ? "Exportando..." : "Exportar"}</span>
@@ -255,7 +255,7 @@ export function UsersDataTable({
             type="button"
             onClick={onCreateClick}
             size="sm"
-            className="rounded-full hidden sm:flex shrink-0 gap-1 cursor-pointer"
+            className="rounded-full shrink-0 gap-1 cursor-pointer"
           >
             <BoxIcon name="plus" className="text-base" />
             <span>Adicionar</span>
@@ -282,18 +282,12 @@ export function UsersDataTable({
             const u = row.original;
             const isSelfOrFirst = u.id === currentUserId || u.isFirstUser;
             const hasMobileActions = onEdit || onChangePassword || onToggleActive || onDelete;
-            const initial = u.name.charAt(0).toUpperCase() || "U";
 
             return (
               <div
                 key={row.id}
                 className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
               >
-                {/* Avatar / Inicial do Usuário */}
-                <div className="h-12 w-12 rounded-2xl shrink-0 bg-primary/10 text-primary font-bold flex items-center justify-center text-lg">
-                  {initial}
-                </div>
-
                 {/* Dados do Usuário */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">

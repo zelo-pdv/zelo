@@ -437,17 +437,10 @@ export default function RegistrosPage() {
                 return (
                   <div
                     key={log.id}
-                    className="flex items-start gap-3 p-3.5 sm:p-4 hover:bg-muted/30 transition-colors"
+                    className="p-3.5 sm:p-4 hover:bg-muted/30 transition-colors space-y-1"
                   >
-                    {/* Ícone */}
-                    <div
-                      className={`mt-0.5 size-8 sm:size-9 rounded-xl border flex items-center justify-center shrink-0 ${formatted.colorClass}`}
-                    >
-                      <BoxIcon name={formatted.icon} className="text-base sm:text-lg" />
-                    </div>
-
                     {/* Conteúdo Humanizado */}
-                    <div className="flex-1 min-w-0 space-y-1">
+                    <div className="space-y-1">
                       <div className="flex flex-wrap items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-semibold text-xs sm:text-sm text-foreground">

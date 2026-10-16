@@ -30,7 +30,7 @@ export function MobileActionFab({ onAdd, onExport, onConfig, onImport, isExporti
       )}
       <div
         className={cn(
-          "fixed right-4 z-50 flex flex-col-reverse items-end gap-3 pointer-events-none transition-all duration-300 ease-in-out",
+          "fixed right-4 z-50 flex flex-col-reverse items-end gap-3 pointer-events-none transition-all duration-300 ease-in-out md:hidden",
           "bottom-[calc(84px+env(safe-area-inset-bottom))]"
         )}
       >

@@ -408,29 +408,6 @@ export function SalesDataTable({
                 key={row.id}
                 className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
               >
-                {/* Ícone de Status da Venda */}
-                <div
-                  className={cn(
-                    "h-12 w-12 rounded-2xl shrink-0 flex items-center justify-center text-xl font-bold",
-                    sale.status === "PAGO"
-                      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : sale.status === "CANCELADO"
-                        ? "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                        : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400",
-                  )}
-                >
-                  <BoxIcon
-                    name={
-                      sale.status === "PAGO"
-                        ? "check-circle"
-                        : sale.status === "CANCELADO"
-                          ? "x-circle"
-                          : "time-five"
-                    }
-                    className="text-2xl"
-                  />
-                </div>
-
                 {/* Dados da Venda */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">

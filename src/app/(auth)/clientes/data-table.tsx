@@ -157,8 +157,7 @@ export function ClientsDataTable({
                 <Button
                   variant={activeFiltersCount > 0 ? "default" : "outline"}
                   className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
-                  aria-label="Abrir filtros"
-                >
+                  aria-label="Abrir filtros">
                   <BoxIcon name="slider-alt" className="text-lg" />
                   <span className="hidden sm:inline">Filtros</span>
                   {activeFiltersCount > 0 && (
@@ -171,7 +170,9 @@ export function ClientsDataTable({
             />
             <PopoverContent align="end" className="w-80 p-4 space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
-                <span className="font-semibold text-sm">Filtros de Clientes</span>
+                <span className="font-semibold text-sm">
+                  Filtros de Clientes
+                </span>
               </div>
 
               {/* Status de Cadastro */}
@@ -185,8 +186,7 @@ export function ClientsDataTable({
                     variant={activeFilter === "Todos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setActiveFilter("Todos")}
-                  >
+                    onClick={() => setActiveFilter("Todos")}>
                     Todos
                   </Button>
                   <Button
@@ -194,17 +194,17 @@ export function ClientsDataTable({
                     variant={activeFilter === "Ativos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
-                    onClick={() => setActiveFilter("Ativos")}
-                  >
+                    onClick={() => setActiveFilter("Ativos")}>
                     Ativos
                   </Button>
                   <Button
                     type="button"
-                    variant={activeFilter === "Inativos" ? "default" : "outline"}
+                    variant={
+                      activeFilter === "Inativos" ? "default" : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs text-muted-foreground"
-                    onClick={() => setActiveFilter("Inativos")}
-                  >
+                    onClick={() => setActiveFilter("Inativos")}>
                     Inativos
                   </Button>
                 </div>
@@ -221,17 +221,17 @@ export function ClientsDataTable({
                     variant={pendingFilter === "Todos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setPendingFilter("Todos")}
-                  >
+                    onClick={() => setPendingFilter("Todos")}>
                     Todas
                   </Button>
                   <Button
                     type="button"
-                    variant={pendingFilter === "Pendentes" ? "default" : "outline"}
+                    variant={
+                      pendingFilter === "Pendentes" ? "default" : "outline"
+                    }
                     size="sm"
                     className="h-8 text-xs text-amber-600 dark:text-amber-400"
-                    onClick={() => setPendingFilter("Pendentes")}
-                  >
+                    onClick={() => setPendingFilter("Pendentes")}>
                     Pendentes
                   </Button>
                   <Button
@@ -239,8 +239,7 @@ export function ClientsDataTable({
                     variant={pendingFilter === "Pagos" ? "default" : "outline"}
                     size="sm"
                     className="h-8 text-xs text-muted-foreground"
-                    onClick={() => setPendingFilter("Pagos")}
-                  >
+                    onClick={() => setPendingFilter("Pagos")}>
                     Em dia
                   </Button>
                 </div>
@@ -253,8 +252,7 @@ export function ClientsDataTable({
                   size="sm"
                   className="w-full text-xs font-medium"
                   onClick={clearAllFilters}
-                  disabled={activeFiltersCount === 0}
-                >
+                  disabled={activeFiltersCount === 0}>
                   Limpar dados
                 </Button>
               </div>
@@ -269,8 +267,7 @@ export function ClientsDataTable({
               variant="outline"
               size="sm"
               onClick={onImportClick}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="upload" className="text-base" />
               <span>Importar</span>
             </Button>
@@ -283,8 +280,7 @@ export function ClientsDataTable({
               size="sm"
               onClick={onExportClick}
               disabled={isExporting}
-              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer"
-            >
+              className="rounded-full hidden sm:flex shrink-0 gap-1.5 cursor-pointer">
               <BoxIcon name="download" className="text-base" />
               <span>{isExporting ? "Exportando..." : "Exportar"}</span>
             </Button>
@@ -295,8 +291,7 @@ export function ClientsDataTable({
               type="button"
               onClick={onCreateClick}
               size="sm"
-              className="rounded-full hidden sm:flex shrink-0 gap-1 cursor-pointer"
-            >
+              className="rounded-full hidden sm:flex shrink-0 gap-1 cursor-pointer">
               <BoxIcon name="plus" className="text-base" />
               <span>Adicionar</span>
             </Button>
@@ -322,19 +317,13 @@ export function ClientsDataTable({
           rows.map((row) => {
             const client = row.original;
             const isProtected = client.name === "Consumidor Final";
-            const hasMobileActions = onView || onEdit || onDelete || onToggleActive;
-            const initial = client.name.charAt(0).toUpperCase() || "C";
+            const hasMobileActions =
+              onView || onEdit || onDelete || onToggleActive;
 
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20"
-              >
-                {/* Avatar / Inicial do Cliente */}
-                <div className="h-12 w-12 rounded-2xl shrink-0 bg-primary/10 text-primary font-bold flex items-center justify-center text-lg">
-                  {initial}
-                </div>
-
+                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
                 {/* Dados do Cliente */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">
@@ -344,8 +333,7 @@ export function ClientsDataTable({
                     {!client.active && (
                       <Badge
                         variant="outline"
-                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4"
-                      >
+                        className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1.5 h-4">
                         Inativo
                       </Badge>
                     )}
@@ -369,8 +357,7 @@ export function ClientsDataTable({
                     <div className="mt-0.5">
                       <Badge
                         variant="destructive"
-                        className="text-[10px] px-1.5 py-0 h-4 font-semibold"
-                      >
+                        className="text-[10px] px-1.5 py-0 h-4 font-semibold">
                         Pendente: {currency(client.pendingAmount)}
                       </Badge>
                     </div>
@@ -387,8 +374,7 @@ export function ClientsDataTable({
                           size="icon"
                           className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 rounded-lg cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Ações do cliente"
-                        >
+                          aria-label="Ações do cliente">
                           <BoxIcon
                             name="dots-vertical-rounded"
                             className="text-lg"
@@ -405,8 +391,7 @@ export function ClientsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onView(client);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="show" className="mr-2 text-base" />
                           Visualizar
                         </Button>
@@ -420,8 +405,7 @@ export function ClientsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(client);
-                          }}
-                        >
+                          }}>
                           <BoxIcon name="pencil" className="mr-2 text-base" />
                           Editar
                         </Button>
@@ -435,8 +419,7 @@ export function ClientsDataTable({
                           onClick={(e) => {
                             e.stopPropagation();
                             onToggleActive(client);
-                          }}
-                        >
+                          }}>
                           <BoxIcon
                             name="power-off"
                             className="mr-2 text-base"
@@ -455,8 +438,7 @@ export function ClientsDataTable({
                             onClick={(e) => {
                               e.stopPropagation();
                               onDelete(client);
-                            }}
-                          >
+                            }}>
                             <BoxIcon name="trash" className="mr-2 text-base" />
                             Excluir
                           </Button>
@@ -477,72 +459,68 @@ export function ClientsDataTable({
 
       <div className="hidden md:block">
         <Card className="border-border/70 p-0">
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-hidden sm:overflow-x-auto">
-            <Table className="table-fixed w-full">
-              <TableHeader>
-                {table.getHeaderGroups().map((hg) => (
-                  <TableRow key={hg.id}>
-                    {hg.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className={
-                          header.column.id === "name" ||
-                          header.column.id === "actions"
-                            ? undefined
-                            : "hidden sm:table-cell"
-                        }
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {rows.length ? (
-                  rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-hidden sm:overflow-x-auto">
+              <Table className="table-fixed w-full">
+                <TableHeader>
+                  {table.getHeaderGroups().map((hg) => (
+                    <TableRow key={hg.id}>
+                      {hg.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
                           className={
-                            cell.column.id === "name" ||
-                            cell.column.id === "actions"
+                            header.column.id === "name" ||
+                            header.column.id === "actions"
                               ? undefined
                               : "hidden sm:table-cell"
-                          }
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
+                          }>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-sm text-muted-foreground"
-                    >
-                      Nenhum cliente encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {rows.length ? (
+                    rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={
+                              cell.column.id === "name" ||
+                              cell.column.id === "actions"
+                                ? undefined
+                                : "hidden sm:table-cell"
+                            }>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-sm text-muted-foreground">
+                        Nenhum cliente encontrado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
     </div>
   );
 }
