@@ -34,15 +34,15 @@ export function ThemeColorUpdater() {
       // - Modo dark: #000000 (preto profundo igual ao fundo escurecido com desfoque)
       // - Modo light: #999999 (cinza suave equivalente ao desfoque bg-black/40 sobre branco)
       // Quando fechado ou componente sem desfoque (ex: filtros, detalhes, comprovantes):
-      // - Modo dark: #0a0a0a (cor real de fundo do app em dark mode, oklch(0.145 0 0))
+      // - Modo dark: #18161a (cor real de fundo do app em dark mode, oklch(0.145 0 0))
       // - Modo light: #ffffff (cor de fundo branca do app em light mode)
       const color = isFormOpen
         ? isDark
           ? "#000000"
           : "#999999"
         : isDark
-        ? "#0a0a0a"
-        : "#ffffff";
+          ? "#18161a"
+          : "#ffffff";
 
       // Atualiza meta[name="theme-color"]
       const existingMetas = document.querySelectorAll('meta[name="theme-color"]');
