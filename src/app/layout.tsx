@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Montserrat, Outfit, Noto_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-// @ts-expect-error Next.js bundles this stylesheet, but TypeScript has no CSS declaration.
 import "./globals.css";
-// @ts-expect-error Boxicons bundles this stylesheet, but TypeScript has no CSS declaration.
 import "boxicons/css/boxicons.min.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PWAUpdater } from "@/components/pwa-updater";
