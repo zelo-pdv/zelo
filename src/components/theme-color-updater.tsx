@@ -34,33 +34,63 @@ export function ThemeColorUpdater() {
       // - Modo dark: #000000 (preto profundo igual ao fundo escurecido com desfoque)
       // - Modo light: #999999 (cinza suave equivalente ao desfoque bg-black/40 sobre branco)
       // Quando fechado ou componente sem desfoque (ex: filtros, detalhes, comprovantes):
-      // - Modo dark: #0a0a0a (cor real de fundo do app em dark mode, oklch(0.145 0 0))
-      // - Modo light: #ffffff (cor de fundo branca do app em light mode)
+      // - Modo dark: #0C090C (cor real de fundo do app em dark mode, oklch(0.145 0.008 326))
+      // - Modo light: #FFFFFF (cor de fundo branca do app em light mode, oklch(1 0 0))
       const color = isFormOpen
         ? isDark
           ? "#000000"
           : "#999999"
         : isDark
-        ? "#0a0a0a"
-        : "#ffffff";
+        ? "#0C090C"
+        : "#FFFFFF";
 
       // Atualiza meta[name="theme-color"]
-      const existingMetas = document.querySelectorAll('meta[name="theme-color"]');
-      if (existingMetas.length > 1) {
-        existingMetas.forEach((el, index) => {
-          if (index > 0) el.remove();
-        });
-      }
+      const existingMetas = Array.from(
+        document.querySelectorAll('meta[name="theme-color"]')
+      );
 
-      let meta = existingMetas[0];
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.setAttribute("name", "theme-color");
-        document.head.appendChild(meta);
-      }
-      meta.removeAttribute("media");
-      if (meta.getAttribute("content") !== color) {
-        meta.setAttribute("content", color);
+      if (theme === "system" && !isFormOpen) {
+        // Modo do sistema sem modal: mantém ou cria as duas tags com media query nativa
+        const hasValidDualMetas =
+          existingMetas.length === 2 &&
+          existingMetas.some((m) =>
+            m.getAttribute("media")?.includes("light")
+          ) &&
+          existingMetas.some((m) =>
+            m.getAttribute("media")?.includes("dark")
+          );
+
+        if (!hasValidDualMetas) {
+          existingMetas.forEach((el) => el.remove());
+
+          const lightMeta = document.createElement("meta");
+          lightMeta.setAttribute("name", "theme-color");
+          lightMeta.setAttribute("media", "(prefers-color-scheme: light)");
+          lightMeta.setAttribute("content", "#FFFFFF");
+          document.head.appendChild(lightMeta);
+
+          const darkMeta = document.createElement("meta");
+          darkMeta.setAttribute("name", "theme-color");
+          darkMeta.setAttribute("media", "(prefers-color-scheme: dark)");
+          darkMeta.setAttribute("content", "#0C090C");
+          document.head.appendChild(darkMeta);
+        }
+      } else {
+        // Modo explícito (dark / light) ou formulário com desfoque aberto: tag única direcionada
+        if (existingMetas.length > 1) {
+          existingMetas.slice(1).forEach((el) => el.remove());
+        }
+
+        let meta = existingMetas[0];
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.setAttribute("name", "theme-color");
+          document.head.appendChild(meta);
+        }
+        meta.removeAttribute("media");
+        if (meta.getAttribute("content") !== color) {
+          meta.setAttribute("content", color);
+        }
       }
 
       // Atualiza meta[name="apple-mobile-web-app-status-bar-style"]
