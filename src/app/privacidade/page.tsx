@@ -229,10 +229,10 @@ export default function PrivacidadePage() {
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
               <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-foreground text-sm font-bold">6</span>
-              Retenção, Zona de Perigo e Exclusão de Dados
+              Retenção e Gerenciamento de Dados
             </h2>
             <p className="text-muted-foreground">
-              Os dados permanecem armazenados enquanto a conta da loja estiver ativa. O titular da loja conta com controle total sobre seus dados através do módulo de <strong>Configurações &gt; Zona de Perigo</strong>:
+              Os dados permanecem armazenados enquanto a conta da loja estiver ativa. O titular da loja conta com controle total sobre seus dados através do módulo de <strong>Configurações &gt; Gerenciamento de dados</strong>:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-muted-foreground text-sm">
               <li>

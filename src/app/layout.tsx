@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: "Zelo | Gestão de Vendas",
-    template: "%s | Zelo",
+    template: "Zelo | %s",
   },
   description:
     "Zelo: Gestão de vendas, estoque e pedidos para revendedores e pequenos negócios. Caderno de pedidos digital e controle de cobranças sem complicação.",

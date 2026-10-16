@@ -85,16 +85,9 @@ export function GroupsSection() {
             aria-expanded={isExpanded}
           >
             <div className="flex items-center gap-2 flex-wrap">
-              <BoxIcon name="shield-quarter" solid={isExpanded} className="text-base text-foreground shrink-0" />
               <CardTitle className="text-base font-semibold">Grupos de acesso</CardTitle>
-              {!isExpanded && (
-                <span className="hidden sm:inline text-xs text-muted-foreground">
-                  • {groups.length} grupo{groups.length === 1 ? "" : "s"} configurado{groups.length === 1 ? "" : "s"}
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground shrink-0 ml-2">
-              <span>{isExpanded ? "Minimizar" : "Gerenciar"}</span>
               <BoxIcon
                 name="chevron-down"
                 className={cn(

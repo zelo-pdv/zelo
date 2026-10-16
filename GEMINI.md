@@ -62,7 +62,7 @@ src/
 │   │   ├── clientes/       # Gestão de clientes e histórico de compras
 │   │   ├── historico/      # Histórico geral de vendas e emissão de comprovantes
 │   │   ├── usuarios/       # Gestão de operadores e equipe da loja
-│   │   ├── configuracoes/  # Configurações da loja, grupos de acesso e Zona de Perigo
+│   │   ├── configuracoes/  # Configurações da loja, grupos de acesso e Gerenciamento de Dados
 │   │   └── registros/      # Logs de auditoria do sistema
 │   ├── api/                # Endpoints HTTP da API REST (Next.js Route Handlers)
 │   ├── cadastro/           # Criação de conta (loja + administrador inicial)
@@ -115,7 +115,7 @@ src/
    - Listagem ordenada de vendas com filtros por data, status (Pago/Pendente/Cancelado) e cliente.
    - Cancelamento de venda com estorno automático de estoque e comprovante imprimível/compartilhável em WhatsApp.
 7. **Configurações (`/configuracoes`):**
-   - Dados da loja, regras de estoque, formas de pagamento, grupos de acesso com permissões refinadas e **Zona de Perigo** (para exclusão de registros da loja ou exclusão definitiva da conta mediante confirmação com a senha do usuário).
+   - Dados da loja, regras de estoque, formas de pagamento, grupos de acesso com permissões refinadas e **Gerenciamento de Dados** (para exclusão de registros da loja ou exclusão definitiva da conta mediante confirmação com a senha do usuário).
 
 ---
 
@@ -139,7 +139,7 @@ src/
 
 ### Proteção de Registros Essenciais
 - **Cliente "Consumidor Final":** Não pode ser excluído nem desativado, pois garante a integridade de vendas avulsas e do PDV.
-- **Exclusões na Zona de Perigo:**
+- **Exclusões em Gerenciamento de Dados:**
   - Ambas as ações (*Excluir dados* e *Excluir conta*) exigem autenticação obrigatória via senha atual do administrador verificada com `bcrypt.compare`.
   - Excluir dados apaga itens operacionais, preservando o usuário administrador, a loja e restaurando os registros padrão (*Consumidor Final* e categoria *Geral*).
 

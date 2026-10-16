@@ -55,7 +55,7 @@
 - Criptografia de senhas com algoritmo bcrypt e salt seguro.
 - Totalmente aderente à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
 - Ausência total de cookies de rastreamento publicitário de terceiros.
-- Opção na "Zona de Perigo" para exclusão controlada de dados ou cancelamento de conta com validação de senha.
+- Opção em "Gerenciamento de dados" para exclusão controlada de dados ou cancelamento de conta com validação de senha.
 
 ## URLs Públicas Oficiais
 - Início: https://zelo.com.br/

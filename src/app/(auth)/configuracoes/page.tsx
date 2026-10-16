@@ -59,8 +59,8 @@ export default function ConfiguracoesPage() {
       <NotificationsSection />
       <SalesConfigSection />
       <GroupsSection />
-      <DangerZoneSection />
-      </div>
+      <DataManagementSection />
+    </div>
   );
 }
 
@@ -1006,11 +1006,12 @@ function SalesConfigSection() {
   );
 }
 
-function DangerZoneSection() {
+function DataManagementSection() {
   const router = useRouter();
   const [lojaId, setLojaId] = useState<string | null>(null);
   const [storeName, setStoreName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Estados dos modais de confirmação
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
@@ -1032,7 +1033,7 @@ function DangerZoneSection() {
           setStoreName(data.name || "");
         }
       } catch (err) {
-        console.error("Erro ao carregar loja para zona de perigo:", err);
+        console.error("Erro ao carregar loja para gerenciamento de dados:", err);
       } finally {
         setLoading(false);
       }
@@ -1089,65 +1090,79 @@ function DangerZoneSection() {
 
   return (
     <>
-      <Card className="border-destructive/30 bg-destructive/5 dark:bg-destructive/10 mt-6 overflow-hidden">
-        <CardHeader className="pb-3 border-b border-destructive/20">
-          <div className="flex items-center gap-2">
-            <BoxIcon name="error" className="text-xl text-destructive" />
-            <CardTitle className="text-base font-semibold text-destructive">
-              Zona de Perigo
-            </CardTitle>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Ações irreversíveis para gerenciamento de registros e encerramento de conta.
-          </p>
+      <Card className="mb-4">
+        <CardHeader className="py-4">
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="flex w-full items-center justify-between text-left cursor-pointer group hover:opacity-80 transition-opacity"
+            aria-expanded={isExpanded}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <CardTitle className="text-base font-semibold">Gerenciamento de dados</CardTitle>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground shrink-0 ml-2">
+              <BoxIcon
+                name="chevron-down"
+                className={cn(
+                  "text-base transition-transform duration-200",
+                  isExpanded && "rotate-180"
+                )}
+              />
+            </div>
+          </button>
         </CardHeader>
-        <CardContent className="pt-5 space-y-4">
-          {/* Opção 1: Excluir todos os dados e registros */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-destructive/20 bg-background/60">
-            <div className="space-y-1 pr-2">
-              <h4 className="text-sm font-semibold text-foreground">
-                Excluir todos os dados e registros
-              </h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Apaga todas as vendas, produtos, clientes e histórico de movimentações da loja. Sua conta, login e configurações serão preservados para você recomeçar do zero.
-              </p>
+        {isExpanded && (
+          <CardContent className="space-y-4 pt-0 animate-in fade-in-50 duration-150">
+            {/* Opção 1: Excluir todos os dados e registros */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/70 bg-background/60">
+              <div className="space-y-1 pr-2">
+                <h4 className="text-sm font-semibold text-foreground">
+                  Excluir todos os dados e registros
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Apaga todas as vendas, produtos, clientes e histórico de movimentações da loja. Sua conta, login e configurações serão preservados para você recomeçar do zero.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPurgePassword("");
+                  setIsPurgeModalOpen(true);
+                }}
+                className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground cursor-pointer text-xs h-9 px-4 font-semibold"
+              >
+                <BoxIcon name="trash" className="mr-1.5 text-base" />
+                Excluir dados
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setPurgePassword("");
-                setIsPurgeModalOpen(true);
-              }}
-              className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground cursor-pointer text-xs h-9 px-4 font-semibold">
-              <BoxIcon name="trash" className="mr-1.5 text-base" />
-              Excluir dados
-            </Button>
-          </div>
 
-          {/* Opção 2: Excluir conta completa */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-destructive/30 bg-destructive/10">
-            <div className="space-y-1 pr-2">
-              <h4 className="text-sm font-semibold text-destructive">
-                Excluir conta definitivamente
-              </h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Exclui permanentemente sua loja, todos os usuários, acessos, configurações e todos os dados associados. Esta ação é irreversível e encerrará sua sessão imediatamente.
-              </p>
+            {/* Opção 2: Excluir conta completa */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/70 bg-background/60">
+              <div className="space-y-1 pr-2">
+                <h4 className="text-sm font-semibold text-foreground">
+                  Excluir conta definitivamente
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Exclui permanentemente sua loja, todos os usuários, acessos, configurações e todos os dados associados. Esta ação é irreversível e encerrará sua sessão imediatamente.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setDeleteAccountPassword("");
+                  setIsDeleteAccountModalOpen(true);
+                }}
+                className="shrink-0 font-semibold cursor-pointer text-xs h-9 px-4 shadow-sm shadow-destructive/20"
+              >
+                <BoxIcon name="user-x" className="mr-1.5 text-base" />
+                Excluir conta
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                setDeleteAccountPassword("");
-                setIsDeleteAccountModalOpen(true);
-              }}
-              className="shrink-0 font-semibold cursor-pointer text-xs h-9 px-4 shadow-sm shadow-destructive/20">
-              <BoxIcon name="user-x" className="mr-1.5 text-base" />
-              Excluir conta
-            </Button>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Modal 1: Confirmação de Exclusão de Dados */}
