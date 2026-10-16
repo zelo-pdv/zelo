@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Outfit, Noto_Sans } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "boxicons/css/boxicons.min.css";
@@ -7,23 +7,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PWAUpdater } from "@/components/pwa-updater";
 import { ThemeColorUpdater } from "@/components/theme-color-updater";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
-<<<<<<< HEAD
-import { cn } from "@/lib/utils";
-
-const notoSansHeading = Noto_Sans({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
-
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
-=======
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-
-const notoSansHeading = Noto_Sans({subsets:['latin'],variable:'--font-heading'});
-
-const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
->>>>>>> bad55af93f5b96c4cec9ea09eca9bcf6fccc74f6
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -108,10 +91,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0C090C" },
-  ],
 };
 
 const jsonLd = {
@@ -164,14 +143,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<<<<<<< HEAD
-    <html
-      lang="pt-br"
-      suppressHydrationWarning
-      className={cn("font-sans", outfit.variable, notoSansHeading.variable)}>
-=======
-    <html lang="pt-br" suppressHydrationWarning className={cn("font-sans", outfit.variable, notoSansHeading.variable)}>
->>>>>>> bad55af93f5b96c4cec9ea09eca9bcf6fccc74f6
+    <html lang="pt-br" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -183,16 +155,9 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-<<<<<<< HEAD
-          disableTransitionOnChange>
-          {children}
-=======
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
->>>>>>> bad55af93f5b96c4cec9ea09eca9bcf6fccc74f6
+          {children}
           <PWAUpdater />
           <ThemeColorUpdater />
           <Toaster position="top-right" richColors />
