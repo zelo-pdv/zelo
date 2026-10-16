@@ -33,6 +33,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ConfiguracoesPage() {
   const { isAdmin } = usePermissions();
@@ -1008,6 +1017,7 @@ function SalesConfigSection() {
 
 function DataManagementSection() {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [lojaId, setLojaId] = useState<string | null>(null);
   const [storeName, setStoreName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -1166,120 +1176,238 @@ function DataManagementSection() {
       </Card>
 
       {/* Modal 1: Confirmação de Exclusão de Dados */}
-      <AlertDialog open={isPurgeModalOpen} onOpenChange={setIsPurgeModalOpen}>
-        <AlertDialogContent className="max-w-md p-6">
-          <AlertDialogHeader className="space-y-2">
-            <div className="flex items-center gap-2 text-destructive">
-              <BoxIcon name="error-circle" className="text-2xl" />
-              <AlertDialogTitle className="text-lg font-bold">
-                Excluir todos os dados e registros?
-              </AlertDialogTitle>
+      {isMobile ? (
+        <Drawer open={isPurgeModalOpen} onOpenChange={setIsPurgeModalOpen} blur>
+          <DrawerContent className="p-4 max-h-[85vh] flex flex-col">
+            <DrawerHeader className="px-0 text-center">
+              <div className="flex items-center justify-center gap-2 text-destructive mb-1">
+                <BoxIcon name="error-circle" className="text-2xl shrink-0" />
+                <DrawerTitle className="text-base font-bold text-center">
+                  Excluir todos os dados e registros?
+                </DrawerTitle>
+              </div>
+              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">
+                Esta ação apagará <strong>todas as vendas, produtos e clientes</strong> da loja <span className="font-semibold text-foreground">{storeName}</span>. Seus dados cadastrais e usuários continuarão intactos.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="space-y-2.5 py-4">
+              <Label htmlFor="purge-password-input-mobile" className="text-xs font-semibold">
+                Digite sua senha de acesso para confirmar:
+              </Label>
+              <Input
+                id="purge-password-input-mobile"
+                type="password"
+                value={purgePassword}
+                onChange={(e) => setPurgePassword(e.target.value)}
+                placeholder="Sua senha atual"
+                className="text-sm h-11"
+                autoComplete="current-password"
+              />
             </div>
-            <AlertDialogDescription className="text-sm text-muted-foreground">
-              Esta ação apagará <strong>todas as vendas, produtos e clientes</strong> da loja <span className="font-semibold text-foreground">{storeName}</span>. Seus dados cadastrais e usuários continuarão intactos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
 
-          <div className="space-y-2.5 py-3">
-            <Label htmlFor="purge-password-input" className="text-xs font-semibold">
-              Digite sua senha de acesso para confirmar:
-            </Label>
-            <Input
-              id="purge-password-input"
-              type="password"
-              value={purgePassword}
-              onChange={(e) => setPurgePassword(e.target.value)}
-              placeholder="Sua senha atual"
-              className="text-sm"
-              autoComplete="current-password"
-            />
-          </div>
+            <DrawerFooter className="px-0 pt-2 pb-0 mt-auto border-t-0 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={busyAction === "purge" || !purgePassword.trim()}
+                onClick={handlePurgeData}
+                className="w-full h-11 rounded-xl font-semibold cursor-pointer">
+                {busyAction === "purge" ? (
+                  <>
+                    <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir dados"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busyAction === "purge"}
+                onClick={() => setIsPurgeModalOpen(false)}
+                className="w-full h-10 rounded-xl cursor-pointer">
+                Cancelar
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <AlertDialog open={isPurgeModalOpen} onOpenChange={setIsPurgeModalOpen}>
+          <AlertDialogContent className="max-w-md p-6">
+            <AlertDialogHeader className="space-y-2">
+              <div className="flex items-center gap-2 text-destructive">
+                <BoxIcon name="error-circle" className="text-2xl" />
+                <AlertDialogTitle className="text-lg font-bold">
+                  Excluir todos os dados e registros?
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-sm text-muted-foreground">
+                Esta ação apagará <strong>todas as vendas, produtos e clientes</strong> da loja <span className="font-semibold text-foreground">{storeName}</span>. Seus dados cadastrais e usuários continuarão intactos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busyAction === "purge"}
-              onClick={() => setIsPurgeModalOpen(false)}
-              className="w-full sm:w-auto cursor-pointer">
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={busyAction === "purge" || !purgePassword.trim()}
-              onClick={handlePurgeData}
-              className="w-full sm:w-auto font-semibold cursor-pointer">
-              {busyAction === "purge" ? (
-                <>
-                  <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
-                  Excluindo...
-                </>
-              ) : (
-                "Excluir dados"
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div className="space-y-2.5 py-3">
+              <Label htmlFor="purge-password-input" className="text-xs font-semibold">
+                Digite sua senha de acesso para confirmar:
+              </Label>
+              <Input
+                id="purge-password-input"
+                type="password"
+                value={purgePassword}
+                onChange={(e) => setPurgePassword(e.target.value)}
+                placeholder="Sua senha atual"
+                className="text-sm"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busyAction === "purge"}
+                onClick={() => setIsPurgeModalOpen(false)}
+                className="w-full sm:w-auto cursor-pointer">
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={busyAction === "purge" || !purgePassword.trim()}
+                onClick={handlePurgeData}
+                className="w-full sm:w-auto font-semibold cursor-pointer">
+                {busyAction === "purge" ? (
+                  <>
+                    <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir dados"
+                )}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Modal 2: Confirmação de Exclusão de Conta */}
-      <AlertDialog open={isDeleteAccountModalOpen} onOpenChange={setIsDeleteAccountModalOpen}>
-        <AlertDialogContent className="max-w-md p-6">
-          <AlertDialogHeader className="space-y-2">
-            <div className="flex items-center gap-2 text-destructive">
-              <BoxIcon name="skull" className="text-2xl" />
-              <AlertDialogTitle className="text-lg font-bold">
-                Excluir conta definitivamente?
-              </AlertDialogTitle>
+      {isMobile ? (
+        <Drawer open={isDeleteAccountModalOpen} onOpenChange={setIsDeleteAccountModalOpen} blur>
+          <DrawerContent className="p-4 max-h-[85vh] flex flex-col">
+            <DrawerHeader className="px-0 text-center">
+              <div className="flex items-center justify-center gap-2 text-destructive mb-1">
+                <BoxIcon name="skull" className="text-2xl shrink-0" />
+                <DrawerTitle className="text-base font-bold text-center">
+                  Excluir conta definitivamente?
+                </DrawerTitle>
+              </div>
+              <DrawerDescription className="text-xs text-muted-foreground leading-relaxed text-center">
+                Você está prestes a excluir permanentemente a loja <strong className="text-foreground">{storeName}</strong>, incluindo todos os usuários, acessos e histórico. Esta ação é <strong>100% irreversível</strong>.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="space-y-2.5 py-4">
+              <Label htmlFor="delete-account-password-input-mobile" className="text-xs font-semibold">
+                Digite sua senha de acesso para confirmar:
+              </Label>
+              <Input
+                id="delete-account-password-input-mobile"
+                type="password"
+                value={deleteAccountPassword}
+                onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                placeholder="Sua senha atual"
+                className="text-sm h-11"
+                autoComplete="current-password"
+              />
             </div>
-            <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Você está prestes a excluir permanentemente a loja <strong className="text-foreground">{storeName}</strong>, incluindo todos os usuários, acessos e histórico. Esta ação é <strong>100% irreversível</strong>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
 
-          <div className="space-y-2.5 py-3">
-            <Label htmlFor="delete-account-password-input" className="text-xs font-semibold">
-              Digite sua senha de acesso para confirmar:
-            </Label>
-            <Input
-              id="delete-account-password-input"
-              type="password"
-              value={deleteAccountPassword}
-              onChange={(e) => setDeleteAccountPassword(e.target.value)}
-              placeholder="Sua senha atual"
-              className="text-sm"
-              autoComplete="current-password"
-            />
-          </div>
+            <DrawerFooter className="px-0 pt-2 pb-0 mt-auto border-t-0 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={busyAction === "delete" || !deleteAccountPassword.trim()}
+                onClick={handleDeleteAccount}
+                className="w-full h-11 rounded-xl font-semibold cursor-pointer">
+                {busyAction === "delete" ? (
+                  <>
+                    <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir conta"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busyAction === "delete"}
+                onClick={() => setIsDeleteAccountModalOpen(false)}
+                className="w-full h-10 rounded-xl cursor-pointer">
+                Cancelar
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <AlertDialog open={isDeleteAccountModalOpen} onOpenChange={setIsDeleteAccountModalOpen}>
+          <AlertDialogContent className="max-w-md p-6">
+            <AlertDialogHeader className="space-y-2">
+              <div className="flex items-center gap-2 text-destructive">
+                <BoxIcon name="skull" className="text-2xl" />
+                <AlertDialogTitle className="text-lg font-bold">
+                  Excluir conta definitivamente?
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                Você está prestes a excluir permanentemente a loja <strong className="text-foreground">{storeName}</strong>, incluindo todos os usuários, acessos e histórico. Esta ação é <strong>100% irreversível</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busyAction === "delete"}
-              onClick={() => setIsDeleteAccountModalOpen(false)}
-              className="w-full sm:w-auto cursor-pointer">
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={busyAction === "delete" || !deleteAccountPassword.trim()}
-              onClick={handleDeleteAccount}
-              className="w-full sm:w-auto font-semibold cursor-pointer">
-              {busyAction === "delete" ? (
-                <>
-                  <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
-                  Excluindo...
-                </>
-              ) : (
-                "Excluir conta"
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div className="space-y-2.5 py-3">
+              <Label htmlFor="delete-account-password-input" className="text-xs font-semibold">
+                Digite sua senha de acesso para confirmar:
+              </Label>
+              <Input
+                id="delete-account-password-input"
+                type="password"
+                value={deleteAccountPassword}
+                onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                placeholder="Sua senha atual"
+                className="text-sm"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busyAction === "delete"}
+                onClick={() => setIsDeleteAccountModalOpen(false)}
+                className="w-full sm:w-auto cursor-pointer">
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={busyAction === "delete" || !deleteAccountPassword.trim()}
+                onClick={handleDeleteAccount}
+                className="w-full sm:w-auto font-semibold cursor-pointer">
+                {busyAction === "delete" ? (
+                  <>
+                    <BoxIcon name="loader-alt" className="mr-2 bx-spin text-base" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir conta"
+                )}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }

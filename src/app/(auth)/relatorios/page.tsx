@@ -762,7 +762,7 @@ export default function RelatoriosPage() {
             <div className="overflow-x-auto">
               {/* TABELA: PRODUTOS MAIS VENDIDOS */}
               {selectedReport === "top-products" && (
-                <table className="w-full text-xs text-left border-collapse min-w-[580px]">
+                <table className="w-full text-xs text-left border-collapse min-w-145">
                   <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
                     <tr>
                       <th className="px-4 py-3 text-center w-12">#</th>
@@ -823,7 +823,7 @@ export default function RelatoriosPage() {
 
               {/* TABELA: PRODUTOS MENOS VENDIDOS */}
               {selectedReport === "least-products" && (
-                <table className="w-full text-xs text-left border-collapse min-w-[580px]">
+                <table className="w-full text-xs text-left border-collapse min-w-145">
                   <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
                     <tr>
                       <th className="px-4 py-3 text-center w-12">#</th>
@@ -876,7 +876,7 @@ export default function RelatoriosPage() {
 
               {/* TABELA: CLIENTES QUE MAIS COMPRAM */}
               {selectedReport === "top-clients" && (
-                <table className="w-full text-xs text-left border-collapse min-w-[580px]">
+                <table className="w-full text-xs text-left border-collapse min-w-145">
                   <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
                     <tr>
                       <th className="px-4 py-3 text-center w-12">#</th>
@@ -932,7 +932,7 @@ export default function RelatoriosPage() {
 
               {/* TABELA: CLIENTES QUE DEVEM */}
               {selectedReport === "debtor-clients" && (
-                <table className="w-full text-xs text-left border-collapse min-w-[580px]">
+                <table className="w-full text-xs text-left border-collapse min-w-145">
                   <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
                     <tr>
                       <th className="px-4 py-3 text-center w-12">#</th>
@@ -995,7 +995,7 @@ export default function RelatoriosPage() {
               {/* TABELA: RESUMO FINANCEIRO */}
               {selectedReport === "financial-summary" && (
                 <div className="p-4 space-y-4">
-                  <table className="w-full text-xs text-left border-collapse min-w-[480px]">
+                  <table className="w-full text-xs text-left border-collapse min-w-120">
                     <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
                       <tr>
                         <th className="px-4 py-3">Forma de Pagamento</th>

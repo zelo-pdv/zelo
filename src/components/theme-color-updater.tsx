@@ -38,7 +38,7 @@ export function ThemeColorUpdater() {
       // - Modo light: #ffffff (cor de fundo branca do app em light mode)
       const color = isFormOpen
         ? isDark
-          ? "#000000"
+          ? "#070507"
           : "#999999"
         : isDark
           ? "#0C090C"

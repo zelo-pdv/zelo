@@ -60,7 +60,9 @@ export async function POST(request: Request) {
       const item = items[i];
       const rowNum = i + 1;
 
-      const name = item.name ? String(item.name).trim() : "";
+      const name = (item.name ?? item.Nome ?? item.nome ?? item["Nome do Produto"])
+        ? String(item.name ?? item.Nome ?? item.nome ?? item["Nome do Produto"]).trim()
+        : "";
       if (!name) {
         errors.push(`Linha ${rowNum}: Nome do produto é obrigatório.`);
         continue;
@@ -68,7 +70,7 @@ export async function POST(request: Request) {
 
       // Categoria
       let categoryId: string | null = null;
-      const rawCategory = item.category || item.categoryName || item.categoria;
+      const rawCategory = item.category || item.categoryName || item.categoria || item.Categoria || item["Categoria"];
       const categoryName = rawCategory ? String(rawCategory).trim() : "Geral";
 
       let matchedCat = existingCategories.find(
@@ -100,25 +102,25 @@ export async function POST(request: Request) {
       }
 
       const salePrice = parseNumber(
-        item.salePrice ?? item.precoVenda ?? item.preco_venda ?? item["Preço de Venda"] ?? item.valor,
+        item.salePrice ?? item.precoVenda ?? item.preco_venda ?? item["Preço de Venda"] ?? item.valor ?? item.Preco ?? item.Preço,
         0,
       );
       const costPrice = parseNumber(
-        item.costPrice ?? item.precoCusto ?? item.preco_custo ?? item["Preço de Custo"],
+        item.costPrice ?? item.precoCusto ?? item.preco_custo ?? item["Preço de Custo"] ?? item.PrecoCusto,
         0,
       );
       const stock = parseNumber(
-        item.stock ?? item.estoque ?? item["Estoque"],
+        item.stock ?? item.estoque ?? item["Estoque"] ?? item.Estoque,
         0,
       );
       const minStock = parseNumber(
-        item.minStock ?? item.estoqueMinimo ?? item.estoque_minimo ?? item["Estoque Mínimo"],
+        item.minStock ?? item.estoqueMinimo ?? item.estoque_minimo ?? item["Estoque Mínimo"] ?? item["Estoque Minimo"] ?? item.EstoqueMinimo,
         0,
       );
 
-      const code = item.code ?? item.codigo ?? item["Código"] ?? item["Código Interno"];
-      const barcode = item.barcode ?? item.codigoBarras ?? item.codigo_barras ?? item["Código de Barras"];
-      const description = item.description ?? item.descricao ?? item["Descrição"];
+      const code = item.code ?? item.codigo ?? item["Código"] ?? item["Código Interno"] ?? item.Codigo;
+      const barcode = item.barcode ?? item.codigoBarras ?? item.codigo_barras ?? item["Código de Barras"] ?? item.CodigoBarras;
+      const description = item.description ?? item.descricao ?? item["Descrição"] ?? item.Descricao;
 
       try {
         await prisma.product.create({

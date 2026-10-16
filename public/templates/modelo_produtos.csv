@@ -1,0 +1,4 @@
+Nome;Categoria;Preço de Venda;Preço de Custo;Estoque;Estoque Mínimo;Código;Código de Barras;Descrição
+"Camiseta Básica de Algodão";"Vestuário";"49,90";"20,00";"50";"10";"CAM-001";"7891234567890";"Camiseta 100% algodão preta"
+"Calça Jeans Slim";"Vestuário";"119,90";"55,00";"30";"5";"JNS-002";"7891234567891";"Calça jeans com elastano azul escuro"
+"Caneca Térmica Inox";"Acessórios";"35,00";"15,00";"25";"5";"CNC-003";"7891234567892";"Caneca térmica 350ml inox"

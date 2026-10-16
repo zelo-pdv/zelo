@@ -256,3 +256,105 @@ export const handleExportLowStockPdf = async (lowStockProducts: any[], globalThr
     toast.error("Erro ao gerar o PDF.");
   }
 };
+
+export const handleDownloadProductTemplate = () => {
+  const headers = [
+    "Nome",
+    "Categoria",
+    "Preço de Venda",
+    "Preço de Custo",
+    "Estoque",
+    "Estoque Mínimo",
+    "Código",
+    "Código de Barras",
+    "Descrição",
+  ];
+
+  const rows = [
+    [
+      "Camiseta Básica de Algodão",
+      "Vestuário",
+      "49,90",
+      "20,00",
+      "50",
+      "10",
+      "CAM-001",
+      "7891234567890",
+      "Camiseta 100% algodão preta",
+    ],
+    [
+      "Calça Jeans Slim",
+      "Vestuário",
+      "119,90",
+      "55,00",
+      "30",
+      "5",
+      "JNS-002",
+      "7891234567891",
+      "Calça jeans com elastano azul escuro",
+    ],
+    [
+      "Caneca Térmica Inox",
+      "Acessórios",
+      "35,00",
+      "15,00",
+      "25",
+      "5",
+      "CNC-003",
+      "7891234567892",
+      "Caneca térmica 350ml inox",
+    ],
+  ];
+
+  downloadCsv("modelo_produtos_zelo.csv", headers, rows);
+  toast.success("Modelo oficial de produtos baixado com sucesso!");
+};
+
+export const handleDownloadClientTemplate = () => {
+  const headers = [
+    "Nome",
+    "Telefone",
+    "E-mail",
+    "CEP",
+    "Logradouro",
+    "Número",
+    "Complemento",
+    "Bairro",
+    "Cidade",
+    "UF",
+    "Observações",
+  ];
+
+  const rows = [
+    [
+      "Mariana Silva",
+      "(11) 98765-4321",
+      "mariana.silva@exemplo.com",
+      "01310-100",
+      "Avenida Paulista",
+      "1000",
+      "Apto 42",
+      "Bela Vista",
+      "São Paulo",
+      "SP",
+      "Cliente preferencial",
+    ],
+    [
+      "Carlos Eduardo Santos",
+      "(21) 97654-3210",
+      "carlos.santos@exemplo.com",
+      "20040-002",
+      "Rua da Assembléia",
+      "10",
+      "",
+      "Centro",
+      "Rio de Janeiro",
+      "RJ",
+      "Entregar no período da tarde",
+    ],
+  ];
+
+  downloadCsv("modelo_clientes_zelo.csv", headers, rows);
+  toast.success("Modelo oficial de clientes baixado com sucesso!");
+};
+

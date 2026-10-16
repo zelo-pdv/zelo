@@ -43,17 +43,19 @@ export async function POST(request: Request) {
       const item = items[i];
       const rowNum = i + 1;
 
-      const name = item.name ? String(item.name).trim() : "";
+      const name = (item.name ?? item.Nome ?? item.nome ?? item["Nome do Cliente"])
+        ? String(item.name ?? item.Nome ?? item.nome ?? item["Nome do Cliente"]).trim()
+        : "";
       if (!name) {
         errors.push(`Linha ${rowNum}: Nome do cliente é obrigatório.`);
         continue;
       }
 
-      const rawPhone = item.phone ?? item.telefone ?? item["Telefone"] ?? "";
+      const rawPhone = item.phone ?? item.telefone ?? item["Telefone"] ?? item.Telefone ?? "";
       const phoneStr = String(rawPhone).trim();
       const normPhone = normalizePhone(phoneStr);
 
-      const rawEmail = item.email ?? item["E-mail"] ?? item["Email"] ?? "";
+      const rawEmail = item.email ?? item["E-mail"] ?? item["Email"] ?? item.Email ?? "";
       const emailStr = String(rawEmail).trim().toLowerCase();
 
       // Validação de unicidade de e-mail no lote e banco
@@ -93,14 +95,14 @@ export async function POST(request: Request) {
       }
 
       // Endereço
-      const zipCode = item.zipCode ?? item.cep ?? item["CEP"] ?? "";
-      const street = item.street ?? item.logradouro ?? item.rua ?? item["Logradouro"] ?? item["Endereço"] ?? "";
-      const number = item.number ?? item.numero ?? item["Número"] ?? "";
-      const complement = item.complement ?? item.complemento ?? item["Complemento"] ?? "";
-      const neighborhood = item.neighborhood ?? item.bairro ?? item["Bairro"] ?? "";
-      const city = item.city ?? item.cidade ?? item["Cidade"] ?? "";
-      const state = item.state ?? item.uf ?? item.estado ?? item["UF"] ?? "";
-      const notes = item.notes ?? item.observacoes ?? item.obs ?? item["Observações"] ?? "";
+      const zipCode = item.zipCode ?? item.cep ?? item["CEP"] ?? item.CEP ?? "";
+      const street = item.street ?? item.logradouro ?? item.rua ?? item["Logradouro"] ?? item["Endereço"] ?? item.Logradouro ?? "";
+      const number = item.number ?? item.numero ?? item["Número"] ?? item.Numero ?? "";
+      const complement = item.complement ?? item.complemento ?? item["Complemento"] ?? item.Complemento ?? "";
+      const neighborhood = item.neighborhood ?? item.bairro ?? item["Bairro"] ?? item.Bairro ?? "";
+      const city = item.city ?? item.cidade ?? item["Cidade"] ?? item.Cidade ?? "";
+      const state = item.state ?? item.uf ?? item.estado ?? item["UF"] ?? item.UF ?? "";
+      const notes = item.notes ?? item.observacoes ?? item.obs ?? item["Observações"] ?? item.Observacoes ?? "";
 
       const hasAddress = Boolean(zipCode || street || number || neighborhood || city || state);
 
