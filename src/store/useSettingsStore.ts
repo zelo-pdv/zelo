@@ -156,14 +156,12 @@ export const defaultDashboardSettings: DashboardSettings = {
 
 export interface ProductsSettings {
   trackStock: boolean;
-  globalLowStockThreshold: number;
   showProductImages?: boolean;
   categoryLowStockThresholds?: Record<string, number>;
 }
 
 export const defaultProductsSettings: ProductsSettings = {
   trackStock: false,
-  globalLowStockThreshold: 5,
   showProductImages: true,
   categoryLowStockThresholds: {},
 };
@@ -277,6 +275,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     try {
       const config: any = await settingsService.get();
       if (config) {
+        if (config.products) {
+          delete config.products.globalLowStockThreshold;
+          delete config.products.hideCostPrice;
+        }
         set((state) => ({
           ...state,
           store: config.store ?? state.store,
@@ -320,9 +322,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     settingsService.update(get());
   },
   setProductsSettings: (s) => {
-    set((state) => ({
-      products: { ...(state.products ?? defaultProductsSettings), ...s },
-    }));
+    set((state) => {
+      const next = { ...(state.products ?? defaultProductsSettings), ...s };
+      delete (next as any).globalLowStockThreshold;
+      delete (next as any).hideCostPrice;
+      return { products: next };
+    });
     settingsService.update(get());
   },
   addGroup: (g) => {

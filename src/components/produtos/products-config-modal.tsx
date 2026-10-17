@@ -20,21 +20,10 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const isMobile = useIsMobile();
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
-    globalLowStockThreshold: 5,
   };
   const setProductsSettings = useSettingsStore((s) => s.setProductsSettings);
   const salesSettings = useSettingsStore((s) => s.sales);
   const setSalesSettings = useSettingsStore((s) => s.setSalesSettings);
-
-  const [thresholdInput, setThresholdInput] = useState(
-    String(productsSettings.globalLowStockThreshold ?? 5)
-  );
-
-  useEffect(() => {
-    if (productsSettings.globalLowStockThreshold !== undefined) {
-      setThresholdInput(String(productsSettings.globalLowStockThreshold));
-    }
-  }, [productsSettings.globalLowStockThreshold]);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
     [],
@@ -172,49 +161,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
             <Separator className="my-1" />
 
-            {/* Alerta global de estoque baixo (visível apenas se controle de estoque ativo) */}
-            {(productsSettings.trackStock ?? false) && (
-              <>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-0.5 pr-4">
-                    <Label className="text-sm font-medium">
-                      Alerta global de estoque baixo (quantidade)
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Quantidade padrão para alertar estoque baixo em produtos que não possuem estoque mínimo específico configurado.
-                    </p>
-                  </div>
-                  <div className="w-32 shrink-0">
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={thresholdInput}
-                      onChange={(e) => {
-                        const onlyDigits = e.target.value.replace(/\D/g, "");
-                        setThresholdInput(onlyDigits);
-                        if (onlyDigits !== "") {
-                          const val = parseInt(onlyDigits, 10);
-                          setProductsSettings({ globalLowStockThreshold: val });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (thresholdInput === "" || isNaN(Number(thresholdInput))) {
-                          setThresholdInput("0");
-                          setProductsSettings({ globalLowStockThreshold: 0 });
-                        } else {
-                          const val = parseInt(thresholdInput, 10);
-                          setThresholdInput(String(val));
-                          setProductsSettings({ globalLowStockThreshold: val });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
 
-                <Separator className="my-1" />
-              </>
-            )}
 
 
 
@@ -319,7 +266,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             <Input 
                               type="number" 
                               className="h-7 w-16 text-xs text-center" 
-                              placeholder={String(productsSettings.globalLowStockThreshold ?? 5)}
+                              placeholder="Min"
                               value={productsSettings.categoryLowStockThresholds?.[cat.id] ?? ""}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -332,7 +279,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                                   setProductsSettings({ categoryLowStockThresholds: { ...current, [cat.id]: Number(val) } });
                                 }
                               }}
-                              title="Estoque mínimo para esta categoria (deixe vazio para usar o padrão)"
+                              title="Estoque mínimo para esta categoria"
                             />
                           </div>
 

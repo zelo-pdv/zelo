@@ -144,7 +144,6 @@ export async function POST(req: Request) {
                   },
                   products: {
                     trackStock: true,
-                    globalLowStockThreshold: 5,
                     showProductImages: true,
                     categoryLowStockThresholds: {},
                   },

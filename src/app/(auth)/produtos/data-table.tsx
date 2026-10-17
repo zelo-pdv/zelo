@@ -53,7 +53,6 @@ interface ProductsDataTableProps {
   onDelete?: (product: ProductFrontend) => void;
   onToggleActive?: (product: ProductFrontend) => void;
   trackStock?: boolean;
-  globalLowStockThreshold?: number;
   categoryLowStockThresholds?: Record<string, number>;
   canStock?: boolean;
   canEdit?: boolean;

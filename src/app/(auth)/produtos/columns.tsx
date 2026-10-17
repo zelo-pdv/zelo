@@ -32,10 +32,9 @@ import { isProductLowStock as checkLowStock } from "@/lib/stock";
 
 export function isProductLowStock(
   product: ProductFrontend,
-  trackStockOrGlobalThreshold: boolean | number = true
+  trackStock: boolean = true
 ): boolean {
-  const track = typeof trackStockOrGlobalThreshold === "boolean" ? trackStockOrGlobalThreshold : true;
-  return checkLowStock(product, track);
+  return checkLowStock(product, trackStock);
 }
 
 export type ProductActions = {
@@ -44,7 +43,6 @@ export type ProductActions = {
   onDelete: (product: ProductFrontend) => void;
   onToggleActive?: (product: ProductFrontend) => void;
   can: PermissionChecker;
-  globalLowStockThreshold?: number;
   categoryLowStockThresholds?: Record<string, number>;
   trackStock?: boolean;
 };

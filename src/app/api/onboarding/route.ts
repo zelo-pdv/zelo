@@ -103,12 +103,11 @@ export async function POST(req: Request) {
       products: (() => {
         const p = { ...(currentConfig.products || {}) };
         delete p.hideCostPrice;
+        delete p.globalLowStockThreshold;
         return {
           ...p,
           trackStock,
           showProductImages,
-          globalLowStockThreshold:
-            currentConfig.products?.globalLowStockThreshold ?? 5,
         };
       })(),
       sales: {

@@ -94,7 +94,6 @@ export default function ProdutosPage() {
   const { can } = usePermissions();
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
-    globalLowStockThreshold: 5,
   };
   const [products, setProducts] = useState<ProductFrontend[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
