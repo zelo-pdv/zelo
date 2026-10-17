@@ -32,11 +32,15 @@ function Drawer({
   swipeDirection = "down",
   blur = true,
   isForm = false,
+  disablePointerDismissal = true,
+  preventEscapeClose = true,
+  onOpenChange,
   ...props
 }: DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
   blur?: boolean;
   isForm?: boolean;
+  preventEscapeClose?: boolean;
 }) {
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
   const shouldBlur = blur ?? isForm ?? true;
@@ -51,6 +55,24 @@ function Drawer({
     [hasSnapPoints, modal, showSwipeHandle, swipeDirection, shouldBlur],
   );
 
+  const handleOpenChange = React.useCallback(
+    (open: boolean, eventDetails: DrawerPrimitive.Root.ChangeEventDetails) => {
+      if (!open) {
+        // Bloqueia fechamento acidental por clique no overlay / fora do Drawer
+        if (eventDetails.reason === "outside-press") {
+          return;
+        }
+        // Bloqueia fechamento acidental por Escape (salvo se preventEscapeClose for false)
+        if (preventEscapeClose && eventDetails.reason === "escape-key") {
+          return;
+        }
+        // O gesto de puxar para baixo ("swipe") e o clique no botão fechar/cancelar ("close-press") são permitidos!
+      }
+      onOpenChange?.(open, eventDetails);
+    },
+    [onOpenChange, preventEscapeClose],
+  );
+
   return (
     <DrawerContext.Provider value={contextValue}>
       <DrawerPrimitive.Root
@@ -58,6 +80,8 @@ function Drawer({
         modal={modal}
         snapPoints={snapPoints}
         swipeDirection={swipeDirection}
+        disablePointerDismissal={disablePointerDismissal}
+        onOpenChange={handleOpenChange}
         {...props}
       />
     </DrawerContext.Provider>

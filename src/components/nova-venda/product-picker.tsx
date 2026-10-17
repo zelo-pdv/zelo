@@ -240,8 +240,8 @@ export function ProductPicker({
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="sm:max-w-125 p-0 gap-0 overflow-hidden grid-rows-[auto_1fr] max-h-[85vh] [&>button]:hidden">
-          <DialogHeader className="flex-row items-center gap-2 p-4 pb-0">
+        <DialogContent className="sm:max-w-125 p-0 gap-0 overflow-hidden grid-rows-[auto_1fr] max-h-[85vh]">
+          <DialogHeader className="flex-row items-center gap-2 p-4 pb-0 pr-10">
             <div className="flex items-center gap-2 py-2">
               <DialogTitle>Produtos</DialogTitle>
             </div>

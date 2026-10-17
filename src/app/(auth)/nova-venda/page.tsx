@@ -1138,7 +1138,7 @@ export default function NovaVenda() {
               </div>
 
               <div className="mb-3 flex flex-col gap-2">
-                <Label>Forma de pagamento</Label>
+                <Label required>Forma de pagamento</Label>
                 <Select
                   value={payment}
                   onValueChange={(v) => setPayment(v as PaymentMethod)}
@@ -1157,7 +1157,7 @@ export default function NovaVenda() {
               </div>
 
               <div className="mb-3">
-                <Label>Status</Label>
+                <Label required>Status</Label>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   {Object.values(SaleStatus).map((s) => (
                     <button

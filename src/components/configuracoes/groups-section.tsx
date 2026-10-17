@@ -384,7 +384,7 @@ function GroupForm({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2 flex flex-col gap-2">
-          <Label>Nome</Label>
+          <Label required>Nome</Label>
           <Input
             className="border-primary/50 focus:ring-primary/50 bg-primary/3"
             value={form.name}
@@ -584,14 +584,7 @@ function GroupForm({
   );
 
   const ActionButtons = (
-    <div className="flex w-full justify-between gap-2 sm:justify-end">
-      <Button
-        variant="outline"
-        onClick={() => onOpenChange(false)}
-        disabled={saving}
-      >
-        Cancelar
-      </Button>
+    <div className="flex w-full justify-end">
       <LoadingButton
         onClick={submit}
         disabled={!form.name.trim() || saving}

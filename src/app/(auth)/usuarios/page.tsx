@@ -453,7 +453,7 @@ function UserForm({
   const FormFields = (
     <div className="space-y-4">
       <div className="sm:col-span-2 space-y-2">
-        <Label>Nome</Label>
+        <Label required>Nome</Label>
         <Input
           className={requiredInputClass}
           value={form.name}
@@ -462,7 +462,7 @@ function UserForm({
         />
       </div>
       <div className="sm:col-span-2 space-y-2">
-        <Label>E-mail</Label>
+        <Label required>E-mail</Label>
         <Input
           className={requiredInputClass}
           type="email"
@@ -484,7 +484,7 @@ function UserForm({
         />
       </div>
       <div className="sm:col-span-2 space-y-2">
-        <Label>{isEdit ? "Nova Senha (Opcional)" : "Senha"}</Label>
+        <Label required={!isEdit}>{isEdit ? "Nova Senha" : "Senha"}</Label>
         <div className="relative">
           <Input
             id="user-form-password"
@@ -521,7 +521,7 @@ function UserForm({
       </div>
       <div className="sm:col-span-2 flex gap-4">
         <div className="flex-1 space-y-2">
-          <Label>Tipo de acesso</Label>
+          <Label required>Tipo de acesso</Label>
           <Select
             value={form.groupId}
             onValueChange={(v) => setForm({ ...form, groupId: v as string })}
@@ -652,14 +652,7 @@ function UserForm({
   );
 
   const ActionButtons = (
-    <div className="flex gap-2 w-full justify-between">
-      <Button
-        variant="outline"
-        onClick={() => onOpenChange(false)}
-        disabled={isSubmitting}
-      >
-        Cancelar
-      </Button>
+    <div className="flex w-full justify-end">
       <LoadingButton onClick={submit} loading={isSubmitting} className="min-w-28">
         Salvar
       </LoadingButton>
@@ -812,7 +805,7 @@ function ChangePasswordDialog({
   const ContentBody = (
     <div className="space-y-4 py-4">
       <div className="space-y-2">
-        <Label>Nova Senha</Label>
+        <Label required>Nova Senha</Label>
         <div className="relative">
           <Input
             id="change-password-input"
@@ -845,15 +838,7 @@ function ChangePasswordDialog({
   );
 
   const ActionButtons = (
-    <div className="flex w-full justify-between gap-2">
-      <Button
-        variant="outline"
-        type="button"
-        onClick={onClose}
-        disabled={isSubmitting}
-      >
-        Cancelar
-      </Button>
+    <div className="flex w-full justify-end">
       <Button
         type="button"
         onClick={() => handleSubmit()}

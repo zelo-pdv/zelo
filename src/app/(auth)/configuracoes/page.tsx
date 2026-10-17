@@ -284,7 +284,7 @@ function StoreSection() {
         <CardContent className="space-y-4 pt-0 animate-in fade-in-50 duration-150">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label>Nome da loja</Label>
+            <Label required>Nome da loja</Label>
             <Input
               className={requiredInputClass}
               value={form.name}
@@ -1203,7 +1203,7 @@ function DataManagementSection() {
             </DrawerHeader>
 
             <div className="space-y-2.5 py-4">
-              <Label htmlFor="purge-password-input-mobile" className="text-xs font-semibold">
+              <Label htmlFor="purge-password-input-mobile" required className="text-xs font-semibold">
                 Digite sua senha de acesso para confirmar:
               </Label>
               <Input
@@ -1260,7 +1260,7 @@ function DataManagementSection() {
             </AlertDialogHeader>
 
             <div className="space-y-2.5 py-3">
-              <Label htmlFor="purge-password-input" className="text-xs font-semibold">
+              <Label htmlFor="purge-password-input" required className="text-xs font-semibold">
                 Digite sua senha de acesso para confirmar:
               </Label>
               <Input
@@ -1320,7 +1320,7 @@ function DataManagementSection() {
             </DrawerHeader>
 
             <div className="space-y-2.5 py-4">
-              <Label htmlFor="delete-account-password-input-mobile" className="text-xs font-semibold">
+              <Label htmlFor="delete-account-password-input-mobile" required className="text-xs font-semibold">
                 Digite sua senha de acesso para confirmar:
               </Label>
               <Input
@@ -1377,7 +1377,7 @@ function DataManagementSection() {
             </AlertDialogHeader>
 
             <div className="space-y-2.5 py-3">
-              <Label htmlFor="delete-account-password-input" className="text-xs font-semibold">
+              <Label htmlFor="delete-account-password-input" required className="text-xs font-semibold">
                 Digite sua senha de acesso para confirmar:
               </Label>
               <Input

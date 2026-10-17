@@ -16,12 +16,42 @@ const DialogContext = React.createContext<DialogContextValue>({ blur: false })
 function Dialog({
   blur = false,
   isForm = false,
+  disablePointerDismissal = true,
+  preventEscapeClose = true,
+  onOpenChange,
   ...props
-}: DialogPrimitive.Root.Props & { blur?: boolean; isForm?: boolean }) {
+}: DialogPrimitive.Root.Props & {
+  blur?: boolean
+  isForm?: boolean
+  preventEscapeClose?: boolean
+}) {
   const shouldBlur = blur || isForm
+
+  const handleOpenChange = React.useCallback(
+    (open: boolean, eventDetails: DialogPrimitive.Root.ChangeEventDetails) => {
+      if (!open) {
+        // Bloqueia fechamento acidental por clique no backdrop / fora do Dialog
+        if (eventDetails.reason === "outside-press") {
+          return
+        }
+        // Bloqueia fechamento acidental pela tecla Escape (salvo quando preventEscapeClose for false)
+        if (preventEscapeClose && eventDetails.reason === "escape-key") {
+          return
+        }
+      }
+      onOpenChange?.(open, eventDetails)
+    },
+    [onOpenChange, preventEscapeClose]
+  )
+
   return (
     <DialogContext.Provider value={{ blur: shouldBlur }}>
-      <DialogPrimitive.Root data-slot="dialog" {...props} />
+      <DialogPrimitive.Root
+        data-slot="dialog"
+        disablePointerDismissal={disablePointerDismissal}
+        onOpenChange={handleOpenChange}
+        {...props}
+      />
     </DialogContext.Provider>
   )
 }
@@ -97,13 +127,13 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 cursor-pointer"
                 size="icon-sm"
               />
             }
           >
             <BoxIcon name="x" className="text-lg text-foreground" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">Fechar</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

@@ -157,7 +157,7 @@ export function LoginForm() {
           >
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="font-semibold text-foreground/90">E-mail</Label>
+                <Label htmlFor="email" required className="font-semibold text-foreground/90">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
@@ -172,12 +172,7 @@ export function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                {/* <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="font-semibold text-foreground/90">Senha</Label>
-                  <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                    Esqueceu a senha?
-                  </a>
-                </div> */}
+                <Label htmlFor="password" required className="font-semibold text-foreground/90">Senha</Label>
                 <div className="relative">
                   <Input
                     id="password"

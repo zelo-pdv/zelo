@@ -127,8 +127,8 @@ export function ClientPicker({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-125 p-0 gap-0 overflow-hidden grid-rows-[auto_1fr] max-h-[85vh] [&>button]:hidden">
-        <DialogHeader className="flex-row items-center gap-2 p-4 py-2">
+      <DialogContent className="sm:max-w-125 p-0 gap-0 overflow-hidden grid-rows-[auto_1fr] max-h-[85vh]">
+        <DialogHeader className="flex-row items-center gap-2 p-4 py-2 pr-10">
           <DialogTitle>Escolher cliente</DialogTitle>
         </DialogHeader>
         {PickerContent}

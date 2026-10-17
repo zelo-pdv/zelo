@@ -260,7 +260,7 @@ export function ClientForm({
   const FormFields = (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Nome</Label>
+        <Label required>Nome</Label>
         <Input
           className={requiredInputClass}
           name="name"
@@ -274,7 +274,6 @@ export function ClientForm({
         <div className="space-y-2">
           <Label>Telefone / WhatsApp</Label>
           <Input
-            className={requiredInputClass}
             name="phone"
             value={form.phone ?? ""}
             onChange={(e) => {
@@ -308,9 +307,6 @@ export function ClientForm({
           <div className="flex items-center gap-2">
             <BoxIcon name="map-pin" className="text-base text-muted-foreground group-hover:text-foreground" />
             <h3 className="text-sm font-medium">Endereço</h3>
-            <span className="text-[11px] text-muted-foreground">
-              (opcional)
-            </span>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground">
             <span>{isAddressOpen ? "Ocultar" : "Adicionar / Ver"}</span>
@@ -474,13 +470,7 @@ export function ClientForm({
   );
 
   const ActionButtons = (
-    <div className="flex w-full justify-end gap-3 mt-4">
-      <Button
-        variant="outline"
-        onClick={() => onOpenChange(false)}
-        disabled={loading}>
-        Cancelar
-      </Button>
+    <div className="flex w-full justify-end mt-4">
       <LoadingButton
         loading={loading}
         disabled={form.name.trim().length < 2 || loading}

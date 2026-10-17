@@ -217,29 +217,24 @@ export default function ClientDetail({
     </div>
   );
 
-  // Botões de ação compartilhados
-  const ActionButtons = (
-    <div className="flex w-full items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <Link
-              href={`https://wa.me/${activeClient.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá, ${activeClient.name.split(" ")[0]}!`)}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <BoxIcon name="message-rounded-dots" className="mr-1.5 text-base text-foreground" /> WhatsApp
-            </Link>
-          }
-        />
-      </div>
-      <Button size="sm" variant="ghost" onClick={onClose}>
-        Fechar
-      </Button>
+  // Botão de ação no Desktop (WhatsApp quando disponível)
+  const ActionButtons = activeClient.phone ? (
+    <div className="flex w-full items-center justify-end">
+      <Button
+        variant="outline"
+        size="sm"
+        render={
+          <Link
+            href={`https://wa.me/${activeClient.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá, ${activeClient.name.split(" ")[0]}!`)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <BoxIcon name="message-rounded-dots" className="mr-1.5 text-base text-foreground" /> WhatsApp
+          </Link>
+        }
+      />
     </div>
-  );
+  ) : null;
 
   // Renderização Mobile (Drawer Bottom)
   if (isMobile) {
@@ -295,9 +290,11 @@ export default function ClientDetail({
         <div className="py-2">
           {DetailContent}
         </div>
-        <DialogFooter className="mt-2 flex-row items-center justify-between sm:justify-between">
-          {ActionButtons}
-        </DialogFooter>
+        {ActionButtons && (
+          <DialogFooter className="mt-2 flex-row items-center justify-end">
+            {ActionButtons}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

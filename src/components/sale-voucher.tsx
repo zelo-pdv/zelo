@@ -512,14 +512,16 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
           <BoxIcon name="download" className="mr-2 text-base text-foreground" /> Imagem
         </Button>
       </div>
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-        onClick={onClose}
-      >
-        Fechar
-      </Button>
+      {isMobile && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+          onClick={onClose}
+        >
+          Fechar
+        </Button>
+      )}
     </div>
   );
 

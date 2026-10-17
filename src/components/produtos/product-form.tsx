@@ -240,8 +240,8 @@ export function ProductForm({
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm sm:text-base font-semibold">
-                  Nome do Produto <span className="text-destructive">*</span>
+                <Label required className="text-sm sm:text-base font-semibold">
+                  Nome do Produto
                 </Label>
                 <Input
                   className={inputClass}
@@ -253,8 +253,8 @@ export function ProductForm({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm sm:text-base font-semibold">
-                  Preço de Venda <span className="text-destructive">*</span>
+                <Label required className="text-sm sm:text-base font-semibold">
+                  Preço de Venda
                 </Label>
                 <div className="relative flex items-center">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground select-none">
@@ -617,10 +617,7 @@ export function ProductForm({
                         </div>
 
                         <div className="space-y-2">
-                          <Label>
-                            Nome da Variação{" "}
-                            <span className="text-destructive">*</span>
-                          </Label>
+                          <Label required>Nome da Variação</Label>
                           <Input
                             className={inputClass}
                             placeholder="Ex: 75ml, M / Preto, etc."
@@ -634,7 +631,7 @@ export function ProductForm({
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Preço de Venda (Opcional)</Label>
+                            <Label>Preço de Venda</Label>
                             <div className="relative flex items-center">
                               <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground select-none">
                                 R$
@@ -737,15 +734,7 @@ export function ProductForm({
           </Button>
         </div>
       ) : (
-        <div className="p-4 border-t bg-background/95 backdrop-blur-sm flex items-center justify-end gap-3 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-            className="rounded-xl h-11 px-5 text-sm font-medium">
-            Cancelar
-          </Button>
+        <div className="p-4 border-t bg-background/95 backdrop-blur-sm flex items-center justify-end shrink-0">
           <LoadingButton
             type="submit"
             loading={busy || uploadingImage}

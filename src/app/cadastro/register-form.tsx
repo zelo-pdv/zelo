@@ -135,7 +135,7 @@ export function RegisterForm() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <Label htmlFor="ownerName" className="font-semibold text-foreground/90 text-sm">
+                <Label htmlFor="ownerName" required className="font-semibold text-foreground/90 text-sm">
                   Seu Nome
                 </Label>
                 <Input
@@ -151,7 +151,7 @@ export function RegisterForm() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="storeName" className="font-semibold text-foreground/90 text-sm">
+                <Label htmlFor="storeName" required className="font-semibold text-foreground/90 text-sm">
                   Nome da sua Loja
                 </Label>
                 <Input
@@ -167,7 +167,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="font-semibold text-foreground/90 text-sm">
+              <Label htmlFor="email" required className="font-semibold text-foreground/90 text-sm">
                 E-mail
               </Label>
               <Input
@@ -185,7 +185,7 @@ export function RegisterForm() {
 
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="font-semibold text-foreground/90 text-sm">
-                WhatsApp / Telefone <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                WhatsApp / Telefone
               </Label>
               <Input
                 id="phone"
@@ -202,7 +202,7 @@ export function RegisterForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="font-semibold text-foreground/90 text-sm">
+                <Label htmlFor="password" required className="font-semibold text-foreground/90 text-sm">
                   Senha
                 </Label>
                 <div className="relative">
@@ -229,7 +229,7 @@ export function RegisterForm() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="font-semibold text-foreground/90 text-sm">
+                <Label htmlFor="confirmPassword" required className="font-semibold text-foreground/90 text-sm">
                   Confirmar Senha
                 </Label>
                 <div className="relative">

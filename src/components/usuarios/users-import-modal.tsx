@@ -247,15 +247,16 @@ export function ClientsImportModal({ isOpen, onClose }: { isOpen: boolean; onClo
         </div>
 
         <DialogFooter className="shrink-0 pt-4 border-t border-border/40 sm:border-0 sm:pt-2 mt-2 gap-2 sm:gap-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="w-full sm:w-auto rounded-xl sm:rounded-lg"
-          >
-            Fechar
-          </Button>
-          {!importResult && (
+          {importResult ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto rounded-xl sm:rounded-lg"
+            >
+              Fechar
+            </Button>
+          ) : (
             <Button
               type="button"
               onClick={handleImportData}

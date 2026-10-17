@@ -332,7 +332,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
               <div className="py-4 space-y-4">
                 <div className="space-y-2">
-                  <Label>Nome da Categoria</Label>
+                  <Label required>Nome da Categoria</Label>
                   <Input
                     className="border-primary/50 focus:ring-primary/50 bg-primary/3"
                     value={categoryName}
@@ -341,7 +341,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Estoque Mínimo (Opcional)</Label>
+                  <Label>Estoque Mínimo</Label>
                   <Input
                     type="number"
                     min="0"
@@ -390,7 +390,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
               <div className="py-4 space-y-4">
                 <div className="space-y-2">
-                  <Label>Nome da Categoria</Label>
+                  <Label required>Nome da Categoria</Label>
                   <Input
                     className="border-primary/50 focus:ring-primary/50 bg-primary/3"
                     value={categoryName}
@@ -399,7 +399,7 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Estoque Mínimo (Opcional)</Label>
+                  <Label>Estoque Mínimo</Label>
                   <Input
                     type="number"
                     min="0"
@@ -415,12 +415,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
               </div>
 
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCategoryModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
                 <LoadingButton
                   onClick={handleSaveCategory}
                   loading={savingCategory}

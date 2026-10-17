@@ -108,12 +108,9 @@ export function BarcodeScanner({
   return (
     <Dialog
       open={open}
-      onOpenChange={(o) => {
-        // Impede fechamento ao clicar fora do modal (útil por causa do prompt de permissão da câmera)
-        if (o) onOpenChange(o);
-      }}
+      onOpenChange={onOpenChange}
     >
-      <DialogContent showCloseButton={false} className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Ler Código de Barras</DialogTitle>
           <DialogDescription>

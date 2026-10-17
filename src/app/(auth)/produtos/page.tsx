@@ -470,7 +470,7 @@ function StockEntry({
 
       {hasVariants && (
         <div className="space-y-2">
-          <Label>Variação</Label>
+          <Label required>Variação</Label>
           <select
             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             value={selectedVariantId}
@@ -486,7 +486,7 @@ function StockEntry({
       )}
 
       <div className="space-y-2">
-        <Label>Quantidade a adicionar</Label>
+        <Label required>Quantidade a adicionar</Label>
         <Input
           type="number"
           min={1}
@@ -500,11 +500,7 @@ function StockEntry({
   );
 
   const ActionButtons = (
-    <div className="flex w-full justify-between gap-2 sm:justify-end">
-      <Button variant="outline" onClick={onClose} disabled={busy}>
-        Cancelar
-      </Button>
-
+    <div className="flex w-full justify-end">
       <LoadingButton
         loading={busy}
         disabled={qty <= 0}
