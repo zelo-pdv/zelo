@@ -57,8 +57,10 @@ export function BoxIcon({
   filled,
   active,
   className,
+  children,
   ...props
 }: BoxIconProps) {
+  void children;
   const isSolid = active ?? solid ?? filled ?? false;
 
   let explicitPrefix: "bx" | "bxs" | null = null;

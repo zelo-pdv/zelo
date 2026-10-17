@@ -54,7 +54,9 @@ function SelectTrigger({
             className="pointer-events-none text-base text-muted-foreground shrink-0 opacity-70"
           />
         }
-      />
+      >
+        {null}
+      </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
 }
@@ -188,13 +190,15 @@ function SelectScrollDownButton({
   )
 }
 
-function SelectIcon({ className, ...props }: SelectPrimitive.Icon.Props) {
+function SelectIcon({ className, children, ...props }: SelectPrimitive.Icon.Props) {
   return (
     <SelectPrimitive.Icon
       data-slot="select-icon"
       className={cn("text-muted-foreground", className)}
       {...props}
-    />
+    >
+      {children ?? null}
+    </SelectPrimitive.Icon>
   )
 }
 
