@@ -32,6 +32,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserTableData } from "./columns";
 import type { AppUser } from "./page";
@@ -204,17 +211,26 @@ export function UsersDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                   Grupo de Acesso
                 </Label>
-                <select
+                <Select
                   value={groupFilter}
-                  onChange={(e) => setGroupFilter(e.target.value)}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                  <option value="Todos">Todos os grupos</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.name}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(val) => setGroupFilter(val || "Todos")}
+                >
+                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
+                    <SelectValue placeholder="Todos os grupos">
+                      {groupFilter === "Todos" ? "Todos os grupos" : groupFilter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todos" className="text-xs">
+                      Todos os grupos
+                    </SelectItem>
+                    {groups.map((g) => (
+                      <SelectItem key={g.id} value={g.name} className="text-xs">
+                        {g.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="pt-2">

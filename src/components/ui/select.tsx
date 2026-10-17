@@ -47,6 +47,14 @@ function SelectTrigger({
       {...props}
     >
       {children}
+      <SelectPrimitive.Icon
+        render={
+          <BoxIcon
+            name="chevron-down"
+            className="pointer-events-none text-base text-muted-foreground shrink-0 opacity-70"
+          />
+        }
+      />
     </SelectPrimitive.Trigger>
   )
 }
@@ -180,10 +188,21 @@ function SelectScrollDownButton({
   )
 }
 
+function SelectIcon({ className, ...props }: SelectPrimitive.Icon.Props) {
+  return (
+    <SelectPrimitive.Icon
+      data-slot="select-icon"
+      className={cn("text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
 export {
   Select,
   SelectContent,
   SelectGroup,
+  SelectIcon,
   SelectItem,
   SelectLabel,
   SelectScrollDownButton,

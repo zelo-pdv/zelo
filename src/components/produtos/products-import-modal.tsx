@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BoxIcon } from "@/components/ui/box-icon";
@@ -26,9 +26,18 @@ export function ProductsImportModal({ isOpen, onClose }: { isOpen: boolean; onCl
   };
 
   const handleClose = () => {
-    resetForm();
+    if (isImporting) return;
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        resetForm();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,8 +103,6 @@ export function ProductsImportModal({ isOpen, onClose }: { isOpen: boolean; onCl
       setIsImporting(false);
     }
   };
-
-  if (!isOpen) return null;
 
   const bodyContent = (
     <>

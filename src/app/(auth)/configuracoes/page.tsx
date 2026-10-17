@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { PaymentMethod, PAYMENT_LABELS, SaleStatus, type Product } from "@/types";
 import { getLoja, updateLoja, deleteLoja, purgeLojaData } from "@/services/loja.service";
@@ -936,22 +943,33 @@ function SalesConfigSection() {
                 Define qual método de pagamento já vem pré-selecionado ao abrir o checkout de nova venda.
               </p>
             </div>
-            <div className="shrink-0">
-              <select
+            <div className="shrink-0 w-full sm:w-auto">
+              <Select
                 value={salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO}
-                onChange={(e) => {
-                  const method = e.target.value as PaymentMethod;
+                onValueChange={(val) => {
+                  if (!val) return;
+                  const method = val as PaymentMethod;
                   setSalesSettings({ defaultPaymentMethod: method });
                   toast.success(`Forma de pagamento padrão: ${PAYMENT_LABELS[method] || method}`);
                 }}
-                className="h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
               >
-                {paymentMethods.map((pm) => (
-                  <option key={pm} value={pm}>
-                    {PAYMENT_LABELS[pm] || pm.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 w-full sm:w-[220px] justify-between">
+                  <SelectValue placeholder="Selecione a forma padrão">
+                    {PAYMENT_LABELS[
+                      (salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO) as PaymentMethod
+                    ] ||
+                      salesSettings.defaultPaymentMethod?.replace(/_/g, " ") ||
+                      PAYMENT_LABELS[PaymentMethod.DINHEIRO]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentMethods.map((pm) => (
+                    <SelectItem key={pm} value={pm}>
+                      {PAYMENT_LABELS[pm] || pm.replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -1003,21 +1021,30 @@ function SalesConfigSection() {
                 Define se uma nova venda já abre com status &quot;Pago&quot; ou &quot;Pendente&quot;.
               </p>
             </div>
-            <div className="shrink-0">
-              <select
+            <div className="shrink-0 w-full sm:w-auto">
+              <Select
                 value={salesSettings.defaultSaleStatus || SaleStatus.PAGO}
-                onChange={(e) => {
-                  const newStatus = e.target.value as SaleStatus;
+                onValueChange={(val) => {
+                  if (!val) return;
+                  const newStatus = val as SaleStatus;
                   setSalesSettings({ defaultSaleStatus: newStatus });
                   toast.success(
                     `Status padrão da venda: ${newStatus === SaleStatus.PAGO ? "Pago" : "Pendente"}`
                   );
                 }}
-                className="h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
               >
-                <option value={SaleStatus.PAGO}>Pago</option>
-                <option value={SaleStatus.PENDENTE}>Pendente</option>
-              </select>
+                <SelectTrigger className="h-9 w-full sm:w-[160px] justify-between">
+                  <SelectValue placeholder="Selecione o status padrão">
+                    {(salesSettings.defaultSaleStatus || SaleStatus.PAGO) === SaleStatus.PAGO
+                      ? "Pago"
+                      : "Pendente"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SaleStatus.PAGO}>Pago</SelectItem>
+                  <SelectItem value={SaleStatus.PENDENTE}>Pendente</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>

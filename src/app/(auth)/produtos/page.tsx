@@ -29,6 +29,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { getProductColumns, getProductTotalStock, ProductFrontend } from "./columns";
@@ -416,11 +423,20 @@ function StockEntry({
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const isMobile = useIsMobile();
+  const [cachedProduct, setCachedProduct] = useState(product);
+
+  useEffect(() => {
+    if (product) {
+      setCachedProduct(product);
+    }
+  }, [product]);
+
+  const activeProduct = product || cachedProduct;
 
   const activeVariants = useMemo(() => {
-    if (!product || !Array.isArray(product.variants)) return [];
-    return product.variants.filter((v: any) => v.active !== false && !v.deletedAt);
-  }, [product]);
+    if (!activeProduct || !Array.isArray(activeProduct.variants)) return [];
+    return activeProduct.variants.filter((v: any) => v.active !== false && !v.deletedAt);
+  }, [activeProduct]);
 
   const hasVariants = activeVariants.length > 0;
 
@@ -459,29 +475,40 @@ function StockEntry({
     }
   };
 
-  const totalStock = product ? getProductTotalStock(product) : 0;
+  const totalStock = activeProduct ? getProductTotalStock(activeProduct) : 0;
 
-  const ContentBody = product && (
+  const ContentBody = activeProduct && (
     <div className="space-y-3 py-2">
       <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{product.name}</span> —
+        <span className="font-medium text-foreground">{activeProduct.name}</span> —
         atual: {totalStock} un
       </div>
 
       {hasVariants && (
         <div className="space-y-2">
           <Label required>Variação</Label>
-          <select
-            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          <Select
             value={selectedVariantId}
-            onChange={(e) => setSelectedVariantId(e.target.value)}
+            onValueChange={(val) => {
+              if (val) setSelectedVariantId(val as string);
+            }}
           >
-            {activeVariants.map((v: any) => (
-              <option key={v.id} value={v.id}>
-                {v.name} (atual: {Number(v.stock ?? 0)} un)
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full h-9 rounded-md text-sm justify-between">
+              <SelectValue placeholder="Selecione a variação">
+                {(() => {
+                  const sel = activeVariants.find((v: any) => v.id === selectedVariantId);
+                  return sel ? `${sel.name} (atual: ${Number(sel.stock ?? 0)} un)` : undefined;
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {activeVariants.map((v: any) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.name} (atual: {Number(v.stock ?? 0)} un)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

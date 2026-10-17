@@ -18,6 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { textIncludes } from "@/lib/search";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -223,22 +230,33 @@ export function ProductsDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                   Categorias
                 </Label>
-                <select
+                <Select
                   value={categoryFilter}
-                  onChange={(e) => {
-                    const val = e.target.value;
+                  onValueChange={(val) => {
+                    const finalVal = val || "Todas";
                     table
                       .getColumn("category")
-                      ?.setFilterValue(val === "Todas" ? undefined : val);
+                      ?.setFilterValue(finalVal === "Todas" ? undefined : finalVal);
                   }}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                  <option value="Todas">Todas as categorias</option>
-                  {categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                >
+                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
+                    <SelectValue placeholder="Todas as categorias">
+                      {categoryFilter === "Todas"
+                        ? "Todas as categorias"
+                        : categoryFilter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Todas" className="text-xs">
+                      Todas as categorias
+                    </SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c} className="text-xs">
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="pt-2">

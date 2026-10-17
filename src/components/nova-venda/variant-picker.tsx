@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,18 +19,25 @@ export function VariantPicker({
   onSelect: (variant: any) => void;
 }) {
   const isMobile = useIsMobile();
+  const [cachedProduct, setCachedProduct] = useState(product);
 
-  const activeVariants = (product?.variants || []).filter(
+  useEffect(() => {
+    if (product) {
+      setCachedProduct(product);
+    }
+  }, [product]);
+
+  const activeProduct = product || cachedProduct;
+
+  const activeVariants = (activeProduct?.variants || []).filter(
     (v: any) => v.active !== false && !v.deletedAt
   );
 
-  if (!product || activeVariants.length === 0) return null;
-
-  const Content = (
+  const Content = activeProduct ? (
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-3">
         {activeVariants.map((v) => {
-          const price = v.salePrice !== null ? Number(v.salePrice) : Number(product.salePrice);
+          const price = v.salePrice !== null ? Number(v.salePrice) : Number(activeProduct.salePrice);
           return (
             <Button
               key={v.id}
@@ -50,7 +58,7 @@ export function VariantPicker({
         })}
       </div>
     </ScrollArea>
-  );
+  ) : null;
 
   if (isMobile) {
     return (

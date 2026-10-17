@@ -177,6 +177,7 @@ function DrawerContent({
           initialFocus={initialFocus}
           data-slot="drawer-popup"
           data-blur={isBlurActive ? "" : undefined}
+          data-swipe-direction={swipeDirection}
           data-swipe-axis={swipeAxis}
           data-snap-points={hasSnapPoints ? "" : undefined}
           className={cn(

@@ -43,8 +43,8 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const [categoryLowStockThreshold, setCategoryLowStockThreshold] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
 
     try {
       const cats = await categoriesService.list();
@@ -57,8 +57,14 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData(false);
+    }
+  }, [isOpen]);
 
   // Category Actions
 
@@ -122,8 +128,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
     setIsCategoryModalOpen(true);
   };
-
-  if (!isOpen) return null;
 
   const content = (
     <div className="space-y-4 pt-4">

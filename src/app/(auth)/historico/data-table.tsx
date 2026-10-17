@@ -30,6 +30,13 @@ import {
 import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { currency, dateTime } from "@/lib/format";
 import { textIncludes } from "@/lib/search";
@@ -277,17 +284,28 @@ export function SalesDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Forma de Pagamento
                 </Label>
-                <select
+                <Select
                   value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="w-full h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                  <option value="all">Todas as formas</option>
-                  {paymentMethodsList.map((pm) => (
-                    <option key={pm} value={pm}>
-                      {getPaymentLabel(pm)}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(val) => setPaymentFilter(val || "all")}
+                >
+                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
+                    <SelectValue placeholder="Todas as formas">
+                      {paymentFilter === "all"
+                        ? "Todas as formas"
+                        : getPaymentLabel(paymentFilter)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">
+                      Todas as formas
+                    </SelectItem>
+                    {paymentMethodsList.map((pm) => (
+                      <SelectItem key={pm} value={pm} className="text-xs">
+                        {getPaymentLabel(pm)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Item #19: Filtro por Período */}

@@ -771,6 +771,15 @@ function ChangePasswordDialog({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cachedUser, setCachedUser] = useState(user);
+
+  useEffect(() => {
+    if (user) {
+      setCachedUser(user);
+    }
+  }, [user]);
+
+  const activeUser = user || cachedUser;
 
   useEffect(() => {
     if (!user) {
@@ -857,7 +866,7 @@ function ChangePasswordDialog({
           <DrawerHeader className="px-0 text-center">
             <DrawerTitle className="text-center">Trocar Senha</DrawerTitle>
             <p className="text-sm text-muted-foreground text-center">
-              Defina uma nova senha para o usuário <strong>{user?.name}</strong>
+              Defina uma nova senha para o usuário <strong>{activeUser?.name}</strong>
             </p>
           </DrawerHeader>
           {ContentBody}

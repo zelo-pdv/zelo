@@ -114,24 +114,33 @@ export default function HistoricoPage() {
   }, [sales]);
 
   const [detail, setDetail] = useState<Sale | null>(null);
+  const [cachedDetail, setCachedDetail] = useState<Sale | null>(detail);
+
+  useEffect(() => {
+    if (detail) {
+      setCachedDetail(detail);
+    }
+  }, [detail]);
+
+  const activeDetail = detail || cachedDetail;
   const [voucherState, setVoucherState] = useState<{
     sale: Sale;
     phone?: string;
   } | null>(null);
 
   const detailSubtotal = useMemo(() => {
-    if (!detail) return 0;
-    return detail.items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
-  }, [detail]);
+    if (!activeDetail) return 0;
+    return activeDetail.items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
+  }, [activeDetail]);
 
   const detailDiscount = useMemo(() => {
-    if (!detail) return 0;
-    if (typeof detail.discount === "number" && detail.discount > 0) {
-      return detail.discount;
+    if (!activeDetail) return 0;
+    if (typeof activeDetail.discount === "number" && activeDetail.discount > 0) {
+      return activeDetail.discount;
     }
-    const diff = detailSubtotal - Number(detail.total);
+    const diff = detailSubtotal - Number(activeDetail.total);
     return diff > 0.01 ? diff : 0;
-  }, [detail, detailSubtotal]);
+  }, [activeDetail, detailSubtotal]);
 
   useEffect(() => {
     if (sales.length > 0 && typeof window !== "undefined") {
@@ -287,12 +296,12 @@ export default function HistoricoPage() {
             <DrawerHeader className="px-0 text-center">
               <DrawerTitle className="text-center font-semibold">Detalhes da venda</DrawerTitle>
             </DrawerHeader>
-            {detail && (
+            {activeDetail && (
               <div className="space-y-3 overflow-y-auto min-h-0 flex-1 py-2">
                 <div className="rounded-xl border border-border bg-card p-3">
-                  <div className="text-sm font-medium">{detail.clientName}</div>
+                  <div className="text-sm font-medium">{activeDetail.clientName}</div>
                   <div className="text-xs text-muted-foreground">
-                    {dateTime(detail.date)}
+                    {dateTime(activeDetail.date)}
                   </div>
                 </div>
 
@@ -301,7 +310,7 @@ export default function HistoricoPage() {
                     Itens
                   </h4>
                   <div className="space-y-1">
-                    {detail.items.map((it) => (
+                    {activeDetail.items.map((it) => (
                       <div
                         key={it.productId}
                         className="flex items-center justify-between text-sm"
@@ -332,7 +341,7 @@ export default function HistoricoPage() {
                     <div className="flex items-center justify-between pt-1 border-t border-border">
                       <div className="text-sm font-semibold">Total</div>
                       <div className="text-lg font-bold tabular-nums text-primary">
-                        {currency(detail.total)}
+                        {currency(activeDetail.total)}
                       </div>
                     </div>
                   </div>
@@ -340,22 +349,22 @@ export default function HistoricoPage() {
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">Total</div>
                     <div className="text-lg font-semibold tabular-nums">
-                      {currency(detail.total)}
+                      {currency(activeDetail.total)}
                     </div>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Pagamento</span>
-                  <span>{getPaymentLabel(detail.paymentMethod)}</span>
+                  <span>{getPaymentLabel(activeDetail.paymentMethod)}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <SaleStatusBadge status={detail.status} />
+                  <SaleStatusBadge status={activeDetail.status} />
                 </div>
 
-                {detail.status === "CANCELADO" && (
+                {activeDetail.status === "CANCELADO" && (
                   <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive dark:bg-destructive/20">
                     <div className="font-semibold flex items-center gap-1.5">
                       <BoxIcon name="info-circle" className="text-base" /> Venda cancelada
@@ -366,27 +375,27 @@ export default function HistoricoPage() {
                   </div>
                 )}
 
-                {detail.dueDate && (
+                {activeDetail.dueDate && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Vencimento</span>
                     <span>
-                      {formatDateOnly(detail.dueDate)}
+                      {formatDateOnly(activeDetail.dueDate)}
                     </span>
                   </div>
                 )}
 
-                {detail.notes && (
+                {activeDetail.notes && (
                   <div className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
-                    {detail.notes}
+                    {activeDetail.notes}
                   </div>
                 )}
 
-                {detail.status === "PENDENTE" && can("historico", "Editar") && (
+                {activeDetail.status === "PENDENTE" && can("historico", "Editar") && (
                   <Button
                     variant="outline"
                     className="w-full rounded-full border-green-600/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-500/40 dark:text-green-400 dark:hover:bg-green-950/40"
                     disabled={isUpdatingStatus}
-                    onClick={() => handleMarkAsPaid(detail.id)}
+                    onClick={() => handleMarkAsPaid(activeDetail.id)}
                   >
                     {isUpdatingStatus ? (
                       <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />
@@ -397,13 +406,13 @@ export default function HistoricoPage() {
                   </Button>
                 )}
 
-                {detail.status !== "CANCELADO" && can("historico", "Editar") && (
+                {activeDetail.status !== "CANCELADO" && can("historico", "Editar") && (
                   <>
                     <Button
                       variant="outline"
                       className="w-full rounded-full"
                       onClick={() => {
-                        handleEditSale(detail);
+                        handleEditSale(activeDetail);
                         setDetail(null);
                       }}
                     >
@@ -413,7 +422,7 @@ export default function HistoricoPage() {
                       variant="outline"
                       className="w-full rounded-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => {
-                        setSaleToCancel(detail);
+                        setSaleToCancel(activeDetail);
                       }}
                     >
                       <BoxIcon name="x-circle" className="mr-2 text-base" /> Cancelar venda
@@ -425,11 +434,11 @@ export default function HistoricoPage() {
                   className="w-full rounded-full"
                   onClick={() => {
                     addVoucher({
-                      saleId: detail.id,
-                      code: voucherCode(detail.id),
-                      sale: detail,
+                      saleId: activeDetail.id,
+                      code: voucherCode(activeDetail.id),
+                      sale: activeDetail,
                     });
-                    setVoucherState({ sale: detail });
+                    setVoucherState({ sale: activeDetail });
                     setDetail(null);
                   }}
                 >
