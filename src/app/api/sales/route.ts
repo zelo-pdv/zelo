@@ -272,6 +272,8 @@ export async function POST(req: Request) {
       if (trackStock) {
         for (const item of saleItemsData) {
           if (item.variantId) {
+            const currentVariant = (productMap.get(item.productId) as any)?.variants?.find((v: any) => v.id === item.variantId);
+            const prevStock = currentVariant?.stock !== null && currentVariant?.stock !== undefined ? Number(currentVariant.stock) : 0;
             const updatedVariant = await tx.productVariant.update({
               where: { id: item.variantId },
               data: {
@@ -284,9 +286,23 @@ export async function POST(req: Request) {
             if (blockOutOfStock && updatedVariant.stock !== null && updatedVariant.stock.toNumber() < 0) {
               throw new Error(`Estoque insuficiente para a variação ${item.variantName || item.productName}.`);
             }
+            await tx.stockMovement.create({
+              data: {
+                lojaId: user.lojaId,
+                type: "SALE",
+                productId: item.productId,
+                variantId: item.variantId,
+                quantity: item.quantity,
+                previousStock: prevStock,
+                resultStock: Number(updatedVariant.stock ?? 0),
+                userId: user.id,
+                notes: `Venda #${newSale.saleNumber ?? ""}`.trim(),
+              },
+            });
           } else {
             const dbProduct = productMap.get(item.productId);
             if (dbProduct && dbProduct.stock !== null) {
+              const prevStock = Number(dbProduct.stock);
               const updatedProduct = await tx.product.update({
                 where: { id: item.productId },
                 data: {
@@ -300,6 +316,18 @@ export async function POST(req: Request) {
               if (blockOutOfStock && updatedProduct.stock !== null && updatedProduct.stock.toNumber() < 0) {
                 throw new Error(`Estoque insuficiente para o produto ${item.productName}.`);
               }
+              await tx.stockMovement.create({
+                data: {
+                  lojaId: user.lojaId,
+                  type: "SALE",
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  resultStock: Number(updatedProduct.stock ?? 0),
+                  userId: user.id,
+                  notes: `Venda #${newSale.saleNumber ?? ""}`.trim(),
+                },
+              });
             }
           }
         }

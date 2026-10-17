@@ -28,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   );
 
   const visibleSecondaryNav = SECONDARY_NAV.filter(
-    (item) => !item.adminOnly || isAdmin,
+    (item) => (!item.adminOnly || isAdmin) && (!item.module || can(item.module, "Visualizar")),
   );
 
   // Com acesso a apenas uma página (ou nenhuma), a barra lateral não é necessária

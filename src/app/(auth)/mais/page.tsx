@@ -13,7 +13,7 @@ export default function MaisPage() {
 
   const links = [
     ...(historicoLink && (!historicoLink.module || can(historicoLink.module, "Visualizar")) ? [historicoLink] : []),
-    ...SECONDARY_NAV.filter((n) => !n.adminOnly || isAdmin),
+    ...SECONDARY_NAV.filter((n) => (!n.adminOnly || isAdmin) && (!n.module || can(n.module, "Visualizar"))),
   ];
 
   return (

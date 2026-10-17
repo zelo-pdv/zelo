@@ -11,5 +11,20 @@ export function hasPermission(
   isAdmin?: boolean,
 ): boolean {
   if (isAdmin) return true;
-  return permissions?.[module]?.includes(action) ?? false;
+
+  if (permissions?.[module] !== undefined) {
+    return permissions[module]?.includes(action) ?? false;
+  }
+
+  // Fallback para grupos legados: se 'estoque' não estiver definido, herda de 'produtos'
+  if (module === "estoque") {
+    if (action === "Visualizar") {
+      return permissions?.["produtos"]?.includes("Visualizar") ?? false;
+    }
+    if (action === "Adicionar") {
+      return permissions?.["produtos"]?.includes("Editar") ?? false;
+    }
+  }
+
+  return false;
 }

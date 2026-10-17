@@ -56,6 +56,13 @@ export const NAV: NavItem[] = [
 
 export const SECONDARY_NAV: NavItem[] = [
   {
+    to: "/estoque",
+    label: "Movimentações",
+    short: "Estoque",
+    icon: createBoxIcon("transfer"),
+    module: "estoque",
+  },
+  {
     to: "/relatorios",
     label: "Relatórios",
     short: "Relatórios",
@@ -88,6 +95,7 @@ export const SECONDARY_NAV: NavItem[] = [
 export const TitlePages: TitlePage[] = [
   { label: "Início", to: "/dashboard" },
   { label: "Produtos", to: "/produtos" },
+  { label: "Movimentações de Estoque", to: "/estoque" },
   { label: "Nova Venda", to: "/nova-venda" },
   { label: "Clientes", to: "/clientes" },
   { label: "Histórico", to: "/historico" },
@@ -121,6 +129,7 @@ export function getFirstAccessibleRoute(
   const sequence: { module: ModuleKey; to: string }[] = [
     { module: "dashboard", to: "/dashboard" },
     { module: "produtos", to: "/produtos" },
+    { module: "estoque", to: "/estoque" },
     { module: "nova-venda", to: "/nova-venda" },
     { module: "clientes", to: "/clientes" },
     { module: "historico", to: "/historico" },

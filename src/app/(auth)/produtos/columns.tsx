@@ -39,7 +39,6 @@ export function isProductLowStock(
 }
 
 export type ProductActions = {
-  onStock: (product: ProductFrontend) => void;
   onEdit: (product: ProductFrontend) => void;
   onDelete: (product: ProductFrontend) => void;
   onToggleActive?: (product: ProductFrontend) => void;
@@ -49,18 +48,16 @@ export type ProductActions = {
 };
 
 export function getProductColumns({
-  onStock,
   onEdit,
   onDelete,
   onToggleActive,
   can,
   trackStock = false,
 }: ProductActions): ColumnDef<ProductFrontend>[] {
-  const canStock = trackStock && can("produtos", "Editar");
   const canEdit = can("produtos", "Editar");
   const canDelete = can("produtos", "Excluir");
 
-  const hasAnyAction = canStock || canEdit || canDelete;
+  const hasAnyAction = canEdit || canDelete;
 
   const columns: ColumnDef<ProductFrontend>[] = [
     {
@@ -128,21 +125,6 @@ export function getProductColumns({
                     />
 
                     <PopoverContent className="w-52" align="end">
-                      {canStock && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-full justify-start px-3"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onStock(product);
-                          }}
-                        >
-                          <BoxIcon name="package" className="mr-2 text-base" />
-                          Entrada de estoque
-                        </Button>
-                      )}
-
                       {canEdit && (
                         <Button
                           variant="ghost"
@@ -178,7 +160,7 @@ export function getProductColumns({
                         </Button>
                       )}
 
-                      {canStock && canEdit && canDelete && (
+                      {canEdit && canDelete && (
                         <Separator className="my-1" />
                       )}
 
@@ -354,20 +336,6 @@ export function getProductColumns({
 
         return (
           <div className="hidden justify-end gap-1 sm:flex">
-            {canStock && (
-              <ActionTooltip label="Adicionar estoque">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={() => onStock(product)}
-                  aria-label="Adicionar estoque"
-                >
-                  <BoxIcon name="package" className="text-base" />
-                </Button>
-              </ActionTooltip>
-            )}
-
             {canEdit && onToggleActive && (
               <ActionTooltip label={!active ? "Ativar produto" : "Desativar produto"}>
                 <Button

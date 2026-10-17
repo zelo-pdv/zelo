@@ -38,7 +38,7 @@ export function BottomNavigation() {
     if (to === "/mais") {
       return (
         pathname === "/mais" ||
-        ["/historico", "/usuarios", "/registros", "/configuracoes", "/relatorios"].some((p) =>
+        ["/historico", "/usuarios", "/registros", "/configuracoes", "/relatorios", "/estoque"].some((p) =>
           pathname.startsWith(p)
         )
       );

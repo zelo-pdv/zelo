@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   type ColumnDef,
@@ -55,13 +56,11 @@ interface ProductsDataTableProps {
   onImportClick?: () => void;
   onExportClick?: () => void;
   isExporting?: boolean;
-  onStock?: (product: ProductFrontend) => void;
   onEdit?: (product: ProductFrontend) => void;
   onDelete?: (product: ProductFrontend) => void;
   onToggleActive?: (product: ProductFrontend) => void;
   trackStock?: boolean;
   categoryLowStockThresholds?: Record<string, number>;
-  canStock?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -75,12 +74,10 @@ export function ProductsDataTable({
   onImportClick,
   onExportClick,
   isExporting,
-  onStock,
   onEdit,
   onDelete,
   onToggleActive,
   trackStock = false,
-  canStock = false,
   canEdit = false,
   canDelete = false,
 }: ProductsDataTableProps) {
@@ -275,6 +272,17 @@ export function ProductsDataTable({
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
+          <Link href="/estoque">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
+              <BoxIcon name="transfer" className="text-base" />
+              <span>Movimentações</span>
+            </Button>
+          </Link>
+
           {onConfigClick && (
             <Button
               type="button"
@@ -368,7 +376,7 @@ export function ProductsDataTable({
             const isLow = trackStock && isProductLowStock(product, trackStock);
             const lowVariants = trackStock ? getProductLowStockVariants(product, trackStock) : [];
 
-            const hasMobileRowActions = canStock || canEdit || canDelete;
+            const hasMobileRowActions = canEdit || canDelete;
 
             return (
               <div
@@ -459,20 +467,6 @@ export function ProductsDataTable({
                       }
                     />
                     <PopoverContent className="w-52 p-1.5" align="end">
-                      {canStock && onStock && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStock(product);
-                          }}>
-                          <BoxIcon name="package" className="mr-2 text-base" />
-                          Entrada de estoque
-                        </Button>
-                      )}
-
                       {canEdit && onEdit && (
                         <Button
                           variant="ghost"
@@ -511,7 +505,7 @@ export function ProductsDataTable({
                         </Button>
                       )}
 
-                      {canStock && canEdit && canDelete && (
+                      {canEdit && canDelete && (
                         <Separator className="my-1" />
                       )}
 

@@ -31,6 +31,7 @@ model Loja {
   settings        Settings?
   users           User[]
   productVariants ProductVariant[]
+  stockMovements  StockMovement[]
 }
 
 model Address {
@@ -96,9 +97,10 @@ model User {
   deletedAt   DateTime?
   address     Address[]
   auditLogs   AuditLog[]
-  ownedStores Loja[]      @relation("StoreOwner")
-  sales       Sale[]
-  group       AccessGroup @relation(fields: [groupId], references: [id])
+  ownedStores    Loja[]          @relation("StoreOwner")
+  sales          Sale[]
+  stockMovements StockMovement[]
+  group          AccessGroup     @relation(fields: [groupId], references: [id])
   loja        Loja        @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
@@ -164,8 +166,9 @@ model Product {
   active      Boolean          @default(true)
   category    Category?        @relation(fields: [categoryId], references: [id])
   loja        Loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  variants    ProductVariant[]
-  saleItems   SaleItem[]
+  variants       ProductVariant[]
+  saleItems      SaleItem[]
+  stockMovements StockMovement[]
 
   @@unique([lojaId, code])
   @@index([lojaId])
@@ -194,7 +197,8 @@ model ProductVariant {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  saleItems SaleItem[]
+  saleItems      SaleItem[]
+  stockMovements StockMovement[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -288,4 +292,42 @@ enum SaleStatus {
   PAGO
   PENDENTE
   CANCELADO
+}
+
+enum StockMovementType {
+  ENTRY
+  OUT
+  ADJUSTMENT
+  SALE
+  SALE_CANCEL
+}
+
+model StockMovement {
+  id            String            @id @default(cuid())
+  type          StockMovementType @default(ENTRY)
+  quantity      Decimal           @db.Decimal(10, 3)
+  previousStock Decimal           @db.Decimal(10, 3)
+  resultStock   Decimal           @db.Decimal(10, 3)
+  notes         String?
+  
+  productId     String
+  product       Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  variantId     String?
+  variant       ProductVariant?   @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  lojaId        String
+  loja          Loja              @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+
+  userId        String?
+  user          User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime          @default(now())
+
+  @@index([lojaId])
+  @@index([lojaId, createdAt])
+  @@index([lojaId, type])
+  @@index([productId])
+  @@index([variantId])
+  @@index([userId])
 }

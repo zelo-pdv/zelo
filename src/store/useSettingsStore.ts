@@ -6,6 +6,7 @@ import { notifyLocalSync } from "@/hooks/use-data-sync";
 export type ModuleKey =
   | "dashboard"
   | "produtos"
+  | "estoque"
   | "nova-venda"
   | "clientes"
   | "historico";
@@ -32,6 +33,14 @@ export const MODULES: ModuleDef[] = [
       { key: "Adicionar", label: "Adicionar" },
       { key: "Editar", label: "Editar" },
       { key: "Excluir", label: "Excluir" },
+    ],
+  },
+  {
+    key: "estoque",
+    label: "Estoque",
+    actions: [
+      { key: "Visualizar", label: "Visualizar" },
+      { key: "Adicionar", label: "Registrar entrada" },
     ],
   },
   {
@@ -216,7 +225,7 @@ const viewOnly = (): Permissions =>
     MODULES.map((m) => [m.key, ["Visualizar" as ActionKey]]),
   ) as Permissions;
 
-const defaultGroups: AccessGroup[] = [
+export const defaultGroups: AccessGroup[] = [
   {
     id: "g_admin",
     name: "Administrador",
@@ -236,6 +245,7 @@ const defaultGroups: AccessGroup[] = [
       "nova-venda": ["Visualizar", "Adicionar"],
       clientes: ["Visualizar", "Adicionar", "Editar", "Excluir"],
       produtos: ["Visualizar", "Adicionar", "Editar", "Excluir"],
+      estoque: ["Visualizar", "Adicionar"],
     },
     createdAt: new Date().toISOString(),
   },
@@ -247,6 +257,7 @@ const defaultGroups: AccessGroup[] = [
     permissions: {
       dashboard: ["Visualizar"],
       produtos: ["Visualizar"],
+      estoque: ["Visualizar", "Adicionar"],
       "nova-venda": ["Visualizar", "Adicionar"],
       clientes: ["Visualizar", "Adicionar"],
       historico: ["Visualizar"],

@@ -53,17 +53,48 @@ export async function PATCH(
         if (trackStock) {
           for (const item of existing.items) {
             if (item.variantId) {
-              await tx.productVariant.update({
+              const currentVariant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+              const prevStock = currentVariant?.stock !== null && currentVariant?.stock !== undefined ? Number(currentVariant.stock) : 0;
+              const updatedVariant = await tx.productVariant.update({
                 where: { id: item.variantId },
                 data: { stock: { increment: item.quantity } },
-              }).catch(() => {});
+                select: { stock: true },
+              });
+              await tx.stockMovement.create({
+                data: {
+                  lojaId: auth.user.lojaId,
+                  type: "SALE_CANCEL",
+                  productId: item.productId,
+                  variantId: item.variantId,
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  resultStock: Number(updatedVariant.stock ?? 0),
+                  userId: auth.user.id,
+                  notes: `Cancelamento da venda #${existing.saleNumber ?? ""}`.trim(),
+                },
+              });
             } else {
-              await tx.product.update({
+              const currentProduct = await tx.product.findUnique({ where: { id: item.productId } });
+              const prevStock = currentProduct?.stock !== null && currentProduct?.stock !== undefined ? Number(currentProduct.stock) : 0;
+              const updatedProduct = await tx.product.update({
                 where: { id: item.productId },
                 data: {
                   stock: {
                     increment: item.quantity,
                   },
+                },
+                select: { stock: true },
+              });
+              await tx.stockMovement.create({
+                data: {
+                  lojaId: auth.user.lojaId,
+                  type: "SALE_CANCEL",
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  resultStock: Number(updatedProduct.stock ?? 0),
+                  userId: auth.user.id,
+                  notes: `Cancelamento da venda #${existing.saleNumber ?? ""}`.trim(),
                 },
               });
             }
@@ -80,21 +111,50 @@ export async function PATCH(
               if (blockOutOfStock && v && v.stock !== null && v.stock.toNumber() < Number(item.quantity)) {
                 throw new Error(`Estoque insuficiente para reativar a variação ${item.variantName || item.productName}.`);
               }
-              await tx.productVariant.update({
+              const prevStock = v?.stock !== null && v?.stock !== undefined ? Number(v.stock) : 0;
+              const updatedVariant = await tx.productVariant.update({
                 where: { id: item.variantId },
                 data: { stock: { decrement: item.quantity } },
-              }).catch(() => {});
+                select: { stock: true },
+              });
+              await tx.stockMovement.create({
+                data: {
+                  lojaId: auth.user.lojaId,
+                  type: "SALE",
+                  productId: item.productId,
+                  variantId: item.variantId,
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  resultStock: Number(updatedVariant.stock ?? 0),
+                  userId: auth.user.id,
+                  notes: `Reativação da venda #${existing.saleNumber ?? ""}`.trim(),
+                },
+              });
             } else {
               const p = await tx.product.findUnique({ where: { id: item.productId } });
               if (blockOutOfStock && p && p.stock !== null && p.stock.toNumber() < Number(item.quantity)) {
                 throw new Error(`Estoque insuficiente para reativar o produto ${item.productName}.`);
               }
-              await tx.product.update({
+              const prevStock = p?.stock !== null && p?.stock !== undefined ? Number(p.stock) : 0;
+              const updatedProduct = await tx.product.update({
                 where: { id: item.productId },
                 data: {
                   stock: {
                     decrement: item.quantity,
                   },
+                },
+                select: { stock: true },
+              });
+              await tx.stockMovement.create({
+                data: {
+                  lojaId: auth.user.lojaId,
+                  type: "SALE",
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  resultStock: Number(updatedProduct.stock ?? 0),
+                  userId: auth.user.id,
+                  notes: `Reativação da venda #${existing.saleNumber ?? ""}`.trim(),
                 },
               });
             }

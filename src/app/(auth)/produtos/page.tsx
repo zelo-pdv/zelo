@@ -5,19 +5,6 @@ import { ProductForm } from '@/components/produtos/product-form';
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
-import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
@@ -26,23 +13,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { getProductColumns, getProductTotalStock, ProductFrontend } from "./columns";
 import { ProductsDataTable } from "./data-table";
 import { productsService } from "@/services/products.service";
 import { categoriesService } from "@/services/categories.service";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Category } from "@/prisma/client";
 import { usePermissions } from "@/components/auth/permissions-provider";
 import { useDataSync, notifyLocalSync } from "@/hooks/use-data-sync";
@@ -112,7 +88,6 @@ export default function ProdutosPage() {
 
   const [editing, setEditing] = useState<ProductFrontend | null>(null);
   const [creating, setCreating] = useState(false);
-  const [stockDialog, setStockDialog] = useState<ProductFrontend | null>(null);
   const [deleting, setDeleting] = useState<ProductFrontend | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -189,7 +164,6 @@ export default function ProdutosPage() {
   const columns = useMemo(
     () =>
       getProductColumns({
-        onStock: setStockDialog,
         onEdit: setEditing,
         onDelete: setDeleting,
         onToggleActive: handleToggleActive,
@@ -214,12 +188,10 @@ export default function ProdutosPage() {
         onImportClick={() => setIsImportOpen(true)}
         onExportClick={handleExport}
         isExporting={isExporting}
-        onStock={setStockDialog}
         onEdit={setEditing}
         onDelete={setDeleting}
         onToggleActive={handleToggleActive}
         trackStock={productsSettings.trackStock ?? false}
-        canStock={(productsSettings.trackStock ?? false) && can("produtos", "Editar")}
         canEdit={can("produtos", "Editar")}
         canDelete={can("produtos", "Excluir")}
       />
@@ -322,20 +294,6 @@ export default function ProdutosPage() {
         }}
       />
 
-      <StockEntry
-        product={stockDialog}
-        onClose={() => setStockDialog(null)}
-        onSuccess={(updatedProduct) => {
-          setProducts((prev) =>
-            prev.map((product) =>
-              product.id === updatedProduct.id
-                ? { ...product, ...updatedProduct }
-                : product,
-            ),
-          );
-          notifyLocalSync("products");
-        }}
-      />
 
       <DeleteProduct
         product={deleting}
@@ -407,181 +365,6 @@ function DeleteProduct({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
-}
-
-function StockEntry({
-  product,
-  onClose,
-  onSuccess,
-}: {
-  product: ProductFrontend | null;
-  onClose: () => void;
-  onSuccess: (product: ProductFrontend) => void;
-}) {
-  const [qty, setQty] = useState(1);
-  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
-  const [busy, setBusy] = useState(false);
-  const isMobile = useIsMobile();
-  const [cachedProduct, setCachedProduct] = useState(product);
-
-  useEffect(() => {
-    if (product) {
-      setCachedProduct(product);
-    }
-  }, [product]);
-
-  const activeProduct = product || cachedProduct;
-
-  const activeVariants = useMemo(() => {
-    if (!activeProduct || !Array.isArray(activeProduct.variants)) return [];
-    return activeProduct.variants.filter((v: any) => v.active !== false && !v.deletedAt);
-  }, [activeProduct]);
-
-  const hasVariants = activeVariants.length > 0;
-
-  useEffect(() => {
-    if (hasVariants) {
-      setSelectedVariantId(activeVariants[0]?.id || "");
-    } else {
-      setSelectedVariantId("");
-    }
-  }, [hasVariants, activeVariants]);
-
-  const handleAddStock = async () => {
-    if (!product || qty <= 0) return;
-    if (hasVariants && !selectedVariantId) {
-      toast.error("Selecione uma variação.");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const updatedProduct = await productsService.addStock(
-        product.id,
-        qty,
-        hasVariants ? selectedVariantId : undefined
-      );
-      onSuccess(updatedProduct as ProductFrontend);
-      toast.success(`+${qty} un adicionados`);
-      setQty(1);
-      onClose();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Erro ao adicionar estoque.";
-      toast.error(message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const totalStock = activeProduct ? getProductTotalStock(activeProduct) : 0;
-
-  const ContentBody = activeProduct && (
-    <div className="space-y-3 py-2">
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{activeProduct.name}</span> —
-        atual: {totalStock} un
-      </div>
-
-      {hasVariants && (
-        <div className="space-y-2">
-          <Label required>Variação</Label>
-          <Select
-            value={selectedVariantId}
-            onValueChange={(val) => {
-              if (val) setSelectedVariantId(val as string);
-            }}
-          >
-            <SelectTrigger className="w-full h-9 rounded-md text-sm justify-between">
-              <SelectValue placeholder="Selecione a variação">
-                {(() => {
-                  const sel = activeVariants.find((v: any) => v.id === selectedVariantId);
-                  return sel ? `${sel.name} (atual: ${Number(sel.stock ?? 0)} un)` : undefined;
-                })()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {activeVariants.map((v: any) => (
-                <SelectItem key={v.id} value={v.id}>
-                  {v.name} (atual: {Number(v.stock ?? 0)} un)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label required>Quantidade a adicionar</Label>
-        <Input
-          type="number"
-          min={1}
-          value={qty}
-          onChange={(e) => setQty(Number(e.target.value))}
-          inputMode="numeric"
-          onFocus={(e) => e.target.select()}
-        />
-      </div>
-    </div>
-  );
-
-  const ActionButtons = (
-    <div className="flex w-full justify-end">
-      <LoadingButton
-        loading={busy}
-        disabled={qty <= 0}
-        onClick={handleAddStock}
-      >
-        Adicionar
-      </LoadingButton>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Drawer open={!!product} onOpenChange={(open) => !open && onClose()} blur>
-        <DrawerContent className="p-4">
-          <DrawerHeader className="px-0 text-center">
-            <DrawerTitle className="text-center">Entrada de estoque</DrawerTitle>
-          </DrawerHeader>
-          {ContentBody}
-          <div className="flex flex-col gap-2 pt-4 w-full">
-            <LoadingButton
-              loading={busy}
-              disabled={qty <= 0}
-              onClick={handleAddStock}
-              className="h-11 w-full rounded-full font-medium"
-            >
-              Adicionar
-            </LoadingButton>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-              disabled={busy}
-              className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Cancelar
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  return (
-    <Dialog open={!!product} onOpenChange={(open) => !open && onClose()} blur>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Entrada de estoque</DialogTitle>
-        </DialogHeader>
-
-        {ContentBody}
-
-        <DialogFooter>{ActionButtons}</DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
