@@ -15,7 +15,7 @@ import { productsService } from "@/services/products.service";
 import type { Sale } from "@/types";
 import type { ProductFrontend } from "../produtos/columns";
 import { handleExportLowStockPdf } from "@/lib/export";
-import { getLowStockProducts } from "@/lib/stock";
+import { getLowStockProducts, getProductTotalStock, getProductLowStockVariants } from "@/lib/stock";
 import { usePermissions } from "@/components/auth/permissions-provider";
 import { useDataSync } from "@/hooks/use-data-sync";
 import { cn } from "@/lib/utils";
@@ -799,8 +799,17 @@ export default function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{p.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {Number(p.stock)} em estoque
+                      {getProductTotalStock(p)} em estoque
                     </div>
+                    {(() => {
+                      const lowVariants = getProductLowStockVariants(p, true);
+                      if (lowVariants.length === 0) return null;
+                      return (
+                        <div className="text-[11px] text-amber-600 dark:text-amber-400 truncate font-medium">
+                          Baixo: {lowVariants.map((v: any) => `${v.name} (${Number(v.stock ?? 0)} un)`).join(", ")}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <Badge
                     variant="outline"

@@ -28,7 +28,8 @@ export type ProductFrontend = Omit<Product, "costPrice" | "salePrice"> & {
   variants?: any[];
 };
 
-import { isProductLowStock as checkLowStock } from "@/lib/stock";
+import { isProductLowStock as checkLowStock, getProductTotalStock, getProductLowStockVariants } from "@/lib/stock";
+export { getProductTotalStock, getProductLowStockVariants };
 
 export function isProductLowStock(
   product: ProductFrontend,
@@ -249,22 +250,47 @@ export function getProductColumns({
 
             cell: ({ row }: any) => {
               const product = row.original;
-              const stockNum = Number(product.stock ?? 0);
+              const stockNum = getProductTotalStock(product);
               const low = trackStock && isProductLowStock(product, trackStock);
+              const lowVariants = trackStock ? getProductLowStockVariants(product, trackStock) : [];
+
+              let lowStockTooltip: string | undefined;
+              if (lowVariants.length > 0) {
+                const variantSummary = lowVariants
+                  .map(
+                    (v: any) =>
+                      `${v.name} (${Number(v.stock ?? 0)} un, mín. ${Number(v.minStock)})`
+                  )
+                  .join(", ");
+                lowStockTooltip = `Estoque baixo nas variações: ${variantSummary}`;
+              } else if (low && product.minStock !== null && product.minStock !== undefined) {
+                lowStockTooltip = `Estoque baixo: ${stockNum} un (mín. ${Number(product.minStock)})`;
+              }
+
+              const stockContent = (
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    stockNum < 0
+                      ? "font-semibold text-rose-600 dark:text-rose-400"
+                      : low
+                      ? "font-semibold text-amber-600 dark:text-amber-400"
+                      : "text-foreground font-medium"
+                  )}
+                >
+                  {stockNum} un
+                </span>
+              );
+
               return (
                 <div className="flex items-center justify-end text-right text-sm tabular-nums">
-                  <span
-                    className={cn(
-                      "tabular-nums",
-                      stockNum < 0
-                        ? "font-semibold text-rose-600 dark:text-rose-400"
-                        : low
-                        ? "font-semibold text-amber-600 dark:text-amber-400"
-                        : "text-foreground font-medium"
-                    )}
-                  >
-                    {stockNum} un
-                  </span>
+                  {low && lowStockTooltip ? (
+                    <ActionTooltip label={lowStockTooltip} side="top">
+                      {stockContent}
+                    </ActionTooltip>
+                  ) : (
+                    stockContent
+                  )}
                 </div>
               );
             },

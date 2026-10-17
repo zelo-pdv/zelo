@@ -1,4 +1,6 @@
 export interface StockCheckableItem {
+  id?: string;
+  name?: string;
   stock?: number | string | null | { toNumber?: () => number; toString?: () => string };
   minStock?: number | string | null | { toNumber?: () => number; toString?: () => string };
   active?: boolean | null;
@@ -121,3 +123,65 @@ export function getLowStockProducts<T extends StockCheckableProduct>(
     (product) => product.active !== false && isProductLowStock(product, trackStock)
   );
 }
+
+/**
+ * Checks whether a product has active variations.
+ */
+export function hasProductVariants(
+  product: StockCheckableProduct | null | undefined
+): boolean {
+  if (!product || !Array.isArray(product.variants) || product.variants.length === 0) {
+    return false;
+  }
+  return product.variants.some((v) => v.active !== false && !v.deletedAt);
+}
+
+/**
+ * Returns the list of active variations of a product that are currently in low stock.
+ */
+export function getProductLowStockVariants<T extends StockCheckableItem>(
+  product: { variants?: T[] | null } | null | undefined,
+  trackStock: boolean
+): T[] {
+  if (!trackStock || !product || !Array.isArray(product.variants) || product.variants.length === 0) {
+    return [];
+  }
+
+  return product.variants.filter(
+    (v) => v.active !== false && !v.deletedAt && isItemLowStock(v, trackStock)
+  );
+}
+
+/**
+ * Calculates the total stock of a product.
+ *
+ * Rules:
+ * 1. If the product has variations:
+ *    - The total stock is the sum of the stock of all active variations (non-deleted).
+ *    - The parent product's own stock is NOT added to the variations (avoiding double counting).
+ * 2. If the product does NOT have variations:
+ *    - The product is a simple product; its own stock is returned.
+ * 3. Does not invent stock for unconfigured items (null/undefined defaults to 0).
+ */
+export function getProductTotalStock(
+  product: StockCheckableProduct | null | undefined
+): number {
+  if (!product) return 0;
+
+  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+
+  if (hasVariants) {
+    const activeVariants = product.variants!.filter(
+      (v) => v.active !== false && !v.deletedAt
+    );
+
+    // Sum active variations' stock without adding the parent product stock
+    return activeVariants.reduce(
+      (total, v) => total + parseStockNumber(v.stock),
+      0
+    );
+  }
+
+  return parseStockNumber(product.stock);
+}
+

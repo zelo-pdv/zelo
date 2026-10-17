@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { getProductColumns, ProductFrontend } from "./columns";
+import { getProductColumns, getProductTotalStock, ProductFrontend } from "./columns";
 import { ProductsDataTable } from "./data-table";
 import { productsService } from "@/services/products.service";
 import { categoriesService } from "@/services/categories.service";
@@ -246,7 +246,7 @@ export default function ProdutosPage() {
                 description: editing.description || "",
                 costPrice: editing.costPrice || 0,
                 salePrice: editing.salePrice,
-                stock: Number(editing.stock ?? 0),
+                stock: getProductTotalStock(editing),
                 minStock:
                   editing.minStock !== null && editing.minStock !== undefined
                     ? Number(editing.minStock)
@@ -413,15 +413,39 @@ function StockEntry({
   onSuccess: (product: ProductFrontend) => void;
 }) {
   const [qty, setQty] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const isMobile = useIsMobile();
 
+  const activeVariants = useMemo(() => {
+    if (!product || !Array.isArray(product.variants)) return [];
+    return product.variants.filter((v: any) => v.active !== false && !v.deletedAt);
+  }, [product]);
+
+  const hasVariants = activeVariants.length > 0;
+
+  useEffect(() => {
+    if (hasVariants) {
+      setSelectedVariantId(activeVariants[0]?.id || "");
+    } else {
+      setSelectedVariantId("");
+    }
+  }, [hasVariants, activeVariants]);
+
   const handleAddStock = async () => {
     if (!product || qty <= 0) return;
+    if (hasVariants && !selectedVariantId) {
+      toast.error("Selecione uma variação.");
+      return;
+    }
 
     setBusy(true);
     try {
-      const updatedProduct = await productsService.addStock(product.id, qty);
+      const updatedProduct = await productsService.addStock(
+        product.id,
+        qty,
+        hasVariants ? selectedVariantId : undefined
+      );
       onSuccess(updatedProduct as ProductFrontend);
       toast.success(`+${qty} un adicionados`);
       setQty(1);
@@ -435,12 +459,31 @@ function StockEntry({
     }
   };
 
+  const totalStock = product ? getProductTotalStock(product) : 0;
+
   const ContentBody = product && (
     <div className="space-y-3 py-2">
       <div className="text-sm text-muted-foreground">
         <span className="font-medium text-foreground">{product.name}</span> —
-        atual: {Number(product.stock)}
+        atual: {totalStock} un
       </div>
+
+      {hasVariants && (
+        <div className="space-y-2">
+          <Label>Variação</Label>
+          <select
+            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            value={selectedVariantId}
+            onChange={(e) => setSelectedVariantId(e.target.value)}
+          >
+            {activeVariants.map((v: any) => (
+              <option key={v.id} value={v.id}>
+                {v.name} (atual: {Number(v.stock ?? 0)} un)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>Quantidade a adicionar</Label>

@@ -28,6 +28,8 @@ import { BarcodeScanner } from "@/components/barcode-scanner";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/useSettingsStore";
 
+import { getProductTotalStock } from "@/lib/stock";
+
 export function ProductPicker({
   open,
   onClose,
@@ -54,17 +56,18 @@ export function ProductPicker({
   );
 
   const handlePick = (p: import("@/types").Product) => {
+    const totalStock = getProductTotalStock(p);
+    const cartQty = cartItems
+      .filter((i) => i.productId === p.id)
+      .reduce((sum, i) => sum + i.quantity, 0);
+
     if (trackStock && blockOutOfStock) {
-      const inCart = cartItems.find((i) => i.productId === p.id);
-      const cartQty = inCart ? inCart.quantity : 0;
-      if (p.stock <= cartQty) {
+      if (totalStock <= cartQty) {
         toast.error(`Produto ${p.name} sem estoque disponível.`);
         return;
       }
     } else if (trackStock && !blockOutOfStock && outOfStockWarning) {
-      const inCart = cartItems.find((i) => i.productId === p.id);
-      const cartQty = inCart ? inCart.quantity : 0;
-      if (p.stock <= cartQty) {
+      if (totalStock <= cartQty) {
         toast.warning(`Aviso: Produto ${p.name} com estoque insuficiente/zerado.`, {
           id: `warn-stock-${p.id}`,
         });
@@ -79,7 +82,7 @@ export function ProductPicker({
 
   const availableProducts = useMemo(() => {
     if (trackStock && blockOutOfStock) {
-      return products.filter((p) => p.stock > 0);
+      return products.filter((p) => getProductTotalStock(p) > 0);
     }
     return products;
   }, [products, trackStock, blockOutOfStock]);
@@ -132,9 +135,11 @@ export function ProductPicker({
         <ScrollArea className="h-full">
           <div className="space-y-1 pb-4">
             {filtered.map((p) => {
-              const cartQty =
-                cartItems.find((i) => i.productId === p.id)?.quantity || 0;
-              const remaining = p.stock - cartQty;
+              const cartQty = cartItems
+                .filter((i) => i.productId === p.id)
+                .reduce((sum, i) => sum + i.quantity, 0);
+              const totalStock = getProductTotalStock(p);
+              const remaining = totalStock - cartQty;
               const isAdded = justAddedId === p.id;
 
               return (

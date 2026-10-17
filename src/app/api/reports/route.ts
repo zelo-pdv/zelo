@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { getProductTotalStock } from "@/lib/stock";
 
 export async function GET(req: Request) {
   try {
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
           items: {
             include: {
               product: {
-                include: { category: true },
+                include: { category: true, variants: { where: { deletedAt: null } } },
               },
             },
           },
@@ -93,7 +94,7 @@ export async function GET(req: Request) {
               categoryId: item.product?.categoryId || null,
               quantitySold: qty,
               totalRevenue: subtotal,
-              currentStock: Number(item.product?.stock ?? 0),
+              currentStock: getProductTotalStock(item.product),
               salePrice: Number(item.unitPrice),
             });
           }
@@ -131,6 +132,7 @@ export async function GET(req: Request) {
         },
         include: {
           category: true,
+          variants: { where: { deletedAt: null } },
         },
       });
 
@@ -159,7 +161,7 @@ export async function GET(req: Request) {
 
       const list = allProducts.map((p) => {
         const sold = salesCountMap.get(p.id) || { qty: 0, revenue: 0 };
-        const stock = Number(p.stock ?? 0);
+        const stock = getProductTotalStock(p);
         const costPrice = Number(p.costPrice ?? 0);
         const salePrice = Number(p.salePrice ?? 0);
         const stockValue = stock * (costPrice > 0 ? costPrice : salePrice);

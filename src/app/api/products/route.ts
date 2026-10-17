@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { productSchema } from "@/lib/validations/product";
 import { requirePermission } from "@/lib/require-permission";
 import { createAuditLog } from "@/lib/audit";
+import { getProductTotalStock } from "@/lib/stock";
 
 export async function GET() {
   const auth = await requirePermission("produtos", "Visualizar");
@@ -18,20 +19,24 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const serializedProducts = products.map((product) => ({
-      ...product,
-      costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
-      salePrice: Number(product.salePrice),
-      stock: Number(product.stock),
-      minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
-      variants: product.variants?.map((v) => ({
+    const serializedProducts = products.map((product) => {
+      const serializedVariants = product.variants?.map((v) => ({
         ...v,
         costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
         salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
         stock: Number(v.stock),
         minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
-      })),
-    }));
+      }));
+
+      return {
+        ...product,
+        costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
+        salePrice: Number(product.salePrice),
+        stock: getProductTotalStock({ ...product, variants: serializedVariants }),
+        minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
+        variants: serializedVariants,
+      };
+    });
 
     return NextResponse.json(serializedProducts);
   } catch (error) {
@@ -111,20 +116,22 @@ export async function POST(request: Request) {
       lojaId: auth.user.lojaId,
     });
 
+    const serializedVariants = product.variants?.map((v) => ({
+      ...v,
+      costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+      salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+      stock: Number(v.stock),
+      minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+    }));
+
     return NextResponse.json(
       {
         ...product,
         costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
         salePrice: Number(product.salePrice),
-        stock: Number(product.stock),
+        stock: getProductTotalStock({ ...product, variants: serializedVariants }),
         minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
-        variants: product.variants?.map((v) => ({
-          ...v,
-          costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
-          salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
-          stock: Number(v.stock),
-          minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
-        })),
+        variants: serializedVariants,
       },
       { status: 201 },
     );

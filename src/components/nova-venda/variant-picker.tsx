@@ -19,12 +19,16 @@ export function VariantPicker({
 }) {
   const isMobile = useIsMobile();
 
-  if (!product || !product.variants || product.variants.length === 0) return null;
+  const activeVariants = (product?.variants || []).filter(
+    (v: any) => v.active !== false && !v.deletedAt
+  );
+
+  if (!product || activeVariants.length === 0) return null;
 
   const Content = (
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-3">
-        {product.variants.map((v) => {
+        {activeVariants.map((v) => {
           const price = v.salePrice !== null ? Number(v.salePrice) : Number(product.salePrice);
           return (
             <Button
@@ -39,7 +43,7 @@ export function VariantPicker({
               </div>
               <div className="flex justify-between w-full text-sm text-muted-foreground">
                 <span>{v.code ? `Código: ${v.code}` : "Sem código"}</span>
-                <span>Estoque: {v.stock}</span>
+                <span>Estoque: {Number(v.stock ?? 0)}</span>
               </div>
             </Button>
           );

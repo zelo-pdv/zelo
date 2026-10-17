@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { productSchema } from "@/lib/validations/product";
 import { requirePermission } from "@/lib/require-permission";
 import { createAuditLog } from "@/lib/audit";
+import { getProductTotalStock } from "@/lib/stock";
 
 export async function PATCH(
   request: Request,
@@ -20,6 +21,7 @@ export async function PATCH(
 
     const existingProduct = await prisma.product.findFirst({
       where: { id, lojaId: auth.user.lojaId, deletedAt: null },
+      include: { variants: { where: { deletedAt: null } } },
     });
 
     if (!existingProduct) {
@@ -28,26 +30,57 @@ export async function PATCH(
 
     const hasOnlyIncrementStock =
       body.incrementStock !== undefined &&
-      Object.keys(body).filter((k) => k !== "incrementStock").length === 0;
+      Object.keys(body).filter((k) => k !== "incrementStock" && k !== "variantId").length === 0;
 
     if (hasOnlyIncrementStock) {
-      const product = await prisma.product.update({
-        where: { id },
-        data: {
-          stock: {
-            increment: Number(body.incrementStock),
+      let product;
+      if (body.variantId) {
+        await prisma.productVariant.update({
+          where: { id: body.variantId, productId: id },
+          data: {
+            stock: {
+              increment: Number(body.incrementStock),
+            },
           },
-        },
-        include: { category: true },
-      });
+        });
+        product = await prisma.product.findUnique({
+          where: { id },
+          include: { category: true, variants: { where: { deletedAt: null } } },
+        });
+      } else {
+        product = await prisma.product.update({
+          where: { id },
+          data: {
+            stock: {
+              increment: Number(body.incrementStock),
+            },
+          },
+          include: { category: true, variants: { where: { deletedAt: null } } },
+        });
+      }
+
+      if (!product) {
+        return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
+      }
+
+      const serializedVariants = product.variants?.map((v) => ({
+        ...v,
+        costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+        salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+        stock: Number(v.stock),
+        minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+      }));
+
+      const newTotalStock = getProductTotalStock({ ...product, variants: serializedVariants });
 
       await createAuditLog({
         action: "UPDATE_STOCK",
         entity: "Product",
         entityId: id,
         details: {
+          variantId: body.variantId,
           oldStock: Number(existingProduct.stock),
-          newStock: Number(product.stock),
+          newStock: newTotalStock,
           increment: Number(body.incrementStock),
         },
         userId: auth.user.id,
@@ -58,8 +91,9 @@ export async function PATCH(
         ...product,
         costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
         salePrice: Number(product.salePrice),
-        stock: Number(product.stock),
+        stock: newTotalStock,
         minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
+        variants: serializedVariants,
       });
     }
 
@@ -208,19 +242,21 @@ export async function PATCH(
       });
     }
 
+    const serializedVariants = product.variants?.map((v) => ({
+      ...v,
+      costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+      salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+      stock: Number(v.stock),
+      minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+    }));
+
     return NextResponse.json({
       ...product,
       costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
       salePrice: Number(product.salePrice),
-      stock: Number(product.stock),
+      stock: getProductTotalStock({ ...product, variants: serializedVariants }),
       minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
-      variants: product.variants?.map((v) => ({
-        ...v,
-        costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
-        salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
-        stock: Number(v.stock),
-        minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
-      })),
+      variants: serializedVariants,
     });
   } catch (error: any) {
     if (error.code === "P2002") {

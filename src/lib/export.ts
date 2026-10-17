@@ -6,6 +6,7 @@ import { currency, dateTime } from "@/lib/format";
 import { maskPhone } from "@/lib/masks";
 import { PaymentMethod, PAYMENT_LABELS } from "@/types";
 import { toast } from "sonner";
+import { getProductTotalStock, getProductLowStockVariants, parseStockNumber } from "@/lib/stock";
 
 // Helper para download de CSV com UTF-8 BOM e delimitador ;
 export const downloadCsv = (
@@ -151,7 +152,7 @@ export const handleExportProducts = async () => {
       p.category?.name || "Geral",
       currency(p.salePrice),
       currency(p.costPrice),
-      Number(p.stock ?? 0),
+      getProductTotalStock(p),
       p.minStock !== null && p.minStock !== undefined ? Number(p.minStock) : "",
       p.code || "",
       p.barcode || "",
@@ -233,21 +234,15 @@ export const handleExportLowStockPdf = async (lowStockProducts: any[]) => {
       const hasVariants = Array.isArray(p.variants) && p.variants.length > 0;
 
       if (hasVariants) {
-        const lowVariants = p.variants.filter((v: any) => {
-          if (v.active === false || v.deletedAt) return false;
-          if (v.minStock === null || v.minStock === undefined || v.minStock === "") return false;
-          const min = Number(v.minStock);
-          const current = Number(v.stock ?? 0);
-          return !isNaN(min) && min >= 0 && current <= min;
-        });
+        const lowVariants = getProductLowStockVariants(p, true);
 
         if (lowVariants.length > 0) {
           for (const v of lowVariants) {
-            const min = Number(v.minStock);
-            const current = Number(v.stock ?? 0);
+            const min = parseStockNumber(v.minStock);
+            const current = parseStockNumber(v.stock);
             const suggest = Math.max(0, min - current + 1);
             data.push([
-              `${p.name} - ${v.name}`,
+              `${p.name} - ${v.name || ""}`,
               categoryName,
               current.toString(),
               min.toString(),

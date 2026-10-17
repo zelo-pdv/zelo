@@ -26,10 +26,10 @@ export const productsService = {
     });
   },
 
-  async addStock(id: string, qty: number) {
+  async addStock(id: string, qty: number, variantId?: string) {
     return apiRequest(`/products/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ incrementStock: qty }),
+      body: JSON.stringify({ incrementStock: qty, ...(variantId ? { variantId } : {}) }),
     });
   },
 };

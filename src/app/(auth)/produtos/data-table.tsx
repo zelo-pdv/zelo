@@ -37,7 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductThumb } from "@/components/product-thumb";
 import { currency } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { isProductLowStock, type ProductFrontend } from "./columns";
+import { isProductLowStock, getProductTotalStock, getProductLowStockVariants, type ProductFrontend } from "./columns";
 
 interface ProductsDataTableProps {
   columns: ColumnDef<ProductFrontend>[];
@@ -345,9 +345,10 @@ export function ProductsDataTable({
         {rows.length ? (
           rows.map((row) => {
             const product = row.original;
-            const stockNum = Number(product.stock ?? 0);
+            const stockNum = getProductTotalStock(product);
             const isNegative = stockNum < 0;
             const isLow = trackStock && isProductLowStock(product, trackStock);
+            const lowVariants = trackStock ? getProductLowStockVariants(product, trackStock) : [];
 
             const hasMobileRowActions = canStock || canEdit || canDelete;
 
@@ -380,6 +381,13 @@ export function ProductsDataTable({
                   <div className="flex items-center gap-2 text-xs">
                     {trackStock && (
                       <span
+                        title={
+                          lowVariants.length > 0
+                            ? `Baixo nas variações: ${lowVariants.map((v: any) => `${v.name} (${Number(v.stock ?? 0)} un)`).join(", ")}`
+                            : isLow && product.minStock !== null && product.minStock !== undefined
+                            ? `Estoque baixo: mín. ${Number(product.minStock)}`
+                            : undefined
+                        }
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums",
                           isNegative
