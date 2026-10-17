@@ -360,7 +360,6 @@ export function ProductsDataTable({
                 <ProductThumb
                   name={product.name}
                   image={product.image}
-                  forceShow
                   className="h-14 w-14 rounded-2xl shrink-0 text-xl"
                 />
 

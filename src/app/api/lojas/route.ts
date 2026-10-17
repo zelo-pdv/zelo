@@ -170,7 +170,6 @@ export async function POST(request: Request) {
                 store: { name: lojaData.name, email: lojaData.email || "", phone: lojaData.phone || "" },
                 products: { trackStock: true, showImages: true },
                 sales: { blockOutOfStock: true, defaultPaymentMethod: "PIX", defaultStatus: "PAID", requireClient: false },
-                dashboard: { hideCostPrice: false },
                 onboarding: { completed: true, step: 4 },
               },
             },

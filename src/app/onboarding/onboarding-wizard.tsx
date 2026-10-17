@@ -58,9 +58,6 @@ export function OnboardingWizard({
   );
 
   // Etapa 3 - Catálogo & Contato
-  const [hideCostPrice, setHideCostPrice] = useState<boolean>(
-    initialConfig?.products?.hideCostPrice ?? false,
-  );
   const [showProductImages, setShowProductImages] = useState<boolean>(
     initialConfig?.products?.showProductImages ?? true,
   );
@@ -74,7 +71,6 @@ export function OnboardingWizard({
     requireClient,
     defaultPaymentMethod,
     defaultSaleStatus,
-    hideCostPrice,
     showProductImages,
     storePhone,
     step,
@@ -306,17 +302,19 @@ export function OnboardingWizard({
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-0.5 pr-2">
                       <Label
-                        htmlFor="toggle-block-out-of-stock"
-                        className="text-sm font-medium cursor-pointer">
+                        id="toggle-block-out-of-stock-label"
+                        className="text-sm font-medium">
                         Bloquear venda com estoque zerado
                       </Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p id="toggle-block-out-of-stock-desc" className="text-xs text-muted-foreground">
                         Se ativado, impede finalizar a venda de produtos sem
                         saldo. Se desativado, apenas exibe um aviso amigável.
                       </p>
                     </div>
                     <Switch
                       id="toggle-block-out-of-stock"
+                      aria-labelledby="toggle-block-out-of-stock-label"
+                      aria-describedby="toggle-block-out-of-stock-desc"
                       checked={blockOutOfStock}
                       onCheckedChange={setBlockOutOfStock}
                     />
@@ -534,74 +532,26 @@ export function OnboardingWizard({
                 </p>
               </div>
 
-              {/* Preço de Custo */}
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold text-foreground">
-                  Visualização do Preço de Custo
-                </Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setHideCostPrice(false)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && setHideCostPrice(false)
-                    }
-                    className={cn(
-                      "flex cursor-pointer flex-col gap-1 rounded-xl border p-3.5 transition-all",
-                      !hideCostPrice
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "border-border/70 hover:bg-muted/30",
-                    )}>
-                    <span className="font-semibold text-sm text-foreground">
-                      Sim, quero acompanhar preço de custo
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      Exibe o custo para você acompanhar sua margem de lucro e
-                      rentabilidade.
-                    </p>
-                  </div>
 
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setHideCostPrice(true)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && setHideCostPrice(true)
-                    }
-                    className={cn(
-                      "flex cursor-pointer flex-col gap-1 rounded-xl border p-3.5 transition-all",
-                      hideCostPrice
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "border-border/70 hover:bg-muted/30",
-                    )}>
-                    <span className="font-semibold text-sm text-foreground">
-                      Ocultar preço de custo
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      Simplifica o cadastro focando apenas no preço de venda aos
-                      clientes.
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Imagens dos Produtos */}
               <div className="rounded-xl border border-border/70 p-4 space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <div className="space-y-0.5 pr-2">
                     <Label
-                      htmlFor="toggle-show-images"
-                      className="text-sm font-medium cursor-pointer">
+                      id="toggle-show-images-label"
+                      className="text-sm font-medium">
                       Exibir fotos dos produtos
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p id="toggle-show-images-desc" className="text-xs text-muted-foreground">
                       Mostra miniaturas dos produtos nas listas e tela de vendas
                       para fácil identificação visual.
                     </p>
                   </div>
                   <Switch
                     id="toggle-show-images"
+                    aria-labelledby="toggle-show-images-label"
+                    aria-describedby="toggle-show-images-desc"
                     checked={showProductImages}
                     onCheckedChange={setShowProductImages}
                   />
@@ -713,14 +663,6 @@ export function OnboardingWizard({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Preço de Custo
-                  </span>
-                  <span className="text-sm font-semibold text-foreground">
-                    {hideCostPrice ? "Ocultado" : "Visível no catálogo"}
-                  </span>
-                </div>
               </div>
 
               <div className="rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 p-4 flex items-start gap-3">

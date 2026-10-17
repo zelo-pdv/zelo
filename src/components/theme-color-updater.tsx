@@ -23,8 +23,10 @@ export function ThemeColorUpdater() {
         [
           '[data-slot="drawer-overlay"][data-blur]:not([data-closed]):not([data-ending-style])',
           '[data-slot="dialog-overlay"][data-blur]:not([data-closed]):not([data-ending-style])',
+          '[data-slot="sheet-overlay"][data-blur]:not([data-closed]):not([data-ending-style])',
           '[data-slot="drawer-popup"][data-blur]:not([data-closed]):not([data-ending-style])',
           '[data-slot="dialog-content"][data-blur]:not([data-closed]):not([data-ending-style])',
+          '[data-slot="sheet-content"][data-blur]:not([data-closed]):not([data-ending-style])',
         ].join(", "),
       );
 

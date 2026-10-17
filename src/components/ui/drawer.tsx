@@ -30,7 +30,7 @@ function Drawer({
   showSwipeHandle = false,
   snapPoints,
   swipeDirection = "down",
-  blur = false,
+  blur = true,
   isForm = false,
   ...props
 }: DrawerPrimitive.Root.Props & {
@@ -39,7 +39,7 @@ function Drawer({
   isForm?: boolean;
 }) {
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
-  const shouldBlur = blur || isForm;
+  const shouldBlur = blur ?? isForm ?? true;
   const contextValue = React.useMemo(
     () => ({
       hasSnapPoints,
@@ -86,7 +86,7 @@ function DrawerOverlay({
   isForm?: boolean;
 }) {
   const { blur: contextBlur } = useDrawer();
-  const isBlurActive = blurProp ?? isFormProp ?? contextBlur ?? false;
+  const isBlurActive = blurProp ?? isFormProp ?? contextBlur ?? true;
 
   return (
     <DrawerPrimitive.Backdrop
@@ -131,7 +131,7 @@ function DrawerContent({
   isForm?: boolean;
 }) {
   const { hasSnapPoints, modal, showSwipeHandle, swipeDirection, blur: contextBlur } = useDrawer();
-  const isBlurActive = blur ?? isForm ?? contextBlur ?? false;
+  const isBlurActive = blur ?? isForm ?? contextBlur ?? true;
   const swipeAxis =
     swipeDirection === "down" || swipeDirection === "up" ? "y" : "x";
 
@@ -140,7 +140,7 @@ function DrawerContent({
       {modal === true && (
         <DrawerOverlay
           data-snap-points={hasSnapPoints ? "" : undefined}
-          blur={blur}
+          blur={isBlurActive}
           isForm={isForm}
         />
       )}

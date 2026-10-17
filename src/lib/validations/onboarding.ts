@@ -7,7 +7,7 @@ export const onboardingSchema = z.object({
   requireClient: z.boolean().default(false),
   defaultPaymentMethod: z.string().default("PIX"),
   defaultSaleStatus: z.nativeEnum(SaleStatus).default(SaleStatus.PAGO),
-  hideCostPrice: z.boolean().default(false),
+  hideCostPrice: z.boolean().optional(),
   showProductImages: z.boolean().default(true),
   storePhone: z.string().optional().default(""),
   step: z.number().int().min(1).max(4).optional().default(1),

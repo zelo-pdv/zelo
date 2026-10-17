@@ -328,27 +328,25 @@ export function ProductForm({
                     </Select>
                   </div>
 
-                  {!productsSettings?.hideCostPrice && (
-                    <div className="space-y-2">
-                      <Label>Preço de Custo</Label>
-                      <div className="relative flex items-center">
-                        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground select-none">
-                          R$
-                        </span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          className={cn(inputClass, "pl-11")}
-                          value={form.costPrice || ""}
-                          onChange={(e) =>
-                            handleNumberChange("costPrice", e.target.value)
-                          }
-                          placeholder="0,00"
-                        />
-                      </div>
+                  <div className="space-y-2">
+                    <Label>Preço de Custo</Label>
+                    <div className="relative flex items-center">
+                      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground select-none">
+                        R$
+                      </span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className={cn(inputClass, "pl-11")}
+                        value={form.costPrice || ""}
+                        onChange={(e) =>
+                          handleNumberChange("costPrice", e.target.value)
+                        }
+                        placeholder="0,00"
+                      />
                     </div>
-                  )}
+                  </div>
 
                   <div className="space-y-2">
                     <Label>Código Interno (SKU)</Label>
@@ -577,10 +575,10 @@ export function ProductForm({
               <div className="space-y-4 px-1 pt-2 pb-2 animate-in slide-in-from-top-2">
                 <div className="flex items-center justify-between p-3.5 sm:p-4 bg-muted/30 rounded-xl border border-border/50 gap-3">
                   <div className="min-w-0 flex-1 space-y-0.5">
-                    <Label className="text-sm sm:text-base font-medium">
+                    <Label id="product-has-variants-label" className="text-sm sm:text-base font-medium">
                       Produto com variações?
                     </Label>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
+                    <p id="product-has-variants-desc" className="text-xs sm:text-sm text-muted-foreground">
                       Ative para cadastrar diferentes apresentações, tamanhos ou
                       cores.
                     </p>
@@ -592,6 +590,8 @@ export function ProductForm({
                       updateField("hasVariants", v);
                       if (v && form.variants.length === 0) addVariant();
                     }}
+                    aria-labelledby="product-has-variants-label"
+                    aria-describedby="product-has-variants-desc"
                   />
                 </div>
 

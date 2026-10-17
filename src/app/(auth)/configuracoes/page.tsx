@@ -537,12 +537,12 @@ function NotificationsSection() {
           >
             <div className="space-y-0.5 pr-4">
               <Label
-                className="text-sm font-medium cursor-pointer"
-                htmlFor="toggle-stock-warning"
+                id="toggle-stock-warning-label"
+                className="text-sm font-medium"
               >
                 Avisos de produto sem estoque
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p id="toggle-stock-warning-desc" className="text-xs text-muted-foreground">
                 {!trackStock
                   ? "Controle de estoque desativado nas configurações de produtos."
                   : "Exibe um aviso em toast ao selecionar ou alterar a quantidade de um produto com estoque insuficiente."}
@@ -550,6 +550,8 @@ function NotificationsSection() {
             </div>
             <Switch
               id="toggle-stock-warning"
+              aria-labelledby="toggle-stock-warning-label"
+              aria-describedby="toggle-stock-warning-desc"
               disabled={!trackStock}
               checked={trackStock && notifications.outOfStockWarning}
               onCheckedChange={handleToggleOutOfStockWarning}
@@ -679,17 +681,19 @@ function SalesConfigSection() {
           <div className="flex items-center justify-between rounded-xl border border-border/70 p-4">
             <div className="space-y-0.5 pr-4">
               <Label
-                className="text-sm font-medium cursor-pointer"
-                htmlFor="toggle-require-client"
+                id="toggle-require-client-label"
+                className="text-sm font-medium"
               >
                 Forçar seleção de cliente
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p id="toggle-require-client-desc" className="text-xs text-muted-foreground">
                 Torna obrigatório vincular um cliente cadastrado antes de finalizar a venda. Quando desativado, permite vendas rápidas para &quot;Consumidor Final&quot;.
               </p>
             </div>
             <Switch
               id="toggle-require-client"
+              aria-labelledby="toggle-require-client-label"
+              aria-describedby="toggle-require-client-desc"
               checked={salesSettings.requireClient}
               onCheckedChange={handleToggleRequireClient}
             />
@@ -704,12 +708,12 @@ function SalesConfigSection() {
           >
             <div className="space-y-0.5 pr-4">
               <Label
-                className="text-sm font-medium cursor-pointer"
-                htmlFor="toggle-block-out-of-stock"
+                id="toggle-block-out-of-stock-label"
+                className="text-sm font-medium"
               >
                 Bloquear venda com estoque zerado
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p id="toggle-block-out-of-stock-desc" className="text-xs text-muted-foreground">
                 {!trackStock
                   ? "Controle de estoque desativado nas configurações de produtos."
                   : "Proíbe adicionar ao carrinho ou vender produtos sem estoque disponível. Quando desativado, apenas exibe um aviso em toast."}
@@ -717,6 +721,8 @@ function SalesConfigSection() {
             </div>
             <Switch
               id="toggle-block-out-of-stock"
+              aria-labelledby="toggle-block-out-of-stock-label"
+              aria-describedby="toggle-block-out-of-stock-desc"
               disabled={!trackStock}
               checked={trackStock && salesSettings.blockOutOfStock}
               onCheckedChange={handleToggleBlockOutOfStock}
@@ -728,17 +734,19 @@ function SalesConfigSection() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-open-price"
+                  id="toggle-open-price-label"
+                  className="text-sm font-medium"
                 >
                   Permitir alteração de preço na venda (Preço Aberto)
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p id="toggle-open-price-desc" className="text-xs text-muted-foreground">
                   Permite editar o valor unitário do produto na primeira etapa da venda (no carrinho), sem alterar o preço cadastrado no produto.
                 </p>
               </div>
               <Switch
                 id="toggle-open-price"
+                aria-labelledby="toggle-open-price-label"
+                aria-describedby="toggle-open-price-desc"
                 checked={salesSettings.openPriceEnabled ?? false}
                 onCheckedChange={handleToggleOpenPrice}
               />
@@ -835,17 +843,19 @@ function SalesConfigSection() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-discount-limit"
+                  id="toggle-discount-limit-label"
+                  className="text-sm font-medium"
                 >
                   Limite Geral de Desconto na Venda
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p id="toggle-discount-limit-desc" className="text-xs text-muted-foreground">
                   Define o teto de desconto padrão para vendedores da loja. Pode ser estipulado em porcentagem (%) ou valor em reais (R$). Limites por grupo ou individuais têm preferência.
                 </p>
               </div>
               <Switch
                 id="toggle-discount-limit"
+                aria-labelledby="toggle-discount-limit-label"
+                aria-describedby="toggle-discount-limit-desc"
                 checked={salesSettings.discountLimitEnabled ?? false}
                 onCheckedChange={(checked) => {
                   setSalesSettings({ discountLimitEnabled: checked });

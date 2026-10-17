@@ -95,7 +95,6 @@ export default function ProdutosPage() {
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
     globalLowStockThreshold: 5,
-    hideCostPrice: false,
   };
   const [products, setProducts] = useState<ProductFrontend[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

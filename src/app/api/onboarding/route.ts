@@ -79,7 +79,6 @@ export async function POST(req: Request) {
       requireClient,
       defaultPaymentMethod,
       defaultSaleStatus,
-      hideCostPrice,
       showProductImages,
       storePhone,
       step,
@@ -101,14 +100,17 @@ export async function POST(req: Request) {
         updatedAt: new Date().toISOString(),
         ...(completed ? { completedAt: new Date().toISOString() } : {}),
       },
-      products: {
-        ...(currentConfig.products || {}),
-        trackStock,
-        hideCostPrice,
-        showProductImages,
-        globalLowStockThreshold:
-          currentConfig.products?.globalLowStockThreshold ?? 5,
-      },
+      products: (() => {
+        const p = { ...(currentConfig.products || {}) };
+        delete p.hideCostPrice;
+        return {
+          ...p,
+          trackStock,
+          showProductImages,
+          globalLowStockThreshold:
+            currentConfig.products?.globalLowStockThreshold ?? 5,
+        };
+      })(),
       sales: {
         ...(currentConfig.sales || {}),
         requireClient,

@@ -458,14 +458,16 @@ export function ClientForm({
 
       <div className="flex items-center justify-between rounded-xl border border-border/70 p-3">
         <div className="space-y-0.5">
-          <Label className="text-sm font-medium">Cliente Ativo</Label>
-          <p className="text-xs text-muted-foreground">
+          <Label id="client-form-active-label" className="text-sm font-medium">Cliente Ativo</Label>
+          <p id="client-form-active-desc" className="text-xs text-muted-foreground">
             Clientes inativos não aparecerão na seleção de novas vendas.
           </p>
         </div>
         <Switch
           checked={form.active ?? true}
           onCheckedChange={(checked) => setForm({ ...form, active: checked })}
+          aria-labelledby="client-form-active-label"
+          aria-describedby="client-form-active-desc"
         />
       </div>
     </div>

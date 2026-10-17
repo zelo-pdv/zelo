@@ -48,12 +48,12 @@ export function DashboardConfigModal({
       >
         <div className="space-y-0.5 pr-4">
           <Label
-            className="text-sm font-medium cursor-pointer"
-            htmlFor="toggle-hide-low-stock"
+            id="toggle-hide-low-stock-label"
+            className="text-sm font-medium"
           >
             Ocultar seção de estoque baixo
           </Label>
-          <p className="text-xs text-muted-foreground">
+          <p id="toggle-hide-low-stock-desc" className="text-xs text-muted-foreground">
             {!trackStock
               ? "Controle de estoque desativado nas configurações de produtos (seção já ocultada automaticamente)."
               : "Oculta o card e a lista de produtos com estoque baixo no dashboard."}
@@ -61,6 +61,8 @@ export function DashboardConfigModal({
         </div>
         <Switch
           id="toggle-hide-low-stock"
+          aria-labelledby="toggle-hide-low-stock-label"
+          aria-describedby="toggle-hide-low-stock-desc"
           disabled={!trackStock}
           checked={!trackStock || dashboard.hideLowStockCard}
           onCheckedChange={(checked) => {
@@ -78,17 +80,19 @@ export function DashboardConfigModal({
       <div className="flex items-center justify-between rounded-xl border border-border/70 p-4">
         <div className="space-y-0.5 pr-4">
           <Label
-            className="text-sm font-medium cursor-pointer"
-            htmlFor="toggle-hide-recent-sales"
+            id="toggle-hide-recent-sales-label"
+            className="text-sm font-medium"
           >
             Ocultar seção de últimas vendas
           </Label>
-          <p className="text-xs text-muted-foreground">
+          <p id="toggle-hide-recent-sales-desc" className="text-xs text-muted-foreground">
             Oculta a lista de vendas recentes no dashboard.
           </p>
         </div>
         <Switch
           id="toggle-hide-recent-sales"
+          aria-labelledby="toggle-hide-recent-sales-label"
+          aria-describedby="toggle-hide-recent-sales-desc"
           checked={Boolean(dashboard.hideRecentSales)}
           onCheckedChange={(checked) => {
             setDashboardSettings({ hideRecentSales: checked });

@@ -21,7 +21,6 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
     globalLowStockThreshold: 5,
-    hideCostPrice: false,
   };
   const setProductsSettings = useSettingsStore((s) => s.setProductsSettings);
   const salesSettings = useSettingsStore((s) => s.sales);
@@ -146,17 +145,19 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-track-stock"
+                  id="toggle-track-stock-label"
+                  className="text-sm font-medium"
                 >
                   Controlar estoque de produtos
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p id="toggle-track-stock-desc" className="text-xs text-muted-foreground">
                   Ativa o controle e rastreamento de estoque. Ao desativar, oculta o estoque atual e mínimo, entradas de mercadoria e alertas em todo o sistema.
                 </p>
               </div>
               <Switch
                 id="toggle-track-stock"
+                aria-labelledby="toggle-track-stock-label"
+                aria-describedby="toggle-track-stock-desc"
                 checked={productsSettings.trackStock ?? false}
                 onCheckedChange={(checked) => {
                   setProductsSettings({ trackStock: checked });
@@ -215,50 +216,25 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
               </>
             )}
 
-            {/* Ocultar campo Preço de Custo */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5 pr-4">
-                <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-hide-cost-price"
-                >
-                  Ocultar campo &quot;Preço de Custo&quot;
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Esconde o campo de preço de custo nos formulários de cadastro e edição de produtos.
-                </p>
-              </div>
-              <Switch
-                id="toggle-hide-cost-price"
-                checked={productsSettings.hideCostPrice}
-                onCheckedChange={(checked) => {
-                  setProductsSettings({ hideCostPrice: checked });
-                  if (checked) {
-                    toast.info("Campo de preço de custo ocultado nos formulários");
-                  } else {
-                    toast.success("Campo de preço de custo visível nos formulários");
-                  }
-                }}
-              />
-            </div>
 
-            <Separator className="my-1" />
 
             {/* Exibir / Ocultar Imagens dos Produtos */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-show-product-images"
+                  id="toggle-show-product-images-label"
+                  className="text-sm font-medium"
                 >
                   Exibir imagens dos produtos
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p id="toggle-show-product-images-desc" className="text-xs text-muted-foreground">
                   Exibe ou oculta as imagens e miniaturas de produtos na listagem de produtos, tela de vendas e demais páginas.
                 </p>
               </div>
               <Switch
                 id="toggle-show-product-images"
+                aria-labelledby="toggle-show-product-images-label"
+                aria-describedby="toggle-show-product-images-desc"
                 checked={productsSettings.showProductImages ?? true}
                 onCheckedChange={(checked) => {
                   setProductsSettings({ showProductImages: checked });
@@ -277,17 +253,19 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label
-                  className="text-sm font-medium cursor-pointer"
-                  htmlFor="toggle-open-price-modal"
+                  id="toggle-open-price-modal-label"
+                  className="text-sm font-medium"
                 >
                   Permitir alteração de preço na venda (Preço Aberto)
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p id="toggle-open-price-modal-desc" className="text-xs text-muted-foreground">
                   Permite editar o valor unitário do produto na primeira etapa da venda (no carrinho), sem alterar o preço cadastrado no produto.
                 </p>
               </div>
               <Switch
                 id="toggle-open-price-modal"
+                aria-labelledby="toggle-open-price-modal-label"
+                aria-describedby="toggle-open-price-modal-desc"
                 checked={salesSettings?.openPriceEnabled ?? false}
                 onCheckedChange={(checked) => {
                   setSalesSettings({ openPriceEnabled: checked });

@@ -547,11 +547,12 @@ function UserForm({
         </div>
 
         <div className="shrink-0 space-y-2">
-          <Label>Usuário Ativo</Label>
+          <Label id="user-form-active-label">Usuário Ativo</Label>
           <div className="flex items-center gap-2 h-9">
             <Switch
               checked={form.active}
               onCheckedChange={(v) => setForm({ ...form, active: v })}
+              aria-labelledby="user-form-active-label"
             />
             <span className="text-sm text-muted-foreground min-w-12">
               {form.active ? "Ativo" : "Inativo"}

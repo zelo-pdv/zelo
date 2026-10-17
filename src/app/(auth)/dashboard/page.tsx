@@ -338,7 +338,6 @@ export default function Dashboard() {
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
     globalLowStockThreshold: 5,
-    hideCostPrice: false,
   };
 
   const [period, setPeriod] = useState<DashboardPeriod>("today");

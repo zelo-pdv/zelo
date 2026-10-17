@@ -405,8 +405,8 @@ function GroupForm({
         </div>
         <div className="flex items-center justify-between rounded-lg border border-border/70 p-3 sm:col-span-2">
           <div>
-            <div className="text-sm font-medium">Status</div>
-            <div className="text-xs text-muted-foreground">
+            <div id="group-modal-status-label" className="text-sm font-medium">Status</div>
+            <div id="group-modal-status-desc" className="text-xs text-muted-foreground">
               Grupos inativos não concedem acesso aos usuários.
             </div>
           </div>
@@ -417,6 +417,8 @@ function GroupForm({
             <Switch
               checked={form.active}
               onCheckedChange={(v) => setForm({ ...form, active: v })}
+              aria-labelledby="group-modal-status-label"
+              aria-describedby="group-modal-status-desc"
             />
           </div>
         </div>

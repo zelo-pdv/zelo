@@ -46,7 +46,6 @@ export const onboardingService = {
         requireClient: false,
         defaultPaymentMethod: "PIX",
         defaultSaleStatus: "PAGO",
-        hideCostPrice: false,
         showProductImages: true,
         step: 4,
         completed: true,

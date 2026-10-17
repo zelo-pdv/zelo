@@ -7,8 +7,21 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BoxIcon } from "@/components/ui/box-icon";
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+interface SheetContextValue {
+  blur?: boolean;
+}
+
+const SheetContext = React.createContext<SheetContextValue>({ blur: true });
+
+function Sheet({
+  blur = true,
+  ...props
+}: SheetPrimitive.Root.Props & { blur?: boolean }) {
+  return (
+    <SheetContext.Provider value={{ blur }}>
+      <SheetPrimitive.Root data-slot="sheet" {...props} />
+    </SheetContext.Provider>
+  );
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
@@ -25,15 +38,19 @@ function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
 
 function SheetOverlay({
   className,
-  blur = false,
+  blur: blurProp,
   ...props
 }: SheetPrimitive.Backdrop.Props & { blur?: boolean }) {
+  const context = React.useContext(SheetContext);
+  const isBlurActive = blurProp ?? context?.blur ?? true;
+
   return (
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
+      data-blur={isBlurActive ? "" : undefined}
       className={cn(
         "fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0",
-        blur && "supports-backdrop-filter:backdrop-blur-sm",
+        isBlurActive && "supports-backdrop-filter:backdrop-blur-sm",
         className,
       )}
       {...props}
@@ -47,17 +64,23 @@ function SheetContent({
   side = "right",
   showCloseButton = true,
   initialFocus = false,
+  blur,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
+  blur?: boolean;
 }) {
+  const context = React.useContext(SheetContext);
+  const isBlurActive = blur ?? context?.blur ?? true;
+
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay blur={isBlurActive} />
       <SheetPrimitive.Popup
         initialFocus={initialFocus}
         data-slot="sheet-content"
+        data-blur={isBlurActive ? "" : undefined}
         data-side={side}
         className={cn(
           "fixed z-50 flex flex-col gap-4 bg-background bg-clip-padding text-sm text-foreground shadow-lg transition duration-200 ease-in-out",
