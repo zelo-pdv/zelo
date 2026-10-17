@@ -148,6 +148,20 @@ export async function GET(req: Request) {
         searchOrList.push({ details: { path: ["saleNumber"], equals: searchNum } });
       }
 
+      // Consulta insensível a acentos no banco de dados via unaccent para operadores/usuários
+      try {
+        const matchingUsers = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "User"
+          WHERE "lojaId" = ${user.lojaId}
+            AND unaccent("name") ILIKE unaccent(${'%' + search + '%'})
+        `;
+        if (matchingUsers.length > 0) {
+          searchOrList.push({ userId: { in: matchingUsers.map((u) => u.id) } });
+        }
+      } catch {
+        // Fallback seguro caso o banco de dados não possua unaccent disponível
+      }
+
       andConditions.push({ OR: searchOrList });
     }
 

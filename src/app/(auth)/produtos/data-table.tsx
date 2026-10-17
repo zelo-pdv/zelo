@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { textIncludes } from "@/lib/search";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -92,14 +93,13 @@ export function ProductsDataTable({
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _id, value) => {
-      const term = String(value).trim().toLowerCase();
-      if (!term) return true;
+      if (!value) return true;
       const p = row.original;
 
       return Boolean(
-        p.name.toLowerCase().includes(term) ||
-        p.category?.name.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term),
+        textIncludes(p.name, value) ||
+        textIncludes(p.category?.name, value) ||
+        textIncludes(p.description, value),
       );
     },
     getCoreRowModel: getCoreRowModel(),

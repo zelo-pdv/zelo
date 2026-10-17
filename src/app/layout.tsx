@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PWAUpdater } from "@/components/pwa-updater";
 import { ThemeColorUpdater } from "@/components/theme-color-updater";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const notoSansHeading = Noto_Sans({
@@ -165,11 +166,13 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          {children}
-          <PWAUpdater />
-          <ThemeColorUpdater />
-          <Toaster position="top-right" richColors />
-          <ScrollToTop />
+          <TooltipProvider delay={200}>
+            {children}
+            <PWAUpdater />
+            <ThemeColorUpdater />
+            <Toaster position="top-right" richColors />
+            <ScrollToTop />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

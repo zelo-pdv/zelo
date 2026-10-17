@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ActionTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getAccessGroups, updateAccessGroup, deleteAccessGroup, createAccessGroup, AccessGroupDTO } from "@/services/accessGroup.service";
 import { Permissions, ModuleKey, ActionKey } from "@/store/useSettingsStore";
@@ -168,27 +169,32 @@ export function GroupsSection() {
                         aria-label="Ativar grupo"
                       />
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      onClick={() => setEditing(g)}
-                      aria-label="Editar"
-                    >
-                      <BoxIcon name="pencil" className="text-base" />
-                    </Button>
+                    <ActionTooltip label="Editar grupo">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => setEditing(g)}
+                        aria-label="Editar grupo"
+                      >
+                        <BoxIcon name="pencil" className="text-base" />
+                      </Button>
+                    </ActionTooltip>
                     <AlertDialog>
-                      <AlertDialogTrigger
-                        render={
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-destructive"
-                          >
-                            <BoxIcon name="trash" className="text-base" />
-                          </Button>
-                        }
-                      ></AlertDialogTrigger>
+                      <ActionTooltip label="Excluir grupo">
+                        <AlertDialogTrigger
+                          render={
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive"
+                              aria-label="Excluir grupo"
+                            >
+                              <BoxIcon name="trash" className="text-base" />
+                            </Button>
+                          }
+                        />
+                      </ActionTooltip>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remover grupo?</AlertDialogTitle>

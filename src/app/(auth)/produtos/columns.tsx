@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ActionTooltip } from "@/components/ui/tooltip";
 
 import { currency } from "@/lib/format";
 import { ProductThumb } from "@/components/product-thumb";
@@ -120,6 +121,7 @@ export function getProductColumns({
                           size="icon"
                           className="h-8 w-8"
                           onClick={(event) => event.stopPropagation()}
+                          aria-label="Ações do produto"
                         >
                           <BoxIcon name="dots-vertical-rounded" className="text-base" />
                         </Button>
@@ -329,59 +331,63 @@ export function getProductColumns({
         return (
           <div className="hidden justify-end gap-1 sm:flex">
             {canStock && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8"
-                onClick={() => onStock(product)}
-                aria-label="Entrada de estoque"
-                title="Entrada de estoque"
-              >
-                <BoxIcon name="package" className="text-base" />
-              </Button>
+              <ActionTooltip label="Adicionar estoque">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => onStock(product)}
+                  aria-label="Adicionar estoque"
+                >
+                  <BoxIcon name="package" className="text-base" />
+                </Button>
+              </ActionTooltip>
             )}
 
             {canEdit && onToggleActive && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className={
-                  !active
-                    ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
-                    : "h-8 w-8 text-muted-foreground hover:text-foreground"
-                }
-                onClick={() => onToggleActive(product)}
-                aria-label={!active ? "Ativar produto" : "Desativar produto"}
-                title={!active ? "Ativar produto" : "Desativar produto"}
-              >
-                <BoxIcon name="power-off" className="text-base" />
-              </Button>
+              <ActionTooltip label={!active ? "Ativar produto" : "Desativar produto"}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={
+                    !active
+                      ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
+                      : "h-8 w-8 text-muted-foreground hover:text-foreground"
+                  }
+                  onClick={() => onToggleActive(product)}
+                  aria-label={!active ? "Ativar produto" : "Desativar produto"}
+                >
+                  <BoxIcon name="power-off" className="text-base" />
+                </Button>
+              </ActionTooltip>
             )}
 
             {canEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8"
-                onClick={() => onEdit(product)}
-                aria-label="Editar produto"
-                title="Editar produto"
-              >
-                <BoxIcon name="pencil" className="text-base" />
-              </Button>
+              <ActionTooltip label="Editar produto">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => onEdit(product)}
+                  aria-label="Editar produto"
+                >
+                  <BoxIcon name="pencil" className="text-base" />
+                </Button>
+              </ActionTooltip>
             )}
 
             {canDelete && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-destructive"
-                onClick={() => onDelete(product)}
-                aria-label="Remover produto"
-                title="Remover produto"
-              >
-                <BoxIcon name="trash" className="text-base" />
-              </Button>
+              <ActionTooltip label="Excluir produto">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => onDelete(product)}
+                  aria-label="Excluir produto"
+                >
+                  <BoxIcon name="trash" className="text-base" />
+                </Button>
+              </ActionTooltip>
             )}
           </div>
         );

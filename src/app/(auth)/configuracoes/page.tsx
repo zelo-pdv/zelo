@@ -22,6 +22,7 @@ import {
 } from "@/lib/validations/loja";
 import { maskCep, maskCpfCnpj, maskPhone } from "@/lib/masks";
 import { currency } from "@/lib/format";
+import { textIncludes } from "@/lib/search";
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/components/auth/permissions-provider";
 import { GroupsSection } from "@/components/configuracoes/groups-section";
@@ -785,8 +786,8 @@ function SalesConfigSection() {
                     <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
                       {productsList
                         .filter((p) =>
-                          p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                          (p.code && p.code.toLowerCase().includes(productSearch.toLowerCase()))
+                          textIncludes(p.name, productSearch) ||
+                          (p.code ? textIncludes(p.code, productSearch) : false)
                         )
                         .map((p) => {
                           const isSelected = (salesSettings.openPriceProductIds || []).includes(p.id);

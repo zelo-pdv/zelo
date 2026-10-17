@@ -5,7 +5,7 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 import { cn } from "@/lib/utils"
 
 function TooltipProvider({
-  delay = 0,
+  delay = 200,
   ...props
 }: TooltipPrimitive.Provider.Props) {
   return (
@@ -64,3 +64,4 @@ function TooltipContent({
 }
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { ActionTooltip } from "./action-tooltip"

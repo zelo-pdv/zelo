@@ -32,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { currency, dateTime } from "@/lib/format";
+import { textIncludes } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import { getPaymentLabel, PaymentMethod, type Sale, SaleStatus } from "@/types";
 import { useSettingsStore } from "@/store/useSettingsStore";
@@ -145,10 +146,9 @@ export function SalesDataTable({
     state: { globalFilter },
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _id, value) => {
-      const term = String(value).trim().toLowerCase();
-      if (!term) return true;
+      if (!value) return true;
       const clientName = row.original.clientName || "Consumidor Final";
-      return clientName.toLowerCase().includes(term);
+      return textIncludes(clientName, value);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

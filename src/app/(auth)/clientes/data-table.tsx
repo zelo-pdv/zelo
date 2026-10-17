@@ -16,6 +16,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { textIncludes } from "@/lib/search";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -83,12 +84,11 @@ export function ClientsDataTable({
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     globalFilterFn: (row, _id, value) => {
-      const term = String(value).trim().toLowerCase();
-      if (!term) return true;
+      if (!value) return true;
       const c = row.original;
       return (
-        c.name.toLowerCase().includes(term) ||
-        c.phone.toLowerCase().includes(term)
+        textIncludes(c.name, value) ||
+        textIncludes(c.phone, value)
       );
     },
     getCoreRowModel: getCoreRowModel(),

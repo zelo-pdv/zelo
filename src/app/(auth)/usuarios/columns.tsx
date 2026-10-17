@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ActionTooltip } from "@/components/ui/tooltip";
 import { AppUser } from "./page";
 
 export type UserTableData = AppUser & {
@@ -112,18 +113,20 @@ export function getUserColumns({
         return (
           <div className="flex justify-end">
             <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
-                    aria-label="Ações do usuário"
-                  >
-                    <BoxIcon name="dots-vertical-rounded" className="text-base" />
-                  </Button>
-                }
-              />
+              <ActionTooltip label="Ações do usuário">
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                      aria-label="Ações do usuário"
+                    >
+                      <BoxIcon name="dots-vertical-rounded" className="text-base" />
+                    </Button>
+                  }
+                />
+              </ActionTooltip>
               <PopoverContent className="w-52 p-1.5" align="end">
                 <Button
                   variant="ghost"

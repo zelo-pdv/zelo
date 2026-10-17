@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { textIncludes } from "@/lib/search";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Client } from "@/prisma/client";
@@ -38,12 +39,12 @@ export function ClientPicker({
   const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
-    const t = q.trim().toLowerCase();
+    const t = q.trim();
     const withoutDefault = clients.filter(
-      (c) => !c.name.toLowerCase().includes("consumidor final") && !c.name.toLowerCase().includes("ao consumidor")
+      (c) => !textIncludes(c.name, "consumidor final") && !textIncludes(c.name, "ao consumidor")
     );
     return t
-      ? withoutDefault.filter((c) => c.name.toLowerCase().includes(t))
+      ? withoutDefault.filter((c) => textIncludes(c.name, t))
       : withoutDefault;
   }, [q, clients]);
 
@@ -62,7 +63,7 @@ export function ClientPicker({
         {/* SOLUÇÃO: Esconde a barra alvejando o elemento interno do Radix */}
         <ScrollArea className="h-full">
           <div className="space-y-1 pb-4">
-            {(!q || "consumidor final".includes(q.toLowerCase())) && (
+            {(!q.trim() || textIncludes("consumidor final", q)) && (
               <button
                 onClick={() => onPick(null)}
                 className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border/80 p-2.5 text-left transition hover:border-primary/40 hover:bg-accent"

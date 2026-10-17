@@ -14,6 +14,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { textIncludes } from "@/lib/search";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -74,12 +75,11 @@ export function UsersDataTable({
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     globalFilterFn: (row, _id, value) => {
-      const term = String(value).trim().toLowerCase();
-      if (!term) return true;
+      if (!value) return true;
       const u = row.original;
       return (
-        u.name.toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term)
+        textIncludes(u.name, value) ||
+        textIncludes(u.email, value)
       );
     },
     getCoreRowModel: getCoreRowModel(),

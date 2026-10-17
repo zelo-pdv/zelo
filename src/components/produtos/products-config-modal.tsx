@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { GlobalLoader } from '@/components/ui/global-loader';
+import { ActionTooltip } from '@/components/ui/tooltip';
 
 export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const isMobile = useIsMobile();
@@ -358,22 +359,28 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                           </div>
 
                           <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openCategoryModal(cat)}
-                          >
-                            <BoxIcon name="pencil" className="text-base text-muted-foreground hover:text-foreground" />
-                          </Button>
+                            <ActionTooltip label="Editar categoria">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openCategoryModal(cat)}
+                                aria-label="Editar categoria"
+                              >
+                                <BoxIcon name="pencil" className="text-base text-muted-foreground hover:text-foreground" />
+                              </Button>
+                            </ActionTooltip>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteCategory(cat.id)}
-                          >
-                            <BoxIcon name="trash" className="text-base text-muted-foreground hover:text-destructive" />
-                          </Button>
-                        </div>
+                            <ActionTooltip label="Excluir categoria">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                aria-label="Excluir categoria"
+                              >
+                                <BoxIcon name="trash" className="text-base text-muted-foreground hover:text-destructive" />
+                              </Button>
+                            </ActionTooltip>
+                          </div>
                         </div>
                       </li>
                     ))}

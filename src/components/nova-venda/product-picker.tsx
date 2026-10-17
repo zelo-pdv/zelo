@@ -21,6 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { currency } from "@/lib/format";
+import { textIncludes, textEquals } from "@/lib/search";
 import { ProductThumb } from "@/components/product-thumb";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 
@@ -84,13 +85,13 @@ export function ProductPicker({
   }, [products, trackStock, blockOutOfStock]);
 
   const filtered = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    return t
+    const trimmed = q.trim();
+    return trimmed
       ? availableProducts.filter(
         (p) =>
-          p.name.toLowerCase().includes(t) ||
-          p.category?.toLowerCase().includes(t) ||
-          p.barcode?.toLowerCase() === t,
+          textIncludes(p.name, trimmed) ||
+          textIncludes(p.category, trimmed) ||
+          (p.barcode ? textEquals(p.barcode, trimmed) : false),
       )
       : availableProducts;
   }, [q, availableProducts]);
