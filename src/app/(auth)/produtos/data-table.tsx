@@ -73,8 +73,6 @@ export function ProductsDataTable({
   onDelete,
   onToggleActive,
   trackStock = false,
-  globalLowStockThreshold = 5,
-  categoryLowStockThresholds = {},
   canStock = false,
   canEdit = false,
   canDelete = false,
@@ -350,13 +348,7 @@ export function ProductsDataTable({
             const product = row.original;
             const stockNum = Number(product.stock ?? 0);
             const isNegative = stockNum < 0;
-            const isLow =
-              stockNum === 0 ||
-              isProductLowStock(
-                product,
-                globalLowStockThreshold,
-                categoryLowStockThresholds,
-              );
+            const isLow = trackStock && isProductLowStock(product, trackStock);
 
             const hasMobileRowActions = canStock || canEdit || canDelete;
 

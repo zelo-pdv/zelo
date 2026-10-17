@@ -113,10 +113,17 @@ export async function POST(request: Request) {
         item.stock ?? item.estoque ?? item["Estoque"] ?? item.Estoque,
         0,
       );
-      const minStock = parseNumber(
-        item.minStock ?? item.estoqueMinimo ?? item.estoque_minimo ?? item["Estoque Mínimo"] ?? item["Estoque Minimo"] ?? item.EstoqueMinimo,
-        0,
-      );
+      const minStockRaw =
+        item.minStock ??
+        item.estoqueMinimo ??
+        item.estoque_minimo ??
+        item["Estoque Mínimo"] ??
+        item["Estoque Minimo"] ??
+        item.EstoqueMinimo;
+      const minStock =
+        minStockRaw !== undefined && minStockRaw !== null && String(minStockRaw).trim() !== ""
+          ? parseNumber(minStockRaw, 0)
+          : null;
 
       const code = item.code ?? item.codigo ?? item["Código"] ?? item["Código Interno"] ?? item.Codigo;
       const barcode = item.barcode ?? item.codigoBarras ?? item.codigo_barras ?? item["Código de Barras"] ?? item.CodigoBarras;

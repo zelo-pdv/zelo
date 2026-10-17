@@ -154,7 +154,7 @@ model Product {
   costPrice   Decimal?         @db.Decimal(10, 2)
   salePrice   Decimal          @db.Decimal(10, 2)
   stock       Decimal          @default(0) @db.Decimal(10, 3)
-  minStock    Decimal          @default(0) @db.Decimal(10, 3)
+  minStock    Decimal?         @db.Decimal(10, 3)
   notes       String?
   lojaId      String
   categoryId  String?
@@ -185,7 +185,7 @@ model ProductVariant {
   costPrice  Decimal? @db.Decimal(10, 2)
   salePrice  Decimal? @db.Decimal(10, 2)
   stock      Decimal  @default(0) @db.Decimal(10, 3)
-  minStock   Decimal  @default(0) @db.Decimal(10, 3)
+  minStock   Decimal? @db.Decimal(10, 3)
   active     Boolean  @default(true)
 
   lojaId String

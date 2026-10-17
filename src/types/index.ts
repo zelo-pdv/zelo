@@ -76,6 +76,21 @@ export interface Client {
   notes?: string | null;
 }
 
+export interface ProductVariant {
+  id: string;
+  name: string;
+  code?: string | null;
+  barcode?: string | null;
+  attributes?: Record<string, any> | null;
+  costPrice?: number | null;
+  salePrice?: number | null;
+  stock: number;
+  minStock?: number | null;
+  image?: string | null;
+  active?: boolean;
+  deletedAt?: Date | string | null;
+}
+
 export interface Product {
   id: string;
   code?: string | null;
@@ -89,4 +104,6 @@ export interface Product {
   description?: string | null;
   costPrice?: number | null;
   notes?: string | null;
+  variants?: ProductVariant[] | null;
+  active?: boolean;
 }

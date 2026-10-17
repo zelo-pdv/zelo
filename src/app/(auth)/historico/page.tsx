@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Separator } from "@/components/ui/separator";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { SaleVoucher } from "@/components/sale-voucher";
@@ -352,28 +352,7 @@ export default function HistoricoPage() {
 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge
-                    variant={
-                      detail.status === "PAGO"
-                        ? "secondary"
-                        : detail.status === "CANCELADO"
-                          ? "outline"
-                          : "outline"
-                    }
-                    className={
-                      detail.status === "PENDENTE"
-                        ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
-                        : detail.status === "CANCELADO"
-                          ? "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20 font-medium"
-                          : ""
-                    }
-                  >
-                    {detail.status === "PAGO"
-                      ? "Pago"
-                      : detail.status === "CANCELADO"
-                        ? "Cancelado"
-                        : "Pendente"}
-                  </Badge>
+                  <SaleStatusBadge status={detail.status} />
                 </div>
 
                 {detail.status === "CANCELADO" && (
@@ -539,28 +518,7 @@ export default function HistoricoPage() {
 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge
-                    variant={
-                      detail.status === "PAGO"
-                        ? "secondary"
-                        : detail.status === "CANCELADO"
-                          ? "outline"
-                          : "outline"
-                    }
-                    className={
-                      detail.status === "PENDENTE"
-                        ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
-                        : detail.status === "CANCELADO"
-                          ? "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20 font-medium"
-                          : ""
-                    }
-                  >
-                    {detail.status === "PAGO"
-                      ? "Pago"
-                      : detail.status === "CANCELADO"
-                        ? "Cancelado"
-                        : "Pendente"}
-                  </Badge>
+                  <SaleStatusBadge status={detail.status} />
                 </div>
 
                 {detail.status === "CANCELADO" && (

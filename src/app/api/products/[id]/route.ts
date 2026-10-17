@@ -56,8 +56,10 @@ export async function PATCH(
 
       return NextResponse.json({
         ...product,
-        costPrice: Number(product.costPrice),
+        costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
         salePrice: Number(product.salePrice),
+        stock: Number(product.stock),
+        minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
       });
     }
 
@@ -208,8 +210,17 @@ export async function PATCH(
 
     return NextResponse.json({
       ...product,
-      costPrice: Number(product.costPrice),
+      costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
       salePrice: Number(product.salePrice),
+      stock: Number(product.stock),
+      minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
+      variants: product.variants?.map((v) => ({
+        ...v,
+        costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+        salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+        stock: Number(v.stock),
+        minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+      })),
     });
   } catch (error: any) {
     if (error.code === "P2002") {

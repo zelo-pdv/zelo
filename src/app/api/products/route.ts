@@ -20,8 +20,17 @@ export async function GET() {
 
     const serializedProducts = products.map((product) => ({
       ...product,
-      costPrice: Number(product.costPrice),
+      costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
       salePrice: Number(product.salePrice),
+      stock: Number(product.stock),
+      minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
+      variants: product.variants?.map((v) => ({
+        ...v,
+        costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+        salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+        stock: Number(v.stock),
+        minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+      })),
     }));
 
     return NextResponse.json(serializedProducts);
@@ -105,8 +114,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ...product,
-        costPrice: Number(product.costPrice),
+        costPrice: product.costPrice !== null ? Number(product.costPrice) : null,
         salePrice: Number(product.salePrice),
+        stock: Number(product.stock),
+        minStock: product.minStock !== null && product.minStock !== undefined ? Number(product.minStock) : null,
+        variants: product.variants?.map((v) => ({
+          ...v,
+          costPrice: v.costPrice !== null ? Number(v.costPrice) : null,
+          salePrice: v.salePrice !== null ? Number(v.salePrice) : null,
+          stock: Number(v.stock),
+          minStock: v.minStock !== null && v.minStock !== undefined ? Number(v.minStock) : null,
+        })),
       },
       { status: 201 },
     );

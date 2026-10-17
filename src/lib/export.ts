@@ -152,7 +152,7 @@ export const handleExportProducts = async () => {
       currency(p.salePrice),
       currency(p.costPrice),
       Number(p.stock ?? 0),
-      Number(p.minStock ?? 0),
+      p.minStock !== null && p.minStock !== undefined ? Number(p.minStock) : "",
       p.code || "",
       p.barcode || "",
       p.active ? "Ativo" : "Inativo",
@@ -205,7 +205,7 @@ export const handleExportSales = async () => {
   }
 };
 
-export const handleExportLowStockPdf = async (lowStockProducts: any[], globalThreshold: number) => {
+export const handleExportLowStockPdf = async (lowStockProducts: any[]) => {
   try {
     if (!lowStockProducts || lowStockProducts.length === 0) {
       toast.warning("Nenhum produto com estoque baixo para gerar a lista.");
@@ -226,19 +226,52 @@ export const handleExportLowStockPdf = async (lowStockProducts: any[], globalThr
 
     const headers = [["Produto", "Categoria", "Estoque Atual", "Estoque Mínimo", "Sugestão de Reposição"]];
 
-    const data = lowStockProducts.map((p) => {
-      const min = p.minStock !== null && p.minStock !== undefined ? Number(p.minStock) : globalThreshold;
-      const current = Number(p.stock ?? 0);
-      const suggest = Math.max(0, min - current + 1); // Sugestão para ficar acima do mínimo
+    const data: string[][] = [];
 
-      return [
-        p.name,
-        p.category?.name || p.category || "Geral",
-        current.toString(),
-        min.toString(),
-        suggest.toString()
-      ];
-    });
+    for (const p of lowStockProducts) {
+      const categoryName = p.category?.name || p.category || "Geral";
+      const hasVariants = Array.isArray(p.variants) && p.variants.length > 0;
+
+      if (hasVariants) {
+        const lowVariants = p.variants.filter((v: any) => {
+          if (v.active === false || v.deletedAt) return false;
+          if (v.minStock === null || v.minStock === undefined || v.minStock === "") return false;
+          const min = Number(v.minStock);
+          const current = Number(v.stock ?? 0);
+          return !isNaN(min) && min >= 0 && current <= min;
+        });
+
+        if (lowVariants.length > 0) {
+          for (const v of lowVariants) {
+            const min = Number(v.minStock);
+            const current = Number(v.stock ?? 0);
+            const suggest = Math.max(0, min - current + 1);
+            data.push([
+              `${p.name} - ${v.name}`,
+              categoryName,
+              current.toString(),
+              min.toString(),
+              suggest.toString(),
+            ]);
+          }
+          continue;
+        }
+      }
+
+      if (p.minStock !== null && p.minStock !== undefined && p.minStock !== "") {
+        const min = Number(p.minStock);
+        const current = Number(p.stock ?? 0);
+        const suggest = Math.max(0, min - current + 1);
+
+        data.push([
+          p.name,
+          categoryName,
+          current.toString(),
+          min.toString(),
+          suggest.toString(),
+        ]);
+      }
+    }
 
     autoTable(doc, {
       startY: 35,

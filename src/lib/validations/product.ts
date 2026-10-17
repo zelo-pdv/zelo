@@ -9,6 +9,16 @@ export const categorySchema = z.object({
   lowStockThreshold: z.coerce.number().min(0, "O valor mínimo é 0").optional().nullable(),
 });
 
+const minStockValidation = z.preprocess(
+  (val) => (val === "" || val === null || val === undefined ? null : val),
+  z.coerce
+    .number()
+    .min(0, "O estoque mínimo não pode ser negativo")
+    .max(9999999, "Valor muito alto")
+    .nullable()
+    .optional()
+);
+
 export const productVariantSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "O nome da variação é obrigatório"),
@@ -18,7 +28,7 @@ export const productVariantSchema = z.object({
   costPrice: z.coerce.number().min(0).max(9999999).optional().nullable(),
   salePrice: z.coerce.number().min(0).max(9999999).optional().nullable(),
   stock: z.coerce.number().max(9999999).default(0),
-  minStock: z.coerce.number().min(0).max(9999999).default(0),
+  minStock: minStockValidation,
   image: z.string().max(2048).optional().nullable(),
 });
 
@@ -35,7 +45,7 @@ export const productSchema = z.object({
     .min(0, "O preço de venda é obrigatório")
     .max(9999999, "Valor muito alto"),
   stock: z.coerce.number().max(9999999, "Valor muito alto").default(0),
-  minStock: z.coerce.number().min(0, "O estoque mínimo não pode ser negativo").max(9999999, "Valor muito alto").default(0),
+  minStock: minStockValidation,
   notes: z.string().max(500, "A observação é muito longa").optional().nullable(),
   active: z.boolean().default(true).optional(),
   hasVariants: z.boolean().default(false).optional(),

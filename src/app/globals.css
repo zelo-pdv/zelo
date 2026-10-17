@@ -213,3 +213,91 @@ html[data-magicui-theme-vt="active"]::view-transition-new(root) {
   opacity: 0 !important;
   pointer-events: none;
 }
+
+/* ==========================================================================
+   Prevenção de Seleção Acidental de Texto em Dispositivos Móveis e PWA
+   ========================================================================== */
+
+/* Controles de interface estruturais e interativos (em qualquer dispositivo) */
+button,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+nav,
+[data-slot="badge"],
+[data-slot="sidebar-menu-button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/*
+ * Dispositivos móveis com tela de toque e modo de aplicativo PWA:
+ * A regra é ativada quando o dispositivo possui ponteiro primário impreciso (touchscreen: smartphones e tablets)
+ * ou quando em modo PWA standalone com ausência de ponteiro fino.
+ */
+@media (pointer: coarse), ((display-mode: standalone) and (hover: none)) {
+  /*
+   * No mobile/PWA, evita a seleção acidental de textos em títulos, cards, labels,
+   * cabeçalhos de tabelas, indicadores e componentes não editáveis ao tocar ou rolar.
+   * Isso impede que o Chrome mobile ative a Pesquisa por Toque do Google ("Touch to Search")
+   * e que o Safari/iOS exiba balões nativos de seleção que descaracterizam a experiência de app.
+   */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+   * REQUISITOS 3 e 4:
+   * Preserva irrestritamente a capacidade de digitação, seleção de texto, movimentação
+   * do cursor e menu contextual nativo (copiar/colar) em campos de formulário, inputs,
+   * textareas, elementos editáveis e blocos de código/conteúdo explícito.
+   */
+  input,
+  textarea,
+  [contenteditable="true"],
+  [contenteditable],
+  [data-slot="input"],
+  [data-slot="textarea"],
+  .selectable,
+  .select-text,
+  [data-selectable="true"],
+  pre,
+  code {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+  }
+
+  /*
+   * Previne toque longo acidental sobre imagens que aciona menu nativo
+   * de download/compartilhamento de imagens no iOS e Android.
+   */
+  img {
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+}
+
+/*
+ * Utilitários utilitários dedicados para seleção explícita
+ * Podem ser utilizados em qualquer breakpoint ou elemento
+ */
+.select-text,
+.selectable,
+[data-selectable="true"] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+.select-none,
+.unselectable,
+[data-selectable="false"] {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}

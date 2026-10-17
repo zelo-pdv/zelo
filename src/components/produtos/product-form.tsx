@@ -93,7 +93,10 @@ export function ProductForm({
         ) {
           setIsMoreInfoOpen(true);
         }
-        if (initial.stock > 0 || initial.minStock > 0) {
+        if (
+          initial.stock > 0 ||
+          (initial.minStock !== null && initial.minStock !== undefined && initial.minStock >= 0)
+        ) {
           setIsStockOpen(true);
         }
       }
@@ -114,6 +117,16 @@ export function ProductForm({
   const handleNumberChange = (k: keyof FormState, v: string) => {
     const val = parseFloat(v.replace(",", "."));
     updateField(k, isNaN(val) ? 0 : val);
+  };
+
+  const handleMinStockChange = (v: string) => {
+    const trimmed = v.trim();
+    if (trimmed === "") {
+      updateField("minStock", null);
+      return;
+    }
+    const val = parseFloat(trimmed.replace(",", "."));
+    updateField("minStock", isNaN(val) ? null : val);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,7 +200,7 @@ export function ProductForm({
           costPrice: null,
           salePrice: null,
           stock: 0,
-          minStock: 0,
+          minStock: null,
           image: "",
         },
       ],
@@ -517,11 +530,15 @@ export function ProductForm({
                             type="number"
                             step="0.001"
                             className={inputClass}
-                            value={form.minStock || ""}
-                            onChange={(e) =>
-                              handleNumberChange("minStock", e.target.value)
+                            value={
+                              form.minStock === null || form.minStock === undefined
+                                ? ""
+                                : form.minStock
                             }
-                            placeholder="0"
+                            onChange={(e) =>
+                              handleMinStockChange(e.target.value)
+                            }
+                            placeholder="Não configurado"
                           />
                         </div>
                       </div>
@@ -640,22 +657,46 @@ export function ProductForm({
                           </div>
 
                           {productsSettings?.trackStock && (
-                            <div className="space-y-2">
-                              <Label>Estoque Atual</Label>
-                              <Input
-                                type="number"
-                                step="1"
-                                className={inputClass}
-                                value={v.stock || ""}
-                                onChange={(e) =>
-                                  updateVariant(
-                                    idx,
-                                    "stock",
-                                    parseFloat(e.target.value) || 0,
-                                  )
-                                }
-                                placeholder="0"
-                              />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="space-y-2">
+                                <Label>Estoque Atual</Label>
+                                <Input
+                                  type="number"
+                                  step="0.001"
+                                  className={inputClass}
+                                  value={v.stock || ""}
+                                  onChange={(e) =>
+                                    updateVariant(
+                                      idx,
+                                      "stock",
+                                      parseFloat(e.target.value) || 0,
+                                    )
+                                  }
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Estoque Mínimo</Label>
+                                <Input
+                                  type="number"
+                                  step="0.001"
+                                  className={inputClass}
+                                  value={
+                                    v.minStock === null || v.minStock === undefined
+                                      ? ""
+                                      : v.minStock
+                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value.trim();
+                                    updateVariant(
+                                      idx,
+                                      "minStock",
+                                      val === "" ? null : (isNaN(parseFloat(val)) ? null : parseFloat(val))
+                                    );
+                                  }}
+                                  placeholder="Não configurado"
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

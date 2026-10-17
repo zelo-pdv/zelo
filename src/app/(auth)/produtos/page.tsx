@@ -54,7 +54,7 @@ export type FormVariantState = {
   costPrice: number | null;
   salePrice: number | null;
   stock: number;
-  minStock: number;
+  minStock: number | null;
   image: string;
 };
 
@@ -65,7 +65,7 @@ export type FormState = {
   costPrice: number;
   salePrice: number;
   stock: number;
-  minStock: number;
+  minStock: number | null;
   notes: string;
   barcode: string;
   code: string;
@@ -81,7 +81,7 @@ const emptyForm: FormState = {
   costPrice: 0,
   salePrice: 0,
   stock: 0,
-  minStock: 0,
+  minStock: null,
   notes: "",
   barcode: "",
   code: "",
@@ -189,11 +189,9 @@ export default function ProdutosPage() {
         onDelete: setDeleting,
         onToggleActive: handleToggleActive,
         can,
-        globalLowStockThreshold: productsSettings.globalLowStockThreshold,
-        categoryLowStockThresholds: productsSettings.categoryLowStockThresholds,
         trackStock: productsSettings.trackStock ?? false,
       }),
-    [can, productsSettings.globalLowStockThreshold, productsSettings.categoryLowStockThresholds, productsSettings.trackStock],
+    [can, productsSettings.trackStock],
   );
 
   if (loading) {
@@ -216,8 +214,6 @@ export default function ProdutosPage() {
         onDelete={setDeleting}
         onToggleActive={handleToggleActive}
         trackStock={productsSettings.trackStock ?? false}
-        globalLowStockThreshold={productsSettings.globalLowStockThreshold}
-        categoryLowStockThresholds={productsSettings.categoryLowStockThresholds}
         canStock={(productsSettings.trackStock ?? false) && can("produtos", "Editar")}
         canEdit={can("produtos", "Editar")}
         canDelete={can("produtos", "Excluir")}
@@ -253,7 +249,10 @@ export default function ProdutosPage() {
                 costPrice: editing.costPrice || 0,
                 salePrice: editing.salePrice,
                 stock: Number(editing.stock ?? 0),
-                minStock: Number(editing.minStock ?? 0),
+                minStock:
+                  editing.minStock !== null && editing.minStock !== undefined
+                    ? Number(editing.minStock)
+                    : null,
                 notes: editing.notes || "",
                 barcode: editing.barcode || "",
                 code: editing.code || "",
@@ -268,7 +267,10 @@ export default function ProdutosPage() {
                   costPrice: v.costPrice ? Number(v.costPrice) : null,
                   salePrice: v.salePrice ? Number(v.salePrice) : null,
                   stock: Number(v.stock ?? 0),
-                  minStock: Number(v.minStock ?? 0),
+                  minStock:
+                    v.minStock !== null && v.minStock !== undefined
+                      ? Number(v.minStock)
+                      : null,
                   image: v.image || "",
                 })) || [],
               }

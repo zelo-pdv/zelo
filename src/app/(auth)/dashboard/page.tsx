@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Button } from "@/components/ui/button";
 import { currency, dateTime } from "@/lib/format";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import { productsService } from "@/services/products.service";
 import type { Sale } from "@/types";
 import type { ProductFrontend } from "../produtos/columns";
 import { handleExportLowStockPdf } from "@/lib/export";
+import { getLowStockProducts } from "@/lib/stock";
 import { usePermissions } from "@/components/auth/permissions-provider";
 import { useDataSync } from "@/hooks/use-data-sync";
 import { cn } from "@/lib/utils";
@@ -54,7 +56,9 @@ function StatCard({
             {value}
           </div>
           {hint && (
-            <div className="mt-1 text-xs text-muted-foreground truncate">{hint}</div>
+            <div className="mt-1 text-xs text-muted-foreground truncate">
+              {hint}
+            </div>
           )}
         </div>
         {icon && (
@@ -416,37 +420,11 @@ export default function Dashboard() {
 
     const pendingCount = sales.filter((s) => s.status === "PENDENTE").length;
 
-    const threshold = productsSettings.globalLowStockThreshold ?? 5;
-    const catThresholds = productsSettings.categoryLowStockThresholds;
-    const low = products.filter((p) => {
-      const minStockNum =
-        p.minStock !== null && p.minStock !== undefined
-          ? Number(p.minStock)
-          : 0;
-      let min = minStockNum > 0 ? minStockNum : threshold;
-
-      if (minStockNum <= 0 && p.category?.lowStockThreshold != null) {
-        min = p.category.lowStockThreshold;
-      } else if (
-        minStockNum <= 0 &&
-        p.categoryId &&
-        catThresholds?.[p.categoryId]
-      ) {
-        min = catThresholds[p.categoryId];
-      }
-
-      const stockNum = Number(p.stock ?? 0);
-      return min > 0 && stockNum <= min;
-    });
+    const trackStock = Boolean(productsSettings?.trackStock);
+    const low = getLowStockProducts(products, trackStock);
 
     return { soldInPeriod, countInPeriod, pending, pendingCount, low };
-  }, [
-    sales,
-    products,
-    period,
-    productsSettings.globalLowStockThreshold,
-    productsSettings.categoryLowStockThresholds,
-  ]);
+  }, [sales, products, period, productsSettings?.trackStock]);
 
   // Gráfico de vendas dinâmico conforme o período selecionado (Hoje, Semana, Mês)
   const chartData = useMemo<SalesPeriodChartData>(() => {
@@ -798,10 +776,7 @@ export default function Dashboard() {
               className="h-8 text-xs font-medium gap-1.5 shrink-0"
               onClick={async () => {
                 setIsExportingList(true);
-                await handleExportLowStockPdf(
-                  stats.low,
-                  productsSettings.globalLowStockThreshold ?? 5,
-                );
+                await handleExportLowStockPdf(stats.low);
                 setIsExportingList(false);
               }}
               disabled={isExportingList}>
@@ -826,10 +801,7 @@ export default function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{p.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {Number(p.stock)} em estoque · mínimo{" "}
-                      {p.minStock !== null && p.minStock !== undefined
-                        ? Number(p.minStock)
-                        : (productsSettings.globalLowStockThreshold ?? 5)}
+                      {Number(p.stock)} em estoque
                     </div>
                   </div>
                   <Badge
@@ -872,17 +844,9 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-sm font-semibold tabular-nums">
-                      R${currency(s.total)}
+                      {currency(s.total)}
                     </div>
-                    <Badge
-                      variant={s.status === "PAGO" ? "secondary" : "outline"}
-                      className={
-                        s.status === "PENDENTE"
-                          ? "border-amber-500/40 text-amber-700"
-                          : ""
-                      }>
-                      {s.status === "PAGO" ? "Pago" : "Pendente"}
-                    </Badge>
+                    <SaleStatusBadge status={s.status} />
                   </div>
                 </div>
               ))}

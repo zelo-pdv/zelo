@@ -4,7 +4,7 @@ import { currency, dateTime } from "@/lib/format";
 import { Client } from "@/prisma/client";
 import { maskPhone } from "@/lib/masks";
 import { Separator } from "../ui/separator";
-import { Badge } from "../ui/badge";
+import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Button } from "../ui/button";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
@@ -52,16 +52,10 @@ function ClientSaleCard({ sale }: { sale: Sale }) {
           <span className="font-semibold tabular-nums text-sm">
             {currency(Number(sale.total))}
           </span>
-          <Badge
-            variant={sale.status === "PAGO" ? "secondary" : "outline"}
-            className={
-              sale.status === "PENDENTE"
-                ? "border-amber-500/40 text-amber-700 bg-amber-500/10 text-[10px] px-1.5 h-4.5"
-                : "text-[10px] px-1.5 h-4.5"
-            }
-          >
-            {sale.status === "PAGO" ? "Pago" : "Pendente"}
-          </Badge>
+          <SaleStatusBadge
+            status={sale.status}
+            className="text-[10px] px-1.5 h-4.5"
+          />
         </div>
       </div>
 
@@ -164,7 +158,7 @@ export default function ClientDetail({
   // Conteúdo compartilhado entre Desktop e Mobile
   const DetailContent = (
     <div className="space-y-4 pb-2">
-      <div className="rounded-xl border border-border bg-card p-3 text-sm">
+      <div className="rounded-xl border border-border bg-card p-3 text-sm select-text">
         <div>
           <span className="text-muted-foreground">Nome:</span>{" "}
           {activeClient.name}

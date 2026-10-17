@@ -27,7 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -420,27 +420,10 @@ export function SalesDataTable({
                     <span className="font-bold text-foreground text-sm line-clamp-1 truncate leading-tight">
                       {sale.clientName || "Consumidor Final"}
                     </span>
-                    <Badge
-                      variant={
-                        sale.status === "PAGO"
-                          ? "secondary"
-                          : sale.status === "CANCELADO"
-                            ? "outline"
-                            : "outline"
-                      }
-                      className={cn(
-                        "shrink-0 text-[10px] px-1.5 h-4",
-                        sale.status === "PENDENTE" &&
-                          "border-amber-500/40 text-amber-700 dark:text-amber-400",
-                        sale.status === "CANCELADO" &&
-                          "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20 font-medium",
-                      )}>
-                      {sale.status === "PAGO"
-                        ? "Pago"
-                        : sale.status === "CANCELADO"
-                          ? "Cancelado"
-                          : "Pendente"}
-                    </Badge>
+                    <SaleStatusBadge
+                      status={sale.status}
+                      className="shrink-0 text-[10px] px-1.5 h-4"
+                    />
                   </div>
 
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">

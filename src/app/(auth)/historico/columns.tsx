@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SaleStatusBadge } from "@/components/sale-status-badge";
 import {
   Popover,
   PopoverContent,
@@ -92,28 +93,7 @@ export function getSaleColumns({
         const s = row.original;
         return (
           <div className="text-right hidden sm:block">
-            <Badge
-              variant={
-                s.status === "PAGO"
-                  ? "secondary"
-                  : s.status === "CANCELADO"
-                    ? "outline"
-                    : "outline"
-              }
-              className={
-                s.status === "PENDENTE"
-                  ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
-                  : s.status === "CANCELADO"
-                    ? "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20 font-medium"
-                    : ""
-              }
-            >
-              {s.status === "PAGO"
-                ? "Pago"
-                : s.status === "CANCELADO"
-                  ? "Cancelado"
-                  : "Pendente"}
-            </Badge>
+            <SaleStatusBadge status={s.status} />
           </div>
         );
       },
