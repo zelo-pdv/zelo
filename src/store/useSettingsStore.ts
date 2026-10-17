@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { SaleStatus } from "@/types";
 import { settingsService } from "@/services/settings.service";
+import { notifyLocalSync } from "@/hooks/use-data-sync";
 
 export type ModuleKey =
   | "dashboard"
@@ -129,7 +130,7 @@ export const defaultSalesSettings: SalesSettings = {
   blockOutOfStock: false,
   defaultPaymentMethod: "DINHEIRO",
   defaultSaleStatus: SaleStatus.PAGO,
-  paymentMethods: ["DINHEIRO", "PIX", "CARTAO_DE_CREDITO", "CARTAO_DEBITO"],
+  paymentMethods: ["DINHEIRO", "PIX", "CARTAO_DEBITO", "CARTAO_DE_CREDITO"],
   openPriceEnabled: false,
   openPriceMode: "ALL",
   openPriceProductIds: [],
@@ -174,16 +175,16 @@ interface SettingsState {
   sales: SalesSettings;
   dashboard: DashboardSettings;
   products: ProductsSettings;
-  setStore: (s: StoreInfo) => void;
-  setVoucher: (v: VoucherSettings) => void;
-  setNotificationSettings: (s: Partial<NotificationSettings>) => void;
-  setSalesSettings: (s: Partial<SalesSettings>) => void;
-  setDashboardSettings: (s: Partial<DashboardSettings>) => void;
-  setProductsSettings: (s: Partial<ProductsSettings>) => void;
-  addGroup: (g: Omit<AccessGroup, "id" | "createdAt">) => void;
-  updateGroup: (id: string, g: Partial<AccessGroup>) => void;
-  removeGroup: (id: string) => void;
-  toggleGroup: (id: string) => void;
+  setStore: (s: StoreInfo) => Promise<any>;
+  setVoucher: (v: VoucherSettings) => Promise<any>;
+  setNotificationSettings: (s: Partial<NotificationSettings>) => Promise<any>;
+  setSalesSettings: (s: Partial<SalesSettings>) => Promise<any>;
+  setDashboardSettings: (s: Partial<DashboardSettings>) => Promise<any>;
+  setProductsSettings: (s: Partial<ProductsSettings>) => Promise<any>;
+  addGroup: (g: Omit<AccessGroup, "id" | "createdAt">) => Promise<any>;
+  updateGroup: (id: string, g: Partial<AccessGroup>) => Promise<any>;
+  removeGroup: (id: string) => Promise<any>;
+  toggleGroup: (id: string) => Promise<any>;
   fetchSettings: () => Promise<void>;
 }
 
@@ -281,13 +282,13 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
         }
         set((state) => ({
           ...state,
-          store: config.store ?? state.store,
+          store: config.store ? { ...state.store, ...config.store } : state.store,
           groups: config.groups ?? state.groups,
-          voucher: config.voucher ?? state.voucher,
-          notifications: config.notifications ?? state.notifications,
-          sales: config.sales ?? state.sales,
-          dashboard: config.dashboard ?? state.dashboard,
-          products: config.products ?? state.products,
+          voucher: config.voucher ? { ...state.voucher, ...config.voucher } : state.voucher,
+          notifications: config.notifications ? { ...state.notifications, ...config.notifications } : state.notifications,
+          sales: config.sales ? { ...state.sales, ...config.sales } : state.sales,
+          dashboard: config.dashboard ? { ...state.dashboard, ...config.dashboard } : state.dashboard,
+          products: config.products ? { ...state.products, ...config.products } : state.products,
         }));
       }
     } catch (e) {
@@ -295,62 +296,153 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     }
   },
 
-  setStore: (s) => {
+  setStore: async (s) => {
+    const previous = get().store;
     set({ store: s });
-    settingsService.update(get());
+    try {
+      const res = await settingsService.update({ store: s });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ store: previous });
+      throw error;
+    }
   },
-  setVoucher: (v) => {
+
+  setVoucher: async (v) => {
+    const previous = get().voucher;
     set({ voucher: v });
-    settingsService.update(get());
+    try {
+      const res = await settingsService.update({ voucher: v });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ voucher: previous });
+      throw error;
+    }
   },
-  setNotificationSettings: (s) => {
+
+  setNotificationSettings: async (s) => {
+    const previous = get().notifications;
     set((state) => ({
       notifications: { ...(state.notifications ?? defaultNotificationSettings), ...s },
     }));
-    settingsService.update(get());
+    try {
+      const res = await settingsService.update({ notifications: s });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ notifications: previous });
+      throw error;
+    }
   },
-  setSalesSettings: (s) => {
+
+  setSalesSettings: async (s) => {
+    const previous = get().sales;
     set((state) => ({
       sales: { ...(state.sales ?? defaultSalesSettings), ...s },
     }));
-    settingsService.update(get());
+    try {
+      const res = await settingsService.update({ sales: s });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ sales: previous });
+      throw error;
+    }
   },
-  setDashboardSettings: (s) => {
+
+  setDashboardSettings: async (s) => {
+    const previous = get().dashboard;
     set((state) => ({
       dashboard: { ...(state.dashboard ?? defaultDashboardSettings), ...s },
     }));
-    settingsService.update(get());
+    try {
+      const res = await settingsService.update({ dashboard: s });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ dashboard: previous });
+      throw error;
+    }
   },
-  setProductsSettings: (s) => {
+
+  setProductsSettings: async (s) => {
+    const previous = get().products;
     set((state) => {
       const next = { ...(state.products ?? defaultProductsSettings), ...s };
       delete (next as any).globalLowStockThreshold;
       delete (next as any).hideCostPrice;
       return { products: next };
     });
-    settingsService.update(get());
+    try {
+      const payload = { ...s };
+      delete (payload as any).globalLowStockThreshold;
+      delete (payload as any).hideCostPrice;
+      const res = await settingsService.update({ products: payload });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ products: previous });
+      throw error;
+    }
   },
-  addGroup: (g) => {
-    set((state) => ({
-      groups: [{ ...g, id: uid(), createdAt: new Date().toISOString() }, ...state.groups],
-    }));
-    settingsService.update(get());
+
+  addGroup: async (g) => {
+    const previous = get().groups;
+    const newGroup = { ...g, id: uid(), createdAt: new Date().toISOString() };
+    const nextGroups = [newGroup, ...previous];
+    set({ groups: nextGroups });
+    try {
+      const res = await settingsService.update({ groups: nextGroups });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ groups: previous });
+      throw error;
+    }
   },
-  updateGroup: (id, g) => {
-    set((state) => ({
-      groups: state.groups.map((it) => (it.id === id ? { ...it, ...g } : it)),
-    }));
-    settingsService.update(get());
+
+  updateGroup: async (id, g) => {
+    const previous = get().groups;
+    const nextGroups = previous.map((it) => (it.id === id ? { ...it, ...g } : it));
+    set({ groups: nextGroups });
+    try {
+      const res = await settingsService.update({ groups: nextGroups });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ groups: previous });
+      throw error;
+    }
   },
-  removeGroup: (id) => {
-    set((state) => ({ groups: state.groups.filter((it) => it.id !== id) }));
-    settingsService.update(get());
+
+  removeGroup: async (id) => {
+    const previous = get().groups;
+    const nextGroups = previous.filter((it) => it.id !== id);
+    set({ groups: nextGroups });
+    try {
+      const res = await settingsService.update({ groups: nextGroups });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ groups: previous });
+      throw error;
+    }
   },
-  toggleGroup: (id) => {
-    set((state) => ({
-      groups: state.groups.map((it) => (it.id === id ? { ...it, active: !it.active } : it)),
-    }));
-    settingsService.update(get());
+
+  toggleGroup: async (id) => {
+    const previous = get().groups;
+    const nextGroups = previous.map((it) => (it.id === id ? { ...it, active: !it.active } : it));
+    set({ groups: nextGroups });
+    try {
+      const res = await settingsService.update({ groups: nextGroups });
+      notifyLocalSync("settings");
+      return res;
+    } catch (error) {
+      set({ groups: previous });
+      throw error;
+    }
   },
 }));
 

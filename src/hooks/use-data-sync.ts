@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-export type SyncType = "products" | "clients" | "sales" | "categories" | "users" | "access_groups" | "session";
+export type SyncType = "products" | "clients" | "sales" | "categories" | "users" | "access_groups" | "session" | "settings";
 
 type SyncVersions = Record<SyncType, string>;
 
@@ -83,7 +83,7 @@ async function checkForUpdates() {
     }
 
     const changedTypes: SyncType[] = [];
-    const allTypes: SyncType[] = ["products", "clients", "sales", "categories", "users", "access_groups", "session"];
+    const allTypes: SyncType[] = ["products", "clients", "sales", "categories", "users", "access_groups", "session", "settings"];
 
     for (const t of allTypes) {
       if (latestVersions[t] && latestVersions[t] !== cachedVersions[t]) {

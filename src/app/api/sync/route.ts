@@ -13,7 +13,7 @@ export async function GET() {
 
     const lojaId = user.lojaId;
 
-    const [productAgg, clientAgg, saleAgg, categoryAgg, userAgg, groupAgg] = await Promise.all([
+    const [productAgg, clientAgg, saleAgg, categoryAgg, userAgg, groupAgg, settingsRecord] = await Promise.all([
       prisma.product.aggregate({
         where: { lojaId },
         _max: { updatedAt: true },
@@ -44,6 +44,10 @@ export async function GET() {
         _max: { updatedAt: true },
         _count: { id: true },
       }),
+      prisma.settings.findUnique({
+        where: { lojaId },
+        select: { updatedAt: true },
+      }),
     ]);
 
     // Usamos um hash do user atual para o cliente detectar rapidamente se SUAS permissões mudaram
@@ -65,6 +69,7 @@ export async function GET() {
         users: `${userAgg._max.updatedAt?.getTime() ?? 0}_${userAgg._count.id}`,
         access_groups: `${groupAgg._max.updatedAt?.getTime() ?? 0}_${groupAgg._count.id}`,
         session: sessionHash,
+        settings: `${settingsRecord?.updatedAt?.getTime() ?? 0}`,
       },
       {
         headers: {

@@ -152,22 +152,22 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                 aria-labelledby="toggle-track-stock-label"
                 aria-describedby="toggle-track-stock-desc"
                 checked={productsSettings.trackStock ?? false}
-                onCheckedChange={(checked) => {
-                  setProductsSettings({ trackStock: checked });
-                  if (checked) {
-                    toast.success("Controle de estoque ativado");
-                  } else {
-                    toast.info("Controle de estoque desativado. Dados e ações de estoque foram ocultados.");
+                onCheckedChange={async (checked) => {
+                  try {
+                    await setProductsSettings({ trackStock: checked });
+                    if (checked) {
+                      toast.success("Controle de estoque ativado");
+                    } else {
+                      toast.info("Controle de estoque desativado. Dados e ações de estoque foram ocultados.");
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar configuração de estoque.");
                   }
                 }}
               />
             </div>
 
             <Separator className="my-1" />
-
-
-
-
 
             {/* Exibir / Ocultar Imagens dos Produtos */}
             <div className="flex items-center justify-between">
@@ -187,12 +187,16 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                 aria-labelledby="toggle-show-product-images-label"
                 aria-describedby="toggle-show-product-images-desc"
                 checked={productsSettings.showProductImages ?? true}
-                onCheckedChange={(checked) => {
-                  setProductsSettings({ showProductImages: checked });
-                  if (checked) {
-                    toast.success("Exibição de imagens ativada");
-                  } else {
-                    toast.info("Exibição de imagens desativada");
+                onCheckedChange={async (checked) => {
+                  try {
+                    await setProductsSettings({ showProductImages: checked });
+                    if (checked) {
+                      toast.success("Exibição de imagens ativada");
+                    } else {
+                      toast.info("Exibição de imagens desativada");
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar configuração de imagens.");
                   }
                 }}
               />
@@ -218,12 +222,16 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                 aria-labelledby="toggle-open-price-modal-label"
                 aria-describedby="toggle-open-price-modal-desc"
                 checked={salesSettings?.openPriceEnabled ?? false}
-                onCheckedChange={(checked) => {
-                  setSalesSettings({ openPriceEnabled: checked });
-                  if (checked) {
-                    toast.success("Preço aberto na venda ativado");
-                  } else {
-                    toast.info("Preço aberto na venda desativado");
+                onCheckedChange={async (checked) => {
+                  try {
+                    await setSalesSettings({ openPriceEnabled: checked });
+                    if (checked) {
+                      toast.success("Preço aberto na venda ativado");
+                    } else {
+                      toast.info("Preço aberto na venda desativado");
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar configuração de preço aberto.");
                   }
                 }}
               />
@@ -272,15 +280,19 @@ export function ProductsConfigModal({ isOpen, onClose }: { isOpen: boolean; onCl
                               className="h-7 w-16 text-xs text-center" 
                               placeholder="Min"
                               value={productsSettings.categoryLowStockThresholds?.[cat.id] ?? ""}
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const val = e.target.value;
                                 const current = productsSettings.categoryLowStockThresholds || {};
-                                if (!val) {
-                                  const rest = { ...current };
-                                  delete rest[cat.id];
-                                  setProductsSettings({ categoryLowStockThresholds: rest });
-                                } else {
-                                  setProductsSettings({ categoryLowStockThresholds: { ...current, [cat.id]: Number(val) } });
+                                try {
+                                  if (!val) {
+                                    const rest = { ...current };
+                                    delete rest[cat.id];
+                                    await setProductsSettings({ categoryLowStockThresholds: rest });
+                                  } else {
+                                    await setProductsSettings({ categoryLowStockThresholds: { ...current, [cat.id]: Number(val) } });
+                                  }
+                                } catch (err: any) {
+                                  toast.error(err?.message || "Erro ao salvar estoque mínimo da categoria.");
                                 }
                               }}
                               title="Estoque mínimo para esta categoria"

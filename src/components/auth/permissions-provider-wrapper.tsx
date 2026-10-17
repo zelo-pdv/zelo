@@ -58,8 +58,11 @@ export function PermissionsProviderWrapper({
   }, [fetchSettings]);
 
   useDataSync({
-    types: ["session"],
+    types: ["session", "settings"],
     onSync: async (changed, versions) => {
+      if (changed.includes("settings")) {
+        void fetchSettings();
+      }
       if (changed.includes("session") && versions?.session) {
         try {
           const newSession = JSON.parse(versions.session);

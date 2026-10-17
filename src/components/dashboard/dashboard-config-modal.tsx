@@ -65,12 +65,16 @@ export function DashboardConfigModal({
           aria-describedby="toggle-hide-low-stock-desc"
           disabled={!trackStock}
           checked={!trackStock || dashboard.hideLowStockCard}
-          onCheckedChange={(checked) => {
-            setDashboardSettings({ hideLowStockCard: checked });
-            if (checked) {
-              toast.info("Seção de estoque baixo ocultada no dashboard");
-            } else {
-              toast.success("Seção de estoque baixo visível no dashboard");
+          onCheckedChange={async (checked) => {
+            try {
+              await setDashboardSettings({ hideLowStockCard: checked });
+              if (checked) {
+                toast.info("Seção de estoque baixo ocultada no dashboard");
+              } else {
+                toast.success("Seção de estoque baixo visível no dashboard");
+              }
+            } catch (err: any) {
+              toast.error(err?.message || "Erro ao salvar configuração do dashboard.");
             }
           }}
         />
@@ -94,12 +98,16 @@ export function DashboardConfigModal({
           aria-labelledby="toggle-hide-recent-sales-label"
           aria-describedby="toggle-hide-recent-sales-desc"
           checked={Boolean(dashboard.hideRecentSales)}
-          onCheckedChange={(checked) => {
-            setDashboardSettings({ hideRecentSales: checked });
-            if (checked) {
-              toast.info("Seção de últimas vendas ocultada no dashboard");
-            } else {
-              toast.success("Seção de últimas vendas visível no dashboard");
+          onCheckedChange={async (checked) => {
+            try {
+              await setDashboardSettings({ hideRecentSales: checked });
+              if (checked) {
+                toast.info("Seção de últimas vendas ocultada no dashboard");
+              } else {
+                toast.success("Seção de últimas vendas visível no dashboard");
+              }
+            } catch (err: any) {
+              toast.error(err?.message || "Erro ao salvar configuração do dashboard.");
             }
           }}
         />

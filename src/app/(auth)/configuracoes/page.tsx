@@ -501,12 +501,16 @@ function NotificationsSection() {
     (s) => s.setNotificationSettings,
   );
 
-  const handleToggleOutOfStockWarning = (checked: boolean) => {
-    setNotificationSettings({ outOfStockWarning: checked });
-    if (checked) {
-      toast.success("Avisos de estoque insuficiente ativados");
-    } else {
-      toast.info("Avisos de estoque insuficiente desativados");
+  const handleToggleOutOfStockWarning = async (checked: boolean) => {
+    try {
+      await setNotificationSettings({ outOfStockWarning: checked });
+      if (checked) {
+        toast.success("Avisos de estoque insuficiente ativados");
+      } else {
+        toast.info("Avisos de estoque insuficiente desativados");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar configuração de notificações.");
     }
   };
 
@@ -585,46 +589,62 @@ function SalesConfigSection() {
 
   const paymentMethods = salesSettings.paymentMethods?.length > 0 ? salesSettings.paymentMethods : Object.values(PaymentMethod);
 
-  const handleAddPaymentMethod = () => {
+  const handleAddPaymentMethod = async () => {
     if (!newPaymentMethod.trim()) return;
     const formatted = newPaymentMethod.trim().toUpperCase().replace(/\s+/g, "_");
     if (paymentMethods.includes(formatted)) {
       toast.error("Forma de pagamento já existe");
       return;
     }
-    setSalesSettings({ paymentMethods: [...paymentMethods, formatted] });
-    setNewPaymentMethod("");
-    toast.success("Forma de pagamento adicionada");
+    try {
+      await setSalesSettings({ paymentMethods: [...paymentMethods, formatted] });
+      setNewPaymentMethod("");
+      toast.success("Forma de pagamento adicionada");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao adicionar forma de pagamento.");
+    }
   };
 
-  const handleRemovePaymentMethod = (method: string) => {
+  const handleRemovePaymentMethod = async (method: string) => {
     if (paymentMethods.length <= 1) {
       toast.error("Deve haver pelo menos uma forma de pagamento");
       return;
     }
     const newMethods = paymentMethods.filter(m => m !== method);
-    setSalesSettings({ 
-      paymentMethods: newMethods,
-      ...(salesSettings.defaultPaymentMethod === method && { defaultPaymentMethod: newMethods[0] })
-    });
-    toast.success("Forma de pagamento removida");
-  };
-
-  const handleToggleRequireClient = (checked: boolean) => {
-    setSalesSettings({ requireClient: checked });
-    if (checked) {
-      toast.success("Seleção de cliente agora é obrigatória nas vendas");
-    } else {
-      toast.info("Vendas sem cliente (Consumidor Final) agora são permitidas");
+    try {
+      await setSalesSettings({ 
+        paymentMethods: newMethods,
+        ...(salesSettings.defaultPaymentMethod === method && { defaultPaymentMethod: newMethods[0] })
+      });
+      toast.success("Forma de pagamento removida");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao remover forma de pagamento.");
     }
   };
 
-  const handleToggleBlockOutOfStock = (checked: boolean) => {
-    setSalesSettings({ blockOutOfStock: checked });
-    if (checked) {
-      toast.success("Vendas com estoque insuficiente agora serão bloqueadas");
-    } else {
-      toast.info("Vendas com estoque insuficiente agora são permitidas com aviso");
+  const handleToggleRequireClient = async (checked: boolean) => {
+    try {
+      await setSalesSettings({ requireClient: checked });
+      if (checked) {
+        toast.success("Seleção de cliente agora é obrigatória nas vendas");
+      } else {
+        toast.info("Vendas sem cliente (Consumidor Final) agora são permitidas");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar configuração.");
+    }
+  };
+
+  const handleToggleBlockOutOfStock = async (checked: boolean) => {
+    try {
+      await setSalesSettings({ blockOutOfStock: checked });
+      if (checked) {
+        toast.success("Vendas com estoque insuficiente agora serão bloqueadas");
+      } else {
+        toast.info("Vendas com estoque insuficiente agora são permitidas com aviso");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar configuração.");
     }
   };
 
@@ -639,24 +659,36 @@ function SalesConfigSection() {
     }
   }, [isExpanded, productsList.length]);
 
-  const handleToggleOpenPrice = (checked: boolean) => {
-    setSalesSettings({ openPriceEnabled: checked });
-    if (checked) {
-      toast.success("Preço aberto na venda ativado");
-    } else {
-      toast.info("Preço aberto na venda desativado");
+  const handleToggleOpenPrice = async (checked: boolean) => {
+    try {
+      await setSalesSettings({ openPriceEnabled: checked });
+      if (checked) {
+        toast.success("Preço aberto na venda ativado");
+      } else {
+        toast.info("Preço aberto na venda desativado");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar configuração.");
     }
   };
 
-  const handleSetOpenPriceMode = (mode: "ALL" | "SPECIFIC") => {
-    setSalesSettings({ openPriceMode: mode });
+  const handleSetOpenPriceMode = async (mode: "ALL" | "SPECIFIC") => {
+    try {
+      await setSalesSettings({ openPriceMode: mode });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar abrangência de preço aberto.");
+    }
   };
 
-  const handleToggleProductOpenPrice = (productId: string) => {
+  const handleToggleProductOpenPrice = async (productId: string) => {
     const current = salesSettings.openPriceProductIds || [];
     const exists = current.includes(productId);
     const updated = exists ? current.filter((id) => id !== productId) : [...current, productId];
-    setSalesSettings({ openPriceProductIds: updated });
+    try {
+      await setSalesSettings({ openPriceProductIds: updated });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar produto com preço aberto.");
+    }
   };
 
   return (
@@ -864,12 +896,16 @@ function SalesConfigSection() {
                 aria-labelledby="toggle-discount-limit-label"
                 aria-describedby="toggle-discount-limit-desc"
                 checked={salesSettings.discountLimitEnabled ?? false}
-                onCheckedChange={(checked) => {
-                  setSalesSettings({ discountLimitEnabled: checked });
-                  if (checked) {
-                    toast.success("Limite geral de desconto ativado");
-                  } else {
-                    toast.info("Limite geral de desconto desativado (ilimitado)");
+                onCheckedChange={async (checked) => {
+                  try {
+                    await setSalesSettings({ discountLimitEnabled: checked });
+                    if (checked) {
+                      toast.success("Limite geral de desconto ativado");
+                    } else {
+                      toast.info("Limite geral de desconto desativado (ilimitado)");
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar configuração.");
                   }
                 }}
               />
@@ -889,9 +925,13 @@ function SalesConfigSection() {
                       step="1"
                       placeholder="Ex.: 15"
                       value={salesSettings.maxDiscountPercentage ?? ""}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const val = e.target.value === "" ? null : Number(e.target.value);
-                        setSalesSettings({ maxDiscountPercentage: val });
+                        try {
+                          await setSalesSettings({ maxDiscountPercentage: val });
+                        } catch (err: any) {
+                          toast.error(err?.message || "Erro ao salvar porcentagem de desconto.");
+                        }
                       }}
                       className="h-9 pr-10 text-sm bg-background"
                     />
@@ -915,9 +955,13 @@ function SalesConfigSection() {
                       step="0.5"
                       placeholder="Ex.: 50,00"
                       value={salesSettings.maxDiscountValue ?? ""}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const val = e.target.value === "" ? null : Number(e.target.value);
-                        setSalesSettings({ maxDiscountValue: val });
+                        try {
+                          await setSalesSettings({ maxDiscountValue: val });
+                        } catch (err: any) {
+                          toast.error(err?.message || "Erro ao salvar valor de desconto.");
+                        }
                       }}
                       className="h-9 pr-12 text-sm bg-background"
                     />
@@ -946,11 +990,15 @@ function SalesConfigSection() {
             <div className="shrink-0 w-full sm:w-auto">
               <Select
                 value={salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO}
-                onValueChange={(val) => {
+                onValueChange={async (val) => {
                   if (!val) return;
                   const method = val as PaymentMethod;
-                  setSalesSettings({ defaultPaymentMethod: method });
-                  toast.success(`Forma de pagamento padrão: ${PAYMENT_LABELS[method] || method}`);
+                  try {
+                    await setSalesSettings({ defaultPaymentMethod: method });
+                    toast.success(`Forma de pagamento padrão: ${PAYMENT_LABELS[method] || method}`);
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar forma de pagamento padrão.");
+                  }
                 }}
               >
                 <SelectTrigger className="h-9 w-full sm:w-[220px] justify-between">
@@ -1024,13 +1072,17 @@ function SalesConfigSection() {
             <div className="shrink-0 w-full sm:w-auto">
               <Select
                 value={salesSettings.defaultSaleStatus || SaleStatus.PAGO}
-                onValueChange={(val) => {
+                onValueChange={async (val) => {
                   if (!val) return;
                   const newStatus = val as SaleStatus;
-                  setSalesSettings({ defaultSaleStatus: newStatus });
-                  toast.success(
-                    `Status padrão da venda: ${newStatus === SaleStatus.PAGO ? "Pago" : "Pendente"}`
-                  );
+                  try {
+                    await setSalesSettings({ defaultSaleStatus: newStatus });
+                    toast.success(
+                      `Status padrão da venda: ${newStatus === SaleStatus.PAGO ? "Pago" : "Pendente"}`
+                    );
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erro ao salvar status padrão da venda.");
+                  }
                 }}
               >
                 <SelectTrigger className="h-9 w-full sm:w-[160px] justify-between">
