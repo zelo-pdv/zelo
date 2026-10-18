@@ -38,9 +38,14 @@ export function BottomNavigation() {
     if (to === "/mais") {
       return (
         pathname === "/mais" ||
-        ["/historico", "/usuarios", "/registros", "/configuracoes", "/relatorios", "/estoque"].some((p) =>
-          pathname.startsWith(p)
-        )
+        [
+          "/historico",
+          "/usuarios",
+          "/registros",
+          "/configuracoes",
+          "/relatorios",
+          "/estoque",
+        ].some((p) => pathname.startsWith(p))
       );
     }
     return pathname.startsWith(to);
@@ -49,11 +54,10 @@ export function BottomNavigation() {
   return (
     <nav className="fixed inset-x-0 bottom-[max(env(safe-area-inset-bottom),1rem)] z-40 flex justify-center px-4 pointer-events-none md:hidden">
       <div
-        className="pointer-events-auto grid items-center p-1.5 rounded-full bg-[#E9ECF0]/90 dark:bg-[#1C1E22]/90 backdrop-blur-2xl border border-white/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-[calc(100%-1rem)] max-w-[430px]"
+        className="pointer-events-auto grid items-center p-1.5 rounded-full bg-[#E9ECF0]/90 dark:bg-[#1C1E22]/90 backdrop-blur-2xl border border-white/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-[calc(100%-1rem)] max-w-107.5"
         style={{
           gridTemplateColumns: `repeat(${visibleNav.length}, minmax(0, 1fr))`,
-        }}
-      >
+        }}>
         {visibleNav.map((n) => {
           const Icon = n.icon;
           const active = isActive(n.to);
@@ -70,10 +74,9 @@ export function BottomNavigation() {
                   isVender
                     ? "w-11 h-11 rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/25 active:scale-95"
                     : active
-                    ? "w-14 h-11 rounded-full bg-white dark:bg-[#2A2C30] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
-                    : "w-11 h-11 rounded-full bg-transparent"
-                )}
-              >
+                      ? "w-14 h-11 rounded-full bg-white dark:bg-[#2A2C30] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
+                      : "w-11 h-11 rounded-full bg-transparent",
+                )}>
                 <Icon
                   active={active}
                   className={cn(
@@ -81,8 +84,8 @@ export function BottomNavigation() {
                     isVender
                       ? "text-primary-foreground"
                       : active
-                      ? "text-black dark:text-white"
-                      : "text-black/85 dark:text-white/85 group-hover:text-black dark:group-hover:text-white"
+                        ? "text-black dark:text-white"
+                        : "text-black/85 dark:text-white/85 group-hover:text-black dark:group-hover:text-white",
                   )}
                 />
               </Link>
@@ -93,6 +96,3 @@ export function BottomNavigation() {
     </nav>
   );
 }
-
-
-

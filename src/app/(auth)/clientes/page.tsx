@@ -83,10 +83,7 @@ export default function ClientesPage() {
         ...c,
         totalSpent: clientSales
           .filter((s) => s.status === "PAGO")
-          .reduce(
-            (sum, s) => sum + (Number(s.total) || 0),
-            0,
-          ),
+          .reduce((sum, s) => sum + (Number(s.total) || 0), 0),
         pendingAmount: clientSales
           .filter((s) => s.status === "PENDENTE")
           .reduce((sum, s) => sum + (Number(s.total) || 0), 0),
@@ -97,7 +94,9 @@ export default function ClientesPage() {
   const handleToggleActive = async (client: ClientWithAddress) => {
     try {
       const newStatus = !(client.active ?? true);
-      const updated = await clientsService.update(client.id, { active: newStatus });
+      const updated = await clientsService.update(client.id, {
+        active: newStatus,
+      });
       setClients((prev) =>
         prev.map((c) => (c.id === client.id ? { ...c, ...updated } : c)),
       );
@@ -136,8 +135,13 @@ export default function ClientesPage() {
   if (!can("clientes", "Visualizar")) {
     return (
       <div className="flex h-[60vh] w-full flex-col items-center justify-center gap-4 text-muted-foreground">
-        <BoxIcon name="error" className="text-5xl text-destructive opacity-50" />
-        <p className="text-sm font-medium">Você não tem permissão para visualizar clientes.</p>
+        <BoxIcon
+          name="error"
+          className="text-5xl text-destructive opacity-50"
+        />
+        <p className="text-sm font-medium">
+          Você não tem permissão para visualizar clientes.
+        </p>
       </div>
     );
   }
@@ -149,7 +153,9 @@ export default function ClientesPage() {
         data={enrichedClients}
         onCreateClick={() => setCreating(true)}
         canAdd={can("clientes", "Adicionar")}
-        onImportClick={can("clientes", "Adicionar") ? () => setIsImportOpen(true) : undefined}
+        onImportClick={
+          can("clientes", "Adicionar") ? () => setIsImportOpen(true) : undefined
+        }
         onExportClick={handleExport}
         isExporting={isExporting}
         onView={setDetail}
@@ -161,15 +167,19 @@ export default function ClientesPage() {
       />
 
       {can("clientes", "Adicionar") && (
-        <MobileActionFab 
-          onAdd={() => setCreating(true)} 
-          onExport={handleExport} 
+        <MobileActionFab
+          page="usuarios"
+          onAdd={() => setCreating(true)}
+          onExport={handleExport}
           onImport={() => setIsImportOpen(true)}
-          isExporting={isExporting} 
+          isExporting={isExporting}
         />
       )}
 
-      <ClientsImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
+      <ClientsImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+      />
 
       <ClientForm
         key={editing?.id ?? "new"}

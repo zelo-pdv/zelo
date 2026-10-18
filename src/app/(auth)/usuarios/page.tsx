@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getUserColumns} from "./columns";
+import { getUserColumns } from "./columns";
 import { UsersDataTable } from "./data-table";
 import { maskPhone } from "@/lib/masks";
 
@@ -196,9 +196,7 @@ export default function UsuariosPage() {
         active: !user.active,
       });
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === id ? { ...u, active: updated.active } : u,
-        ),
+        prev.map((u) => (u.id === id ? { ...u, active: updated.active } : u)),
       );
       toast.success("Status atualizado!");
       notifyLocalSync("users");
@@ -248,12 +246,12 @@ export default function UsuariosPage() {
         currentUserId={currentUser?.sub}
       />
 
-      <MobileActionFab 
-        onAdd={() => setCreating(true)} 
-        onExport={handleExport} 
-        isExporting={isExporting} 
+      <MobileActionFab
+        page="usuarios"
+        onAdd={() => setCreating(true)}
+        onExport={handleExport}
+        isExporting={isExporting}
       />
-
 
       <UserForm
         key={editing?.id ?? "new"}
@@ -340,16 +338,20 @@ function UserForm({
         active: initial.active,
         discountLimitMode: (initial.discountLimitMode as any) || "INHERIT",
         maxDiscountPercentage:
-          initial.maxDiscountPercentage !== null && initial.maxDiscountPercentage !== undefined
+          initial.maxDiscountPercentage !== null &&
+          initial.maxDiscountPercentage !== undefined
             ? String(initial.maxDiscountPercentage)
             : "",
         maxDiscountValue:
-          initial.maxDiscountValue !== null && initial.maxDiscountValue !== undefined
+          initial.maxDiscountValue !== null &&
+          initial.maxDiscountValue !== undefined
             ? String(initial.maxDiscountValue)
             : "",
       });
     } else {
-      const saved = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LEGACY_DRAFT_KEY);
+      const saved =
+        localStorage.getItem(DRAFT_KEY) ||
+        localStorage.getItem(LEGACY_DRAFT_KEY);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -404,7 +406,8 @@ function UserForm({
           active: form.active,
           discountLimitMode: form.discountLimitMode,
           maxDiscountPercentage:
-            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+            form.discountLimitMode === "CUSTOM" &&
+            form.maxDiscountPercentage !== ""
               ? Number(form.maxDiscountPercentage)
               : null,
           maxDiscountValue:
@@ -424,7 +427,8 @@ function UserForm({
           active: form.active,
           discountLimitMode: form.discountLimitMode,
           maxDiscountPercentage:
-            form.discountLimitMode === "CUSTOM" && form.maxDiscountPercentage !== ""
+            form.discountLimitMode === "CUSTOM" &&
+            form.maxDiscountPercentage !== ""
               ? Number(form.maxDiscountPercentage)
               : null,
           maxDiscountValue:
@@ -509,8 +513,7 @@ function UserForm({
             type="button"
             onClick={() => setShowPassword((s) => !s)}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-          >
+            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
             {showPassword ? (
               <BoxIcon name="hide" className="text-base" />
             ) : (
@@ -524,8 +527,7 @@ function UserForm({
           <Label required>Tipo de acesso</Label>
           <Select
             value={form.groupId}
-            onValueChange={(v) => setForm({ ...form, groupId: v as string })}
-          >
+            onValueChange={(v) => setForm({ ...form, groupId: v as string })}>
             <SelectTrigger className={requiredInputClass}>
               <SelectValue placeholder="Selecione um grupo">
                 {groups.find((g) => g.id === form.groupId)?.name}
@@ -564,9 +566,12 @@ function UserForm({
       {/* Limite de Desconto Individual */}
       <div className="sm:col-span-2 flex flex-col gap-3 rounded-lg border border-border/70 p-3">
         <div className="space-y-0.5">
-          <Label className="text-sm font-medium">Limite de Desconto Individual</Label>
+          <Label className="text-sm font-medium">
+            Limite de Desconto Individual
+          </Label>
           <p className="text-xs text-muted-foreground">
-            Define se este vendedor possui um limite exclusivo ou segue o padrão do seu grupo de acesso.
+            Define se este vendedor possui um limite exclusivo ou segue o padrão
+            do seu grupo de acesso.
           </p>
         </div>
 
@@ -578,9 +583,8 @@ function UserForm({
               "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
               form.discountLimitMode === "INHERIT"
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:bg-muted text-muted-foreground"
-            )}
-          >
+                : "border-border hover:bg-muted text-muted-foreground",
+            )}>
             Padrão do Grupo
           </button>
           <button
@@ -590,9 +594,8 @@ function UserForm({
               "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
               form.discountLimitMode === "CUSTOM"
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:bg-muted text-muted-foreground"
-            )}
-          >
+                : "border-border hover:bg-muted text-muted-foreground",
+            )}>
             Personalizado
           </button>
           <button
@@ -602,9 +605,8 @@ function UserForm({
               "rounded-md border p-2 text-center text-xs font-medium transition cursor-pointer",
               form.discountLimitMode === "UNLIMITED"
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:bg-muted text-muted-foreground"
-            )}
-          >
+                : "border-border hover:bg-muted text-muted-foreground",
+            )}>
             Ilimitado
           </button>
         </div>
@@ -620,7 +622,9 @@ function UserForm({
                   max="100"
                   placeholder="Ex.: 15"
                   value={form.maxDiscountPercentage}
-                  onChange={(e) => setForm({ ...form, maxDiscountPercentage: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, maxDiscountPercentage: e.target.value })
+                  }
                   className="h-8 text-xs pr-8"
                 />
                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
@@ -637,7 +641,9 @@ function UserForm({
                   step="0.5"
                   placeholder="Ex.: 50,00"
                   value={form.maxDiscountValue}
-                  onChange={(e) => setForm({ ...form, maxDiscountValue: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, maxDiscountValue: e.target.value })
+                  }
                   className="h-8 text-xs pr-10"
                 />
                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
@@ -653,7 +659,10 @@ function UserForm({
 
   const ActionButtons = (
     <div className="flex w-full justify-end">
-      <LoadingButton onClick={submit} loading={isSubmitting} className="min-w-28">
+      <LoadingButton
+        onClick={submit}
+        loading={isSubmitting}
+        className="min-w-28">
         Salvar
       </LoadingButton>
     </div>
@@ -664,7 +673,9 @@ function UserForm({
       <Drawer open={open} onOpenChange={onOpenChange} blur>
         <DrawerContent className="h-[90vh]">
           <DrawerHeader className="shrink-0 px-4 text-center">
-            <DrawerTitle className="text-center">{isEdit ? "Editar usuário" : "Novo usuário"}</DrawerTitle>
+            <DrawerTitle className="text-center">
+              {isEdit ? "Editar usuário" : "Novo usuário"}
+            </DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -676,8 +687,7 @@ function UserForm({
               <LoadingButton
                 onClick={submit}
                 loading={isSubmitting}
-                className="h-11 w-full rounded-full font-medium"
-              >
+                className="h-11 w-full rounded-full font-medium">
                 Salvar
               </LoadingButton>
               <Button
@@ -685,8 +695,7 @@ function UserForm({
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
+                className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground">
                 Cancelar
               </Button>
             </div>
@@ -700,7 +709,9 @@ function UserForm({
     <Dialog open={open} onOpenChange={onOpenChange} blur>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar usuário" : "Novo usuário"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Editar usuário" : "Novo usuário"}
+          </DialogTitle>
         </DialogHeader>
         {FormFields}
         <DialogFooter>{ActionButtons}</DialogFooter>
@@ -833,8 +844,7 @@ function ChangePasswordDialog({
             type="button"
             onClick={() => setShowPassword((s) => !s)}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-          >
+            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
             {showPassword ? (
               <BoxIcon name="hide" className="text-base" />
             ) : (
@@ -851,9 +861,10 @@ function ChangePasswordDialog({
       <Button
         type="button"
         onClick={() => handleSubmit()}
-        disabled={isSubmitting}
-      >
-        {isSubmitting && <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />}
+        disabled={isSubmitting}>
+        {isSubmitting && (
+          <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />
+        )}
         Salvar
       </Button>
     </div>
@@ -866,7 +877,8 @@ function ChangePasswordDialog({
           <DrawerHeader className="px-0 text-center">
             <DrawerTitle className="text-center">Trocar Senha</DrawerTitle>
             <p className="text-sm text-muted-foreground text-center">
-              Defina uma nova senha para o usuário <strong>{activeUser?.name}</strong>
+              Defina uma nova senha para o usuário{" "}
+              <strong>{activeUser?.name}</strong>
             </p>
           </DrawerHeader>
           {ContentBody}
@@ -875,9 +887,10 @@ function ChangePasswordDialog({
               type="button"
               onClick={() => handleSubmit()}
               disabled={isSubmitting}
-              className="h-11 w-full rounded-full font-medium"
-            >
-              {isSubmitting && <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />}
+              className="h-11 w-full rounded-full font-medium">
+              {isSubmitting && (
+                <BoxIcon name="loader-alt" className="mr-2 text-base bx-spin" />
+              )}
               Salvar
             </Button>
             <Button
@@ -885,8 +898,7 @@ function ChangePasswordDialog({
               variant="ghost"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
+              className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground">
               Cancelar
             </Button>
           </div>

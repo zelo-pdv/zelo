@@ -57,7 +57,7 @@ export const NAV: NavItem[] = [
 export const SECONDARY_NAV: NavItem[] = [
   {
     to: "/estoque",
-    label: "Movimentações",
+    label: "Estoque",
     short: "Estoque",
     icon: createBoxIcon("transfer"),
     module: "estoque",
@@ -95,7 +95,7 @@ export const SECONDARY_NAV: NavItem[] = [
 export const TitlePages: TitlePage[] = [
   { label: "Início", to: "/dashboard" },
   { label: "Produtos", to: "/produtos" },
-  { label: "Movimentações de Estoque", to: "/estoque" },
+  { label: "Estoque", to: "/estoque" },
   { label: "Nova Venda", to: "/nova-venda" },
   { label: "Clientes", to: "/clientes" },
   { label: "Histórico", to: "/historico" },
@@ -123,8 +123,11 @@ export const SettingsItens: NavItem[] = [
 
 export function getFirstAccessibleRoute(
   canOrPermissions:
-    | ((module: ModuleKey, action: "Visualizar" | "Adicionar" | "Editar" | "Excluir") => boolean)
-    | { permissions?: any; isAdmin?: boolean }
+    | ((
+        module: ModuleKey,
+        action: "Visualizar" | "Adicionar" | "Editar" | "Excluir",
+      ) => boolean)
+    | { permissions?: any; isAdmin?: boolean },
 ): string {
   const sequence: { module: ModuleKey; to: string }[] = [
     { module: "dashboard", to: "/dashboard" },
@@ -137,7 +140,7 @@ export function getFirstAccessibleRoute(
 
   if (typeof canOrPermissions === "function") {
     const found = sequence.find((item) =>
-      canOrPermissions(item.module, "Visualizar")
+      canOrPermissions(item.module, "Visualizar"),
     );
     return found?.to || "/dashboard";
   }
@@ -145,9 +148,8 @@ export function getFirstAccessibleRoute(
   const { permissions, isAdmin } = canOrPermissions;
   if (isAdmin) return "/dashboard";
 
-  const found = sequence.find(
-    (item) => permissions?.[item.module]?.includes("Visualizar")
+  const found = sequence.find((item) =>
+    permissions?.[item.module]?.includes("Visualizar"),
   );
   return found?.to || "/dashboard";
 }
-

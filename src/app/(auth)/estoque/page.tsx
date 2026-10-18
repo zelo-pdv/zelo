@@ -74,14 +74,14 @@ export default function EstoquePage() {
         setTotalPages(res.totalPages || 1);
       } catch (error) {
         if (!silent) {
-          toast.error("Erro ao carregar movimentações de estoque.");
+          toast.error("Erro ao carregar movimentações.");
         }
         console.error("Erro ao buscar movimentações:", error);
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [canView, page, search, typeFilter]
+    [canView, page, search, typeFilter],
   );
 
   useEffect(() => {
@@ -102,8 +102,7 @@ export default function EstoquePage() {
         return (
           <Badge
             variant="outline"
-            className="border-emerald-500/40 text-emerald-700 bg-emerald-500/10 text-xs font-medium"
-          >
+            className="border-emerald-500/40 text-emerald-700 bg-emerald-500/10 text-xs font-medium">
             Entrada
           </Badge>
         );
@@ -111,8 +110,7 @@ export default function EstoquePage() {
         return (
           <Badge
             variant="outline"
-            className="border-amber-500/40 text-amber-700 bg-amber-500/10 text-xs font-medium"
-          >
+            className="border-amber-500/40 text-amber-700 bg-amber-500/10 text-xs font-medium">
             Saída
           </Badge>
         );
@@ -120,8 +118,7 @@ export default function EstoquePage() {
         return (
           <Badge
             variant="outline"
-            className="border-sky-500/40 text-sky-700 bg-sky-500/10 text-xs font-medium"
-          >
+            className="border-sky-500/40 text-sky-700 bg-sky-500/10 text-xs font-medium">
             Ajuste
           </Badge>
         );
@@ -129,8 +126,7 @@ export default function EstoquePage() {
         return (
           <Badge
             variant="outline"
-            className="border-violet-500/40 text-violet-700 bg-violet-500/10 text-xs font-medium"
-          >
+            className="border-violet-500/40 text-violet-700 bg-violet-500/10 text-xs font-medium">
             Venda
           </Badge>
         );
@@ -138,8 +134,7 @@ export default function EstoquePage() {
         return (
           <Badge
             variant="outline"
-            className="border-zinc-500/40 text-zinc-700 bg-zinc-500/10 text-xs font-medium dark:text-zinc-300"
-          >
+            className="border-zinc-500/40 text-zinc-700 bg-zinc-500/10 text-xs font-medium dark:text-zinc-300">
             Estorno
           </Badge>
         );
@@ -149,8 +144,7 @@ export default function EstoquePage() {
   };
 
   const formatQuantity = (item: StockMovementFrontend) => {
-    const isPositive =
-      item.type === "ENTRY" || item.type === "SALE_CANCEL";
+    const isPositive = item.type === "ENTRY" || item.type === "SALE_CANCEL";
     const isNegative = item.type === "OUT" || item.type === "SALE";
 
     return (
@@ -159,11 +153,15 @@ export default function EstoquePage() {
           isPositive
             ? "text-emerald-600 dark:text-emerald-400"
             : isNegative
-            ? "text-rose-600 dark:text-rose-400"
-            : "text-foreground"
-        }`}
-      >
-        {isPositive ? `+${item.quantity}` : isNegative ? `-${item.quantity}` : `${item.quantity}`} un
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-foreground"
+        }`}>
+        {isPositive
+          ? `+${item.quantity}`
+          : isNegative
+            ? `-${item.quantity}`
+            : `${item.quantity}`}{" "}
+        un
       </span>
     );
   };
@@ -173,7 +171,7 @@ export default function EstoquePage() {
       <div className="flex h-64 flex-col items-center justify-center gap-2">
         <BoxIcon name="lock" className="text-3xl text-muted-foreground" />
         <p className="text-muted-foreground">
-          Você não tem permissão para visualizar as movimentações de estoque.
+          Você não tem permissão para visualizar as movimentações.
         </p>
       </div>
     );
@@ -186,8 +184,13 @@ export default function EstoquePage() {
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
           <BoxIcon name="info-circle" className="text-xl shrink-0 mt-0.5" />
           <div className="flex-1">
-            <span className="font-semibold">Controle de estoque desativado:</span>{" "}
-            O registro e a consulta de movimentações permanecem disponíveis, mas o bloqueio de vendas e os alertas de estoque mínimo no dashboard estão inativos. Você pode ativar o controle a qualquer momento nas configurações.
+            <span className="font-semibold">
+              Controle de estoque desativado:
+            </span>{" "}
+            O registro e a consulta de movimentações permanecem disponíveis, mas
+            o bloqueio de vendas e os alertas de estoque mínimo no dashboard
+            estão inativos. Você pode ativar o controle a qualquer momento nas
+            configurações.
           </div>
         </div>
       )}
@@ -219,21 +222,20 @@ export default function EstoquePage() {
                   setTypeFilter(val as string);
                   setPage(1);
                 }
-              }}
-            >
+              }}>
               <SelectTrigger className="w-full h-9 rounded-md text-xs justify-between">
                 <SelectValue placeholder="Tipo de movimentação">
                   {typeFilter === "ALL"
                     ? "Todos os tipos"
                     : typeFilter === "ENTRY"
-                    ? "Entradas (+)"
-                    : typeFilter === "OUT"
-                    ? "Saídas (-)"
-                    : typeFilter === "ADJUSTMENT"
-                    ? "Ajustes (=)"
-                    : typeFilter === "SALE"
-                    ? "Vendas"
-                    : "Estornos"}
+                      ? "Entradas (+)"
+                      : typeFilter === "OUT"
+                        ? "Saídas (-)"
+                        : typeFilter === "ADJUSTMENT"
+                          ? "Ajustes (=)"
+                          : typeFilter === "SALE"
+                            ? "Vendas"
+                            : "Estornos"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -266,8 +268,7 @@ export default function EstoquePage() {
               type="button"
               variant="outline"
               size="sm"
-              className="h-9 rounded-full gap-1.5 cursor-pointer text-xs"
-            >
+              className="h-9 rounded-full gap-1.5 cursor-pointer text-xs">
               <BoxIcon name="package" className="text-base" />
               <span className="hidden sm:inline">Ver Catálogo</span>
             </Button>
@@ -279,8 +280,7 @@ export default function EstoquePage() {
             size="sm"
             onClick={() => fetchMovements(false)}
             className="h-9 rounded-full gap-1 cursor-pointer text-xs"
-            title="Atualizar lista"
-          >
+            title="Atualizar lista">
             <BoxIcon name="refresh" className="text-base" />
             <span className="hidden sm:inline">Atualizar</span>
           </Button>
@@ -290,8 +290,7 @@ export default function EstoquePage() {
               type="button"
               size="sm"
               onClick={() => setIsDialogOpen(true)}
-              className="h-9 rounded-full gap-1 cursor-pointer text-xs font-medium"
-            >
+              className="h-9 rounded-full gap-1 cursor-pointer text-xs font-medium">
               <BoxIcon name="plus" className="text-base" />
               <span>Nova movimentação</span>
             </Button>
@@ -306,15 +305,16 @@ export default function EstoquePage() {
         <Card className="border-border/70 p-12 text-center">
           <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <BoxIcon name="transfer" className="text-4xl opacity-40" />
-            <p className="text-sm font-medium">Nenhuma movimentação de estoque encontrada.</p>
+            <p className="text-sm font-medium">
+              Nenhuma movimentação de estoque encontrada.
+            </p>
             {canAdd && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsDialogOpen(true)}
-                className="rounded-full mt-2"
-              >
+                className="rounded-full mt-2">
                 Registrar primeira movimentação
               </Button>
             )}
@@ -325,7 +325,9 @@ export default function EstoquePage() {
           {/* Visualização em Cards para Mobile */}
           <div className="grid grid-cols-1 gap-2.5 md:hidden">
             {movements.map((item) => (
-              <Card key={item.id} className="border-border/70 p-3.5 space-y-2.5">
+              <Card
+                key={item.id}
+                className="border-border/70 p-3.5 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5 min-w-0">
                     <span className="font-semibold text-sm block truncate text-foreground">
@@ -342,7 +344,9 @@ export default function EstoquePage() {
 
                 <div className="grid grid-cols-2 gap-2 text-xs border-y border-border/50 py-2">
                   <div>
-                    <span className="text-muted-foreground block">Quantidade:</span>
+                    <span className="text-muted-foreground block">
+                      Quantidade:
+                    </span>
                     {formatQuantity(item)}
                   </div>
                   <div className="text-right">
@@ -374,13 +378,13 @@ export default function EstoquePage() {
                 <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[140px]">Data/Hora</TableHead>
-                      <TableHead className="w-[120px]">Operação</TableHead>
+                      <TableHead className="w-35">Data/Hora</TableHead>
+                      <TableHead className="w-30">Operação</TableHead>
                       <TableHead>Produto / Variação</TableHead>
-                      <TableHead className="text-right w-[110px]">Qtd</TableHead>
-                      <TableHead className="text-right w-[140px]">Saldo</TableHead>
-                      <TableHead className="w-[140px]">Responsável</TableHead>
-                      <TableHead className="max-w-[200px]">Observações</TableHead>
+                      <TableHead className="text-right w-27.5">Qtd</TableHead>
+                      <TableHead className="text-right w-35">Saldo</TableHead>
+                      <TableHead className="w-35">Responsável</TableHead>
+                      <TableHead className="max-w-50">Observações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -417,7 +421,7 @@ export default function EstoquePage() {
                         <TableCell className="text-xs text-muted-foreground truncate">
                           {item.user?.name || "Sistema"}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-50">
                           {item.notes || "—"}
                         </TableCell>
                       </TableRow>
@@ -431,8 +435,8 @@ export default function EstoquePage() {
           {/* Paginação */}
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
             <div>
-              Total: <span className="font-semibold text-foreground">{total}</span>{" "}
-              movimentações
+              Total:{" "}
+              <span className="font-semibold text-foreground">{total}</span>
             </div>
             {totalPages > 1 && (
               <div className="flex items-center gap-1.5">
@@ -442,8 +446,7 @@ export default function EstoquePage() {
                   size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer"
-                >
+                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer">
                   Anterior
                 </Button>
                 <span className="px-2 font-medium">
@@ -455,8 +458,7 @@ export default function EstoquePage() {
                   size="sm"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer"
-                >
+                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer">
                   Próxima
                 </Button>
               </div>

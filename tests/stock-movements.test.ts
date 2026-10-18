@@ -4,7 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import { MODULES, defaultGroups } from "@/store/useSettingsStore";
 import { getProductTotalStock } from "@/lib/stock";
 
-describe("Movimentações de Estoque (/estoque)", () => {
+describe("Estoque", () => {
   describe("1. Validação de Dados (createStockMovementSchema)", () => {
     it("deve aceitar movimentação de entrada válida com quantidade inteira", () => {
       const result = createStockMovementSchema.safeParse({
@@ -105,7 +105,7 @@ describe("Movimentações de Estoque (/estoque)", () => {
 
       // Simula entrada de 4 unidades na variação P
       const updatedVariants = product.variants.map((v) =>
-        v.id === "var-p" ? { ...v, stock: v.stock + 4 } : v
+        v.id === "var-p" ? { ...v, stock: v.stock + 4 } : v,
       );
       const productAfterEntry = {
         ...product,
@@ -138,10 +138,18 @@ describe("Movimentações de Estoque (/estoque)", () => {
       ]);
 
       const gerenteGroup = defaultGroups.find((g) => g.name === "Gerente");
-      expect(gerenteGroup?.permissions.estoque).toEqual(["Visualizar", "Adicionar"]);
+      expect(gerenteGroup?.permissions.estoque).toEqual([
+        "Visualizar",
+        "Adicionar",
+      ]);
 
-      const operadorGroup = defaultGroups.find((g) => g.name === "Operador de Caixa");
-      expect(operadorGroup?.permissions.estoque).toEqual(["Visualizar", "Adicionar"]);
+      const operadorGroup = defaultGroups.find(
+        (g) => g.name === "Operador de Caixa",
+      );
+      expect(operadorGroup?.permissions.estoque).toEqual([
+        "Visualizar",
+        "Adicionar",
+      ]);
     });
 
     it("deve herdar permissão de produtos para grupos legados sem a chave estoque explicitada", () => {
@@ -150,13 +158,19 @@ describe("Movimentações de Estoque (/estoque)", () => {
       };
 
       // Visualizar estoque herda de produtos: Visualizar
-      expect(hasPermission(legacyPermissions, "estoque", "Visualizar")).toBe(true);
+      expect(hasPermission(legacyPermissions, "estoque", "Visualizar")).toBe(
+        true,
+      );
 
       // Adicionar estoque herda de produtos: Editar
-      expect(hasPermission(legacyPermissions, "estoque", "Adicionar")).toBe(true);
+      expect(hasPermission(legacyPermissions, "estoque", "Adicionar")).toBe(
+        true,
+      );
 
       // Excluir estoque não é permitido
-      expect(hasPermission(legacyPermissions, "estoque", "Excluir")).toBe(false);
+      expect(hasPermission(legacyPermissions, "estoque", "Excluir")).toBe(
+        false,
+      );
     });
 
     it("deve respeitar permissões explícitas quando configuradas no grupo", () => {
@@ -165,8 +179,12 @@ describe("Movimentações de Estoque (/estoque)", () => {
         estoque: ["Visualizar"], // Somente visualizar estoque, sem permissão de adicionar
       };
 
-      expect(hasPermission(explicitPermissions, "estoque", "Visualizar")).toBe(true);
-      expect(hasPermission(explicitPermissions, "estoque", "Adicionar")).toBe(false);
+      expect(hasPermission(explicitPermissions, "estoque", "Visualizar")).toBe(
+        true,
+      );
+      expect(hasPermission(explicitPermissions, "estoque", "Adicionar")).toBe(
+        false,
+      );
     });
   });
 });

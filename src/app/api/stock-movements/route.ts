@@ -14,7 +14,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "30", 10)));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") || "30", 10)),
+    );
     const q = searchParams.get("q")?.trim();
     const type = searchParams.get("type")?.trim();
     const productId = searchParams.get("productId")?.trim();
@@ -23,7 +26,10 @@ export async function GET(request: Request) {
       lojaId: auth.user.lojaId,
     };
 
-    if (type && Object.values(StockMovementType).includes(type as StockMovementType)) {
+    if (
+      type &&
+      Object.values(StockMovementType).includes(type as StockMovementType)
+    ) {
       where.type = type as StockMovementType;
     }
 
@@ -90,10 +96,10 @@ export async function GET(request: Request) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error("Erro ao listar movimentações de estoque:", error);
+    console.error("Erro ao listar Estoque:", error);
     return NextResponse.json(
-      { error: "Erro ao listar movimentações de estoque." },
-      { status: 500 }
+      { error: "Erro ao listar Estoque." },
+      { status: 500 },
     );
   }
 }
@@ -111,7 +117,7 @@ export async function POST(request: Request) {
     if (!validation.success) {
       return NextResponse.json(
         { error: "Dados inválidos: " + validation.error.issues[0].message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -134,7 +140,7 @@ export async function POST(request: Request) {
     if (!product) {
       return NextResponse.json(
         { error: "Produto não encontrado ou não pertence a esta loja." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -143,8 +149,11 @@ export async function POST(request: Request) {
     if (hasVariants) {
       if (!variantId) {
         return NextResponse.json(
-          { error: "Este produto possui variações. Selecione uma variação para movimentar o estoque." },
-          { status: 400 }
+          {
+            error:
+              "Este produto possui variações. Selecione uma variação para movimentar o estoque.",
+          },
+          { status: 400 },
         );
       }
 
@@ -152,13 +161,13 @@ export async function POST(request: Request) {
       if (!variant) {
         return NextResponse.json(
           { error: "Variação inválida ou não pertence a este produto." },
-          { status: 400 }
+          { status: 400 },
         );
       }
     } else if (variantId) {
       return NextResponse.json(
         { error: "Este produto não possui variações." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -272,13 +281,13 @@ export async function POST(request: Request) {
         previousStock: Number(movement.previousStock),
         resultStock: Number(movement.resultStock),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Erro ao registrar movimentação de estoque:", error);
     return NextResponse.json(
       { error: "Erro ao registrar movimentação de estoque." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

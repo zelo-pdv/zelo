@@ -11,6 +11,7 @@ interface MobileActionFabProps {
   onConfig?: () => void;
   onImport?: () => void;
   isExporting?: boolean;
+  page: "produtos" | "usuarios";
 }
 
 export function MobileActionFab({
@@ -19,6 +20,7 @@ export function MobileActionFab({
   onConfig,
   onImport,
   isExporting,
+  page,
 }: MobileActionFabProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
@@ -131,7 +133,10 @@ export function MobileActionFab({
             )}
             style={{ transitionDelay: isOpen ? "50ms" : "50ms" }}>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-              <BoxIcon name="user-plus" className="text-xl" />
+              <BoxIcon
+                name={page === "produtos" ? "package" : "user-plus"}
+                className="text-xl"
+              />
             </div>
             <span className="text-sm font-semibold">Novo</span>
           </button>

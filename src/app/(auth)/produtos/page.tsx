@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductForm } from '@/components/produtos/product-form';
+import { ProductForm } from "@/components/produtos/product-form";
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,7 +15,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { getProductColumns, getProductTotalStock, ProductFrontend } from "./columns";
+import {
+  getProductColumns,
+  getProductTotalStock,
+  ProductFrontend,
+} from "./columns";
 import { ProductsDataTable } from "./data-table";
 import { productsService } from "@/services/products.service";
 import { categoriesService } from "@/services/categories.service";
@@ -84,8 +88,6 @@ export default function ProdutosPage() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
-
-
   const [editing, setEditing] = useState<ProductFrontend | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<ProductFrontend | null>(null);
@@ -101,11 +103,10 @@ export default function ProdutosPage() {
     try {
       if (!silent) setLoading(true);
 
-      const [fetchedProducts, fetchedCategories] =
-        await Promise.all([
-          productsService.list(),
-          categoriesService.list(),
-        ]);
+      const [fetchedProducts, fetchedCategories] = await Promise.all([
+        productsService.list(),
+        categoriesService.list(),
+      ]);
 
       setProducts(fetchedProducts as ProductFrontend[]);
       setCategories(fetchedCategories as Category[]);
@@ -196,17 +197,23 @@ export default function ProdutosPage() {
         canDelete={can("produtos", "Excluir")}
       />
 
-      <MobileActionFab 
-        onAdd={() => setCreating(true)} 
-        onExport={handleExport} 
+      <MobileActionFab
+        page="produtos"
+        onAdd={() => setCreating(true)}
+        onExport={handleExport}
         onConfig={() => setIsConfigOpen(true)}
         onImport={() => setIsImportOpen(true)}
-        isExporting={isExporting} 
+        isExporting={isExporting}
       />
-      <ProductsImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
+      <ProductsImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+      />
 
-      <ProductsConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
-
+      <ProductsConfigModal
+        isOpen={isConfigOpen}
+        onClose={() => setIsConfigOpen(false)}
+      />
 
       <ProductForm
         key={editing?.id ?? "new"}
@@ -235,26 +242,31 @@ export default function ProdutosPage() {
                 code: editing.code || "",
                 image: editing.image || "",
                 hasVariants: (editing.variants?.length ?? 0) > 0,
-                variants: editing.variants?.map((v: any) => ({
-                  id: v.id,
-                  name: v.name,
-                  code: v.code || "",
-                  barcode: v.barcode || "",
-                  attributes: v.attributes || {},
-                  costPrice: v.costPrice ? Number(v.costPrice) : null,
-                  salePrice: v.salePrice ? Number(v.salePrice) : null,
-                  stock: Number(v.stock ?? 0),
-                  minStock:
-                    v.minStock !== null && v.minStock !== undefined
-                      ? Number(v.minStock)
-                      : null,
-                  image: v.image || "",
-                })) || [],
+                variants:
+                  editing.variants?.map((v: any) => ({
+                    id: v.id,
+                    name: v.name,
+                    code: v.code || "",
+                    barcode: v.barcode || "",
+                    attributes: v.attributes || {},
+                    costPrice: v.costPrice ? Number(v.costPrice) : null,
+                    salePrice: v.salePrice ? Number(v.salePrice) : null,
+                    stock: Number(v.stock ?? 0),
+                    minStock:
+                      v.minStock !== null && v.minStock !== undefined
+                        ? Number(v.minStock)
+                        : null,
+                    image: v.image || "",
+                  })) || [],
               }
             : {
                 ...emptyForm,
                 categoryId:
-                  categories.find((c) => c.name === "Geral" || c.name === "Diversos")?.id || categories[0]?.id || "",
+                  categories.find(
+                    (c) => c.name === "Geral" || c.name === "Diversos",
+                  )?.id ||
+                  categories[0]?.id ||
+                  "",
               }
         }
         isEdit={!!editing}
@@ -293,7 +305,6 @@ export default function ProdutosPage() {
           setEditing(null);
         }}
       />
-
 
       <DeleteProduct
         product={deleting}
@@ -339,8 +350,9 @@ function DeleteProduct({
           <AlertDialogTitle>Remover produto?</AlertDialogTitle>
 
           <AlertDialogDescription>
-            {product?.name} será removido do catálogo. O histórico de vendas deste
-            produto será mantido intacto no sistema. Esta ação não pode ser desfeita.
+            {product?.name} será removido do catálogo. O histórico de vendas
+            deste produto será mantido intacto no sistema. Esta ação não pode
+            ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -358,8 +370,7 @@ function DeleteProduct({
               } finally {
                 setBusy(false);
               }
-            }}
-          >
+            }}>
             Remover
           </LoadingButton>
         </AlertDialogFooter>
@@ -367,4 +378,3 @@ function DeleteProduct({
     </AlertDialog>
   );
 }
-
