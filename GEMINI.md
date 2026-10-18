@@ -155,3 +155,39 @@ src/
   - Feedback de ações sempre via Toasts com `sonner` (mensagens descritivas e amigáveis ao usuário).
 - **Validações Tolerantes:**
   - Schemas Zod devem aceitar `.nullable().optional()` em campos de texto opcionais ou telefones, convertendo strings vazias e nulos com segurança para persistência no banco.
+
+---
+
+## 7. Diretrizes de Frontend e Padrões de Interface (Consulta Obrigatória)
+
+> [!IMPORTANT]
+> **CONSULTA OBRIGATÓRIA A `docs/ui-standards/` ANTES DE QUALQUER DESENVOLVIMENTO DE FRONTEND**
+>
+> Para QUALQUER tarefa envolvendo criação de novas páginas, atualização de telas existentes, formulários, tabelas, modais, drawers, filtros, botões ou componentes visuais no Zelo, é **MANDATÓRIO** consultar e seguir as especificações documentadas em `docs/ui-standards/`:
+>
+> - **Índice e Matriz de Decisão:** [`docs/ui-standards/README.md`](docs/ui-standards/README.md)
+> - **Guia Prático e Checklist Pré-Entrega:** [`docs/ui-standards/18-regras-para-novas-paginas.md`](docs/ui-standards/18-regras-para-novas-paginas.md)
+> - **Catálogo de Componentes Compartilhados:** [`docs/ui-standards/17-componentes-compartilhados.md`](docs/ui-standards/17-componentes-compartilhados.md)
+> - **Páginas de Listagem (CRUD):** [`docs/ui-standards/04-paginas-de-listagem.md`](docs/ui-standards/04-paginas-de-listagem.md)
+> - **Páginas de Detalhes:** [`docs/ui-standards/05-paginas-de-detalhes.md`](docs/ui-standards/05-paginas-de-detalhes.md)
+> - **Páginas de Configurações:** [`docs/ui-standards/06-paginas-de-configuracoes.md`](docs/ui-standards/06-paginas-de-configuracoes.md)
+> - **Formulários e Validação Zod:** [`docs/ui-standards/07-formularios.md`](docs/ui-standards/07-formularios.md)
+> - **Drawers (Mobile):** [`docs/ui-standards/08-drawers.md`](docs/ui-standards/08-drawers.md)
+> - **Dialogs e Modais (Desktop):** [`docs/ui-standards/09-dialogs-e-modais.md`](docs/ui-standards/09-dialogs-e-modais.md)
+> - **Inputs, Textareas e Máscaras:** [`docs/ui-standards/10-inputs-e-campos.md`](docs/ui-standards/10-inputs-e-campos.md)
+> - **Selects e Filtros em Popover:** [`docs/ui-standards/11-selects-e-filtros.md`](docs/ui-standards/11-selects-e-filtros.md)
+> - **Botões, Ações e Boxicons:** [`docs/ui-standards/12-botoes-acoes-e-icones.md`](docs/ui-standards/12-botoes-acoes-e-icones.md)
+> - **Tabelas e Paginação:** [`docs/ui-standards/13-tabelas-e-paginacao.md`](docs/ui-standards/13-tabelas-e-paginacao.md)
+> - **Cards, Badges e Toasts Sonner:** [`docs/ui-standards/14-cards-badges-e-feedbacks.md`](docs/ui-standards/14-cards-badges-e-feedbacks.md)
+> - **Responsividade e Alvos de Toque:** [`docs/ui-standards/15-responsividade.md`](docs/ui-standards/15-responsividade.md)
+> - **Animações e Microinterações:** [`docs/ui-standards/16-animacoes-e-interacoes.md`](docs/ui-standards/16-animacoes-e-interacoes.md)
+>
+> **Regras Sistêmicas Críticas:**
+> 1. **Compensação de Bottom Nav:** Todo container sob `(auth)` deve ter `space-y-6 pb-24 md:pb-6`.
+> 2. **Polimorfismo:** `Drawer blur` no mobile (`< 768px`) e `Dialog blur` no desktop (`>= 768px`).
+> 3. **Prevenção de Perda de Dados:** Modais de formulário devem bloquear fechamento acidental via `disablePointerDismissal={true}` e `preventEscapeClose={true}`.
+> 4. **Prevenção de Zoom iOS:** Entradas de texto devem incluir `text-base md:text-sm`.
+> 5. **Ações:** Botão pílula `rounded-full` no cabeçalho desktop e `MobileActionFab` flutuante no mobile.
+> 6. **Ícones:** Uso exclusivo de Boxicons via `<BoxIcon name="..." />`.
+> 7. **RBAC:** Proteção mandatória com `<Can module="..." action="...">` ou `usePermissions`.
+
