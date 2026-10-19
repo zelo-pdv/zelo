@@ -189,8 +189,12 @@ export async function POST(req: Request) {
       }
 
       const discount = parsed.discount ?? 0;
+      const surcharge = parsed.surcharge ?? 0;
       if (discount < 0 || discount > calculatedTotal) {
         throw new Error("Desconto inválido.");
+      }
+      if (surcharge < 0) {
+        throw new Error("Acréscimo inválido.");
       }
 
       if (discount > 0) {
@@ -223,7 +227,7 @@ export async function POST(req: Request) {
         }
       }
 
-      const finalTotal = calculatedTotal - discount;
+      const finalTotal = Math.max(0, calculatedTotal - discount + surcharge);
 
       // 1. Cria a venda e os itens da venda
       const newSale = await tx.sale.create({
@@ -235,6 +239,7 @@ export async function POST(req: Request) {
           clientName: parsed.clientName,
           total: finalTotal,
           discount: discount,
+          surcharge: surcharge,
           paymentMethod: parsed.paymentMethod,
           status: parsed.status,
           dueDate: parsed.dueDate

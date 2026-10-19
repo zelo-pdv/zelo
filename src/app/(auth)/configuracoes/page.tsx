@@ -50,6 +50,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProductsSection } from "@/components/configuracoes/products-section";
 
 export default function ConfiguracoesPage() {
   const { isAdmin } = usePermissions();
@@ -73,6 +74,7 @@ export default function ConfiguracoesPage() {
   return (
     <div className="w-full px-4">
       <StoreSection />
+      <ProductsSection />
       <NotificationsSection />
       <SalesConfigSection />
       <GroupsSection />

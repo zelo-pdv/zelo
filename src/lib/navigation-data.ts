@@ -67,28 +67,28 @@ export const SECONDARY_NAV: NavItem[] = [
     label: "Relatórios",
     short: "Relatórios",
     icon: createBoxIcon("file-blank"),
-    adminOnly: true,
+    module: "relatorios",
   },
   {
     to: "/usuarios",
     label: "Usuários",
     short: "Usuários",
     icon: createBoxIcon("user"),
-    adminOnly: true,
+    module: "usuarios",
   },
   {
     to: "/registros",
     label: "Registros",
     short: "Registros",
     icon: createBoxIcon("list-ol"),
-    adminOnly: true,
+    module: "registros",
   },
   {
     to: "/configuracoes",
     label: "Configurações",
     short: "Config",
     icon: createBoxIcon("cog"),
-    adminOnly: true,
+    module: "configuracoes",
   },
 ];
 
@@ -136,6 +136,10 @@ export function getFirstAccessibleRoute(
     { module: "nova-venda", to: "/nova-venda" },
     { module: "clientes", to: "/clientes" },
     { module: "historico", to: "/historico" },
+    { module: "relatorios", to: "/relatorios" },
+    { module: "usuarios", to: "/usuarios" },
+    { module: "registros", to: "/registros" },
+    { module: "configuracoes", to: "/configuracoes" },
   ];
 
   if (typeof canOrPermissions === "function") {

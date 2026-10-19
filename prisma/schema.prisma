@@ -227,6 +227,7 @@ model Sale {
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?
   discount      Decimal?   @default(0.00) @db.Decimal(10, 2)
+  surcharge     Decimal?   @default(0.00) @db.Decimal(10, 2)
   saleNumber    Int?
   client        Client?    @relation(fields: [clientId], references: [id])
   loja          Loja       @relation(fields: [lojaId], references: [id], onDelete: Cascade)

@@ -252,6 +252,17 @@ export async function PUT(
       );
     }
 
+    const emissionDate = new Date(existing.date || existing.createdAt);
+    const now = new Date();
+    const diffInHours = (now.getTime() - emissionDate.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours > 24) {
+      return NextResponse.json(
+        { error: "A edição de uma venda só é permitida no período de até 24 horas após sua emissão." },
+        { status: 400 },
+      );
+    }
+
     const productIds = parsed.items.map((i) => i.productId);
     const existingProducts = await prisma.product.findMany({
       where: { id: { in: productIds }, lojaId: auth.user.lojaId },
@@ -355,8 +366,12 @@ export async function PUT(
       }
 
       const discount = parsed.discount ?? 0;
+      const surcharge = parsed.surcharge ?? 0;
       if (discount < 0 || discount > calculatedTotal) {
         throw new Error("Desconto inválido.");
+      }
+      if (surcharge < 0) {
+        throw new Error("Acréscimo inválido.");
       }
 
       if (discount > 0) {
@@ -389,7 +404,7 @@ export async function PUT(
         }
       }
 
-      const finalTotal = calculatedTotal - discount;
+      const finalTotal = Math.max(0, calculatedTotal - discount + surcharge);
 
       // 3. Remove itens anteriores
       await tx.saleItem.deleteMany({
@@ -429,6 +444,7 @@ export async function PUT(
           clientName: parsed.clientName,
           total: finalTotal,
           discount: discount,
+          surcharge: surcharge,
           paymentMethod: parsed.paymentMethod,
           status: parsed.status,
           dueDate: parsed.dueDate

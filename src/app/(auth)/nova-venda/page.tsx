@@ -121,8 +121,11 @@ export default function NovaVenda() {
   const [isFinalizing, setIsFinalizing] = useState(false);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [activeAdjustmentTab, setActiveAdjustmentTab] = useState<"discount" | "surcharge">("discount");
   const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed");
   const [discountValue, setDiscountValue] = useState<string>("");
+  const [surchargeType, setSurchargeType] = useState<"fixed" | "percentage">("fixed");
+  const [surchargeValue, setSurchargeValue] = useState<string>("");
   const [effectiveDiscountLimit, setEffectiveDiscountLimit] = useState<EffectiveDiscountLimit>({
     unlimited: true,
     source: "none",
@@ -177,6 +180,9 @@ export default function NovaVenda() {
           if (parsed.client) setClient(parsed.client);
           if (parsed.discountType) setDiscountType(parsed.discountType);
           if (parsed.discountValue) setDiscountValue(parsed.discountValue);
+          if (parsed.surchargeType) setSurchargeType(parsed.surchargeType);
+          if (parsed.surchargeValue) setSurchargeValue(parsed.surchargeValue);
+          if (parsed.activeAdjustmentTab) setActiveAdjustmentTab(parsed.activeAdjustmentTab);
           if (parsed.notes) setNotes(parsed.notes);
           if (parsed.payment) setPayment(parsed.payment);
           if (parsed.status) setStatus(parsed.status);
@@ -199,8 +205,11 @@ export default function NovaVenda() {
             editingSaleNumber,
             items,
             client,
+            activeAdjustmentTab,
             discountType,
             discountValue,
+            surchargeType,
+            surchargeValue,
             notes,
             payment,
             status,
@@ -213,7 +222,7 @@ export default function NovaVenda() {
     } catch (err) {
       console.error("Erro ao salvar rascunho:", err);
     }
-  }, [items, client, discountType, discountValue, notes, editingSaleId, editingSaleNumber, payment, status, dueDate]);
+  }, [items, client, activeAdjustmentTab, discountType, discountValue, surchargeType, surchargeValue, notes, editingSaleId, editingSaleNumber, payment, status, dueDate]);
 
   // Item #2 e Item #3: Atualiza forma de pagamento e status padrão caso alterados nas configurações
   const paymentMethodsList = salesSettings?.paymentMethods?.length ? salesSettings.paymentMethods : Object.values(PaymentMethod);
@@ -309,9 +318,19 @@ export default function NovaVenda() {
     return validateDiscountLimit(subtotal, discountAmount, effectiveDiscountLimit);
   }, [subtotal, discountAmount, effectiveDiscountLimit]);
 
+  const surchargeAmount = useMemo(() => {
+    const cleanStr = surchargeValue.replace(",", ".");
+    const num = parseFloat(cleanStr);
+    if (isNaN(num) || num <= 0) return 0;
+    if (surchargeType === "percentage") {
+      return (subtotal * num) / 100;
+    }
+    return num;
+  }, [subtotal, surchargeValue, surchargeType]);
+
   const total = useMemo(
-    () => Math.max(0, subtotal - discountAmount),
-    [subtotal, discountAmount],
+    () => Math.max(0, subtotal - discountAmount + surchargeAmount),
+    [subtotal, discountAmount, surchargeAmount],
   );
 
   const canCheckout = items.length > 0 && (!salesSettings.requireClient || !!client);
@@ -421,6 +440,9 @@ export default function NovaVenda() {
     setItems([]);
     setDiscountType("fixed");
     setDiscountValue("");
+    setSurchargeType("fixed");
+    setSurchargeValue("");
+    setActiveAdjustmentTab("discount");
     setStep("cart");
     setPayment(salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO);
     setStatus(salesSettings.defaultSaleStatus || SaleStatus.PAGO);
@@ -453,6 +475,7 @@ export default function NovaVenda() {
           items,
           total,
           discount: discountAmount > 0 ? discountAmount : undefined,
+          surcharge: surchargeAmount > 0 ? surchargeAmount : undefined,
           paymentMethod: payment,
           status,
           dueDate: status === "PENDENTE" ? dueDate || undefined : undefined,
@@ -487,6 +510,7 @@ export default function NovaVenda() {
           items,
           total,
           discount: discountAmount > 0 ? discountAmount : undefined,
+          surcharge: surchargeAmount > 0 ? surchargeAmount : undefined,
           paymentMethod: payment,
           status,
           dueDate: status === "PENDENTE" ? dueDate || undefined : undefined,
@@ -835,77 +859,157 @@ export default function NovaVenda() {
                       ))}
                     </div>
 
-                    {/* Desconto na Venda */}
-                    <div className="mb-4 space-y-2 rounded-xl border border-border/80 bg-muted/20 p-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Desconto na venda
-                        </Label>
+                    {/* Desconto / Acréscimo na Venda */}
+                    <div className="mb-4 space-y-2.5 rounded-xl border border-border/80 bg-muted/20 p-3">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
                           <button
                             type="button"
-                            onClick={() => setDiscountType("fixed")}
+                            onClick={() => setActiveAdjustmentTab("discount")}
                             className={cn(
-                              "px-2.5 py-0.5 rounded-md font-medium transition cursor-pointer",
-                              discountType === "fixed"
+                              "px-2.5 py-1 rounded-md font-medium transition cursor-pointer",
+                              activeAdjustmentTab === "discount"
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground",
                             )}
                           >
-                            R$
+                            Desconto{discountAmount > 0 ? " •" : ""}
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDiscountType("percentage")}
+                            onClick={() => setActiveAdjustmentTab("surcharge")}
                             className={cn(
-                              "px-2.5 py-0.5 rounded-md font-medium transition cursor-pointer",
-                              discountType === "percentage"
+                              "px-2.5 py-1 rounded-md font-medium transition cursor-pointer",
+                              activeAdjustmentTab === "surcharge"
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground",
                             )}
                           >
-                            %
+                            Acréscimo{surchargeAmount > 0 ? " •" : ""}
                           </button>
                         </div>
+                        {activeAdjustmentTab === "discount" ? (
+                          <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setDiscountType("fixed")}
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                                discountType === "fixed"
+                                  ? "bg-muted text-foreground font-semibold shadow-xs"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              R$
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDiscountType("percentage")}
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                                discountType === "percentage"
+                                  ? "bg-muted text-foreground font-semibold shadow-xs"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              %
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setSurchargeType("fixed")}
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                                surchargeType === "fixed"
+                                  ? "bg-muted text-foreground font-semibold shadow-xs"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              R$
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSurchargeType("percentage")}
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                                surchargeType === "percentage"
+                                  ? "bg-muted text-foreground font-semibold shadow-xs"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              %
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          min="0"
-                          step={discountType === "percentage" ? "1" : "0.01"}
-                          placeholder={discountType === "fixed" ? "0,00" : "0"}
-                          value={discountValue}
-                          onChange={(e) => setDiscountValue(e.target.value)}
-                          className={cn(
-                            "h-9 pr-14 text-sm bg-background",
-                            !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+
+                      {activeAdjustmentTab === "discount" ? (
+                        <>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min="0"
+                              step={discountType === "percentage" ? "1" : "0.01"}
+                              placeholder={discountType === "fixed" ? "0,00" : "0"}
+                              value={discountValue}
+                              onChange={(e) => setDiscountValue(e.target.value)}
+                              className={cn(
+                                "h-9 pr-14 text-sm bg-background",
+                                !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+                              )}
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                              {discountType === "fixed" ? "reais" : "%"}
+                            </div>
+                          </div>
+                          {!effectiveDiscountLimit.unlimited && (
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                              <span>Seu limite de desconto:</span>
+                              <span className="font-medium">
+                                {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
+                                {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
+                                {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
+                              </span>
+                            </div>
                           )}
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
-                          {discountType === "fixed" ? "reais" : "%"}
-                        </div>
-                      </div>
-                      {!effectiveDiscountLimit.unlimited && (
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
-                          <span>Seu limite de desconto:</span>
-                          <span className="font-medium">
-                            {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
-                            {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
-                            {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
-                          </span>
-                        </div>
-                      )}
-                      {!discountValidation.valid && (
-                        <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
-                          <BoxIcon name="error-circle" className="text-sm shrink-0" />
-                          <span>{discountValidation.error}</span>
-                        </div>
-                      )}
-                      {discountValidation.valid && discountAmount > 0 && (
-                        <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                          <span>Desconto aplicado:</span>
-                          <span className="tabular-nums">- {currency(discountAmount)}</span>
-                        </div>
+                          {!discountValidation.valid && (
+                            <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
+                              <BoxIcon name="error-circle" className="text-sm shrink-0" />
+                              <span>{discountValidation.error}</span>
+                            </div>
+                          )}
+                          {discountValidation.valid && discountAmount > 0 && (
+                            <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                              <span>Desconto aplicado:</span>
+                              <span className="tabular-nums">- {currency(discountAmount)}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min="0"
+                              step={surchargeType === "percentage" ? "1" : "0.01"}
+                              placeholder={surchargeType === "fixed" ? "0,00" : "0"}
+                              value={surchargeValue}
+                              onChange={(e) => setSurchargeValue(e.target.value)}
+                              className="h-9 pr-14 text-sm bg-background"
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                              {surchargeType === "fixed" ? "reais" : "%"}
+                            </div>
+                          </div>
+                          {surchargeAmount > 0 && (
+                            <div className="flex justify-between text-xs pt-1 text-blue-600 dark:text-blue-400 font-medium">
+                              <span>Acréscimo aplicado:</span>
+                              <span className="tabular-nums">+ {currency(surchargeAmount)}</span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -978,16 +1082,24 @@ export default function NovaVenda() {
               </div>
 
               <div className="shrink-0 pt-4 border-t border-border">
-                {discountAmount > 0 && (
+                {(discountAmount > 0 || surchargeAmount > 0) && (
                   <div className="space-y-1 mb-3 text-xs">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
                       <span className="tabular-nums">{currency(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
-                      <span>Desconto</span>
-                      <span className="tabular-nums">- {currency(discountAmount)}</span>
-                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span>Desconto</span>
+                        <span className="tabular-nums">- {currency(discountAmount)}</span>
+                      </div>
+                    )}
+                    {surchargeAmount > 0 && (
+                      <div className="flex justify-between text-blue-600 dark:text-blue-400 font-medium">
+                        <span>Acréscimo</span>
+                        <span className="tabular-nums">+ {currency(surchargeAmount)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex flex-col gap-2 w-full">
@@ -1063,77 +1175,157 @@ export default function NovaVenda() {
                 </ScrollArea>
               </div>
 
-              {/* Desconto na Venda */}
-              <div className="mb-3 space-y-2 rounded-xl border border-border/80 bg-muted/20 p-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Desconto na venda
-                  </Label>
+              {/* Desconto / Acréscimo na Venda */}
+              <div className="mb-3 space-y-2.5 rounded-xl border border-border/80 bg-muted/20 p-3">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
                     <button
                       type="button"
-                      onClick={() => setDiscountType("fixed")}
+                      onClick={() => setActiveAdjustmentTab("discount")}
                       className={cn(
-                        "px-2.5 py-0.5 rounded-md font-medium transition cursor-pointer",
-                        discountType === "fixed"
+                        "px-2.5 py-1 rounded-md font-medium transition cursor-pointer",
+                        activeAdjustmentTab === "discount"
                           ? "bg-primary text-primary-foreground shadow-xs"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      R$
+                      Desconto{discountAmount > 0 ? " •" : ""}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDiscountType("percentage")}
+                      onClick={() => setActiveAdjustmentTab("surcharge")}
                       className={cn(
-                        "px-2.5 py-0.5 rounded-md font-medium transition cursor-pointer",
-                        discountType === "percentage"
+                        "px-2.5 py-1 rounded-md font-medium transition cursor-pointer",
+                        activeAdjustmentTab === "surcharge"
                           ? "bg-primary text-primary-foreground shadow-xs"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      %
+                      Acréscimo{surchargeAmount > 0 ? " •" : ""}
                     </button>
                   </div>
+                  {activeAdjustmentTab === "discount" ? (
+                    <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType("fixed")}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                          discountType === "fixed"
+                            ? "bg-muted text-foreground font-semibold shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        R$
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType("percentage")}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                          discountType === "percentage"
+                            ? "bg-muted text-foreground font-semibold shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        %
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setSurchargeType("fixed")}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                          surchargeType === "fixed"
+                            ? "bg-muted text-foreground font-semibold shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        R$
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSurchargeType("percentage")}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md font-medium transition cursor-pointer",
+                          surchargeType === "percentage"
+                            ? "bg-muted text-foreground font-semibold shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        %
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    min="0"
-                    step={discountType === "percentage" ? "1" : "0.01"}
-                    placeholder={discountType === "fixed" ? "0,00" : "0"}
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    className={cn(
-                      "h-9 pr-14 text-sm bg-background",
-                      !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+
+                {activeAdjustmentTab === "discount" ? (
+                  <>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        step={discountType === "percentage" ? "1" : "0.01"}
+                        placeholder={discountType === "fixed" ? "0,00" : "0"}
+                        value={discountValue}
+                        onChange={(e) => setDiscountValue(e.target.value)}
+                        className={cn(
+                          "h-9 pr-14 text-sm bg-background",
+                          !discountValidation.valid && "border-destructive text-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                        {discountType === "fixed" ? "reais" : "%"}
+                      </div>
+                    </div>
+                    {!effectiveDiscountLimit.unlimited && (
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                        <span>Seu limite de desconto:</span>
+                        <span className="font-medium">
+                          {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
+                          {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
+                          {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
+                        </span>
+                      </div>
                     )}
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
-                    {discountType === "fixed" ? "reais" : "%"}
-                  </div>
-                </div>
-                {!effectiveDiscountLimit.unlimited && (
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
-                    <span>Seu limite de desconto:</span>
-                    <span className="font-medium">
-                      {effectiveDiscountLimit.maxPercentage != null ? `até ${effectiveDiscountLimit.maxPercentage}%` : ""}
-                      {effectiveDiscountLimit.maxPercentage != null && effectiveDiscountLimit.maxValue != null ? " ou " : ""}
-                      {effectiveDiscountLimit.maxValue != null ? `R$ ${effectiveDiscountLimit.maxValue.toFixed(2).replace(".", ",")}` : ""}
-                    </span>
-                  </div>
-                )}
-                {!discountValidation.valid && (
-                  <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
-                    <BoxIcon name="error-circle" className="text-sm shrink-0" />
-                    <span>{discountValidation.error}</span>
-                  </div>
-                )}
-                {discountValidation.valid && discountAmount > 0 && (
-                  <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span>Desconto aplicado:</span>
-                    <span className="tabular-nums">- {currency(discountAmount)}</span>
-                  </div>
+                    {!discountValidation.valid && (
+                      <div className="flex items-center gap-1.5 text-xs text-destructive pt-1 font-medium">
+                        <BoxIcon name="error-circle" className="text-sm shrink-0" />
+                        <span>{discountValidation.error}</span>
+                      </div>
+                    )}
+                    {discountValidation.valid && discountAmount > 0 && (
+                      <div className="flex justify-between text-xs pt-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span>Desconto aplicado:</span>
+                        <span className="tabular-nums">- {currency(discountAmount)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        step={surchargeType === "percentage" ? "1" : "0.01"}
+                        placeholder={surchargeType === "fixed" ? "0,00" : "0"}
+                        value={surchargeValue}
+                        onChange={(e) => setSurchargeValue(e.target.value)}
+                        className="h-9 pr-14 text-sm bg-background"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none">
+                        {surchargeType === "fixed" ? "reais" : "%"}
+                      </div>
+                    </div>
+                    {surchargeAmount > 0 && (
+                      <div className="flex justify-between text-xs pt-1 text-blue-600 dark:text-blue-400 font-medium">
+                        <span>Acréscimo aplicado:</span>
+                        <span className="tabular-nums">+ {currency(surchargeAmount)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -1202,16 +1394,24 @@ export default function NovaVenda() {
                 />
               </div>
 
-              {discountAmount > 0 && (
+              {(discountAmount > 0 || surchargeAmount > 0) && (
                 <div className="space-y-1 mb-3 text-xs">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
                     <span className="tabular-nums">{currency(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span>Desconto</span>
-                    <span className="tabular-nums">- {currency(discountAmount)}</span>
-                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                      <span>Desconto</span>
+                      <span className="tabular-nums">- {currency(discountAmount)}</span>
+                    </div>
+                  )}
+                  {surchargeAmount > 0 && (
+                    <div className="flex justify-between text-blue-600 dark:text-blue-400 font-medium">
+                      <span>Acréscimo</span>
+                      <span className="tabular-nums">+ {currency(surchargeAmount)}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

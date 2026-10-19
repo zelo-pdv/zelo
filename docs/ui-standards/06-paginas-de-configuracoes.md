@@ -15,16 +15,19 @@ Diferente de sistemas tradicionais que espalham configurações em dezenas de ab
 | [CARD 1: DADOS DA LOJA]                               [ Chevron Down v ] |
 | (Campos cadastrais, endereço com ViaCEP, telefone e documento)           |
 +--------------------------------------------------------------------------+
-| [CARD 2: NOTIFICAÇÕES & ESTOQUE]                      [ Chevron Down v ] |
+| [CARD 2: CONFIGURAÇÕES DE PRODUTOS]                   [ Chevron Down v ] |
+| (Controlar estoque, exibir imagens, preço aberto e gestão de categorias) |
++--------------------------------------------------------------------------+
+| [CARD 3: NOTIFICAÇÕES & ESTOQUE]                      [ Chevron Down v ] |
 | (Switches de alerta de estoque mínimo, avisos de venda sem saldo)        |
 +--------------------------------------------------------------------------+
-| [CARD 3: REGRAS DE VENDAS]                            [ Chevron Down v ] |
+| [CARD 4: REGRAS DE VENDAS]                            [ Chevron Down v ] |
 | (Exigência de cliente no PDV, bloqueio de venda sem estoque, formas pagto)|
 +--------------------------------------------------------------------------+
-| [CARD 4: GRUPOS DE ACESSO & PERMISSÕES (RBAC)]        [ Chevron Down v ] |
+| [CARD 5: GRUPOS DE ACESSO & PERMISSÕES (RBAC)]        [ Chevron Down v ] |
 | (Gerenciamento de papéis, permissões granulares por módulo e vendedor)   |
 +--------------------------------------------------------------------------+
-| [CARD 5: GERENCIAMENTO DE DADOS & CONTA (ZONA CRÍTICA)] [ Chevron Down v ]|
+| [CARD 6: GERENCIAMENTO DE DADOS & CONTA (ZONA CRÍTICA)] [ Chevron Down v ]|
 | (Exclusão seletiva de histórico ou exclusão definitiva com senha)        |
 +--------------------------------------------------------------------------+
 ```

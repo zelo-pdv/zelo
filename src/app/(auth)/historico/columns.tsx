@@ -109,6 +109,11 @@ export function getSaleColumns({
       cell: ({ row }) => {
         const s = row.original;
         const isCancelled = s.status === "CANCELADO";
+        const isEditable = !isCancelled && (() => {
+          const emission = new Date(s.date || (s as any).createdAt).getTime();
+          if (isNaN(emission)) return false;
+          return (Date.now() - emission) / (1000 * 60 * 60) <= 24;
+        })();
 
         return (
           <div className="flex justify-end">
@@ -148,7 +153,7 @@ export function getSaleColumns({
                   Ver comprovante
                 </Button>
 
-                {!isCancelled && onEdit && (
+                {isEditable && onEdit && (
                   <Button
                     variant="ghost"
                     size="sm"

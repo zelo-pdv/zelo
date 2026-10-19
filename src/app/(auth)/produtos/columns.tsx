@@ -80,108 +80,28 @@ export function getProductColumns({
         const low = trackStock && isProductLowStock(product, trackStock);
         const active = product.active ?? true;
 
-        const hasMobileActions = hasAnyAction;
-
         return (
           <div className="min-w-0 max-w-full">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <div className="flex items-center gap-2.5 min-w-0 max-w-[calc(100vw-130px)] sm:max-w-none">
-                <ProductThumb
-                  name={product.name}
-                  image={product.image}
-                  className="h-9 w-9 rounded-lg text-xs shrink-0"
-                />
-                <div className="min-w-0 flex items-center gap-1.5 flex-1">
-                  <span className="truncate text-sm font-medium">
-                    {product.name}
-                  </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <ProductThumb
+                name={product.name}
+                image={product.image}
+                className="h-9 w-9 rounded-lg text-xs shrink-0"
+              />
+              <div className="min-w-0 flex items-center gap-1.5 flex-1">
+                <span className="truncate text-sm font-medium">
+                  {product.name}
+                </span>
 
-                  {!active && (
-                    <Badge
-                      variant="outline"
-                      className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1 h-4"
-                    >
-                      Inativo
-                    </Badge>
-                  )}
-                </div>
+                {!active && (
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 border-muted-foreground/40 text-muted-foreground bg-muted/40 text-[10px] px-1 h-4"
+                  >
+                    Inativo
+                  </Badge>
+                )}
               </div>
-
-              {hasMobileActions && (
-                <div className="sm:hidden shrink-0">
-                  <Popover>
-                    <PopoverTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(event) => event.stopPropagation()}
-                          aria-label="Ações do produto"
-                        >
-                          <BoxIcon name="dots-vertical-rounded" className="text-base" />
-                        </Button>
-                      }
-                    />
-
-                    <PopoverContent className="w-52" align="end">
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-full justify-start px-3"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onEdit(product);
-                          }}
-                        >
-                          <BoxIcon name="pencil" className="mr-2 text-base" />
-                          Editar produto
-                        </Button>
-                      )}
-
-                      {canEdit && onToggleActive && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "h-9 w-full justify-start px-3",
-                            !active
-                              ? "text-emerald-600 hover:text-emerald-700"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onToggleActive(product);
-                          }}
-                        >
-                          <BoxIcon name="power-off" className="mr-2 text-base" />
-                          {active ? "Desativar produto" : "Ativar produto"}
-                        </Button>
-                      )}
-
-                      {canEdit && canDelete && (
-                        <Separator className="my-1" />
-                      )}
-
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-full justify-start px-3 text-destructive hover:text-destructive"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onDelete(product);
-                          }}
-                        >
-                          <BoxIcon name="trash" className="mr-2 text-base" />
-                          Remover produto
-                        </Button>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
             </div>
 
             <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
@@ -335,52 +255,68 @@ export function getProductColumns({
         const active = product.active ?? true;
 
         return (
-          <div className="hidden justify-end gap-1 sm:flex">
-            {canEdit && onToggleActive && (
-              <ActionTooltip label={!active ? "Ativar produto" : "Desativar produto"}>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className={
-                    !active
-                      ? "h-8 w-8 text-emerald-600 hover:text-emerald-700"
-                      : "h-8 w-8 text-muted-foreground hover:text-foreground"
+          <div className="flex justify-end">
+            <Popover>
+              <ActionTooltip label="Ações do produto">
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                      aria-label="Ações do produto"
+                    >
+                      <BoxIcon name="dots-vertical-rounded" className="text-base" />
+                    </Button>
                   }
-                  onClick={() => onToggleActive(product)}
-                  aria-label={!active ? "Ativar produto" : "Desativar produto"}
-                >
-                  <BoxIcon name="power-off" className="text-base" />
-                </Button>
+                />
               </ActionTooltip>
-            )}
+              <PopoverContent className="w-52 p-1.5" align="end">
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-full justify-start px-3 text-xs cursor-pointer"
+                    onClick={() => onEdit(product)}
+                  >
+                    <BoxIcon name="pencil" className="mr-2 text-base" />
+                    Editar produto
+                  </Button>
+                )}
 
-            {canEdit && (
-              <ActionTooltip label="Editar produto">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={() => onEdit(product)}
-                  aria-label="Editar produto"
-                >
-                  <BoxIcon name="pencil" className="text-base" />
-                </Button>
-              </ActionTooltip>
-            )}
+                {canEdit && onToggleActive && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 w-full justify-start px-3 text-xs cursor-pointer",
+                      !active
+                        ? "text-emerald-600 hover:text-emerald-700"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => onToggleActive(product)}
+                  >
+                    <BoxIcon name="power-off" className="mr-2 text-base" />
+                    {active ? "Desativar produto" : "Ativar produto"}
+                  </Button>
+                )}
 
-            {canDelete && (
-              <ActionTooltip label="Excluir produto">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => onDelete(product)}
-                  aria-label="Excluir produto"
-                >
-                  <BoxIcon name="trash" className="text-base" />
-                </Button>
-              </ActionTooltip>
-            )}
+                {canDelete && (
+                  <>
+                    <Separator className="my-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-start px-3 text-xs text-destructive hover:text-destructive cursor-pointer"
+                      onClick={() => onDelete(product)}
+                    >
+                      <BoxIcon name="trash" className="mr-2 text-base" />
+                      Remover produto
+                    </Button>
+                  </>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
         );
       },

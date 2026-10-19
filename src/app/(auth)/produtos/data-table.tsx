@@ -58,7 +58,6 @@ interface ProductsDataTableProps {
   data: ProductFrontend[];
   categories: string[];
   onCreateClick: () => void;
-  onConfigClick?: () => void;
   onImportClick?: () => void;
   onExportClick?: () => void;
   isExporting?: boolean;
@@ -76,7 +75,6 @@ export function ProductsDataTable({
   data,
   categories,
   onCreateClick,
-  onConfigClick,
   onImportClick,
   onExportClick,
   isExporting,
@@ -279,17 +277,6 @@ export function ProductsDataTable({
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
-          {onConfigClick && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onConfigClick}
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
-              <BoxIcon name="cog" className="text-base" />
-              <span>Configurações</span>
-            </Button>
-          )}
 
           {onImportClick && (
             <Button

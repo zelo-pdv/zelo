@@ -30,6 +30,7 @@ export interface Sale {
   items: SaleItem[];
   total: number;
   discount?: number | null;
+  surcharge?: number | null;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
   dueDate?: string;

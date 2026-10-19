@@ -110,7 +110,7 @@ export function StockMovementDetailDialog({
               Título da Movimentação
             </span>
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="font-bold text-base text-foreground break-words">
+              <h4 className="font-bold text-base text-foreground wrap-break-word">
                 {movement.title || "Movimentação de Estoque"}
               </h4>
               {isAlreadyReverted && (

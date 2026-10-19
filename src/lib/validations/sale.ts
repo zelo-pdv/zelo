@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { SaleStatus } from "@/prisma/client";
 
 export const saleItemSchema = z.object({
@@ -16,6 +16,7 @@ export const saleSchema = z.object({
   items: z.array(saleItemSchema).min(1, "Adicione pelo menos um produto").max(500, "Muitos itens na venda"),
   total: z.number().nonnegative("O total não pode ser negativo"),
   discount: z.number().nonnegative().optional().nullable(),
+  surcharge: z.number().nonnegative("O acréscimo não pode ser negativo").optional().nullable(),
   paymentMethod: z.string(),
   status: z.nativeEnum(SaleStatus),
   dueDate: z.string().max(30).optional().nullable(),
@@ -31,4 +32,3 @@ export const saleSchema = z.object({
 });
 
 export type SaleFormValues = z.infer<typeof saleSchema>;
-

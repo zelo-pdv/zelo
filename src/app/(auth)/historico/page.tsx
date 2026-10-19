@@ -138,9 +138,28 @@ export default function HistoricoPage() {
     if (typeof activeDetail.discount === "number" && activeDetail.discount > 0) {
       return activeDetail.discount;
     }
+    if (typeof activeDetail.surcharge === "number" && activeDetail.surcharge > 0) {
+      return 0;
+    }
     const diff = detailSubtotal - Number(activeDetail.total);
     return diff > 0.01 ? diff : 0;
   }, [activeDetail, detailSubtotal]);
+
+  const detailSurcharge = useMemo(() => {
+    if (!activeDetail) return 0;
+    if (typeof activeDetail.surcharge === "number" && activeDetail.surcharge > 0) {
+      return activeDetail.surcharge;
+    }
+    return 0;
+  }, [activeDetail]);
+
+  const isSaleEditable = (sale: Sale | null | undefined): boolean => {
+    if (!sale || sale.status === SaleStatus.CANCELADO) return false;
+    const emissionDate = new Date(sale.date || (sale as any).createdAt).getTime();
+    if (isNaN(emissionDate)) return false;
+    const diffInHours = (Date.now() - emissionDate) / (1000 * 60 * 60);
+    return diffInHours <= 24;
+  };
 
   useEffect(() => {
     if (sales.length > 0 && typeof window !== "undefined") {
@@ -159,6 +178,12 @@ export default function HistoricoPage() {
   const handleEditSale = (sale: Sale) => {
     if (sale.status === SaleStatus.CANCELADO) {
       toast.error("Vendas canceladas não podem ser editadas.");
+      return;
+    }
+    const emissionDate = new Date(sale.date || (sale as any).createdAt).getTime();
+    const diffInHours = (Date.now() - emissionDate) / (1000 * 60 * 60);
+    if (diffInHours > 24) {
+      toast.error("A edição de uma venda só é permitida no período de até 24 horas após sua emissão.");
       return;
     }
     if (!can("historico", "Editar")) {
@@ -182,8 +207,11 @@ export default function HistoricoPage() {
             phone: "",
           }
         : null,
+      activeAdjustmentTab: sale.surcharge && !sale.discount ? ("surcharge" as const) : ("discount" as const),
       discountType: "fixed" as const,
       discountValue: sale.discount ? String(sale.discount) : "",
+      surchargeType: "fixed" as const,
+      surchargeValue: sale.surcharge ? String(sale.surcharge) : "",
       notes: sale.notes || "",
       payment: sale.paymentMethod,
       status: sale.status,
@@ -328,16 +356,24 @@ export default function HistoricoPage() {
 
                 <Separator />
 
-                {detailDiscount > 0 ? (
+                {detailDiscount > 0 || detailSurcharge > 0 ? (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Subtotal</span>
                       <span className="tabular-nums">{currency(detailSubtotal)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                      <span>Desconto</span>
-                      <span className="tabular-nums">- {currency(detailDiscount)}</span>
-                    </div>
+                    {detailDiscount > 0 && (
+                      <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span>Desconto</span>
+                        <span className="tabular-nums">- {currency(detailDiscount)}</span>
+                      </div>
+                    )}
+                    {detailSurcharge > 0 && (
+                      <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        <span>Acréscimo</span>
+                        <span className="tabular-nums">+ {currency(detailSurcharge)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-1 border-t border-border">
                       <div className="text-sm font-semibold">Total</div>
                       <div className="text-lg font-bold tabular-nums text-primary">
@@ -408,16 +444,18 @@ export default function HistoricoPage() {
 
                 {activeDetail.status !== "CANCELADO" && can("historico", "Editar") && (
                   <>
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-full"
-                      onClick={() => {
-                        handleEditSale(activeDetail);
-                        setDetail(null);
-                      }}
-                    >
-                      <BoxIcon name="edit-alt" className="mr-2 text-base" /> Editar venda
-                    </Button>
+                    {isSaleEditable(activeDetail) && (
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full"
+                        onClick={() => {
+                          handleEditSale(activeDetail);
+                          setDetail(null);
+                        }}
+                      >
+                        <BoxIcon name="edit-alt" className="mr-2 text-base" /> Editar venda
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full rounded-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -494,16 +532,24 @@ export default function HistoricoPage() {
 
                 <Separator />
 
-                {detailDiscount > 0 ? (
+                {detailDiscount > 0 || detailSurcharge > 0 ? (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Subtotal</span>
                       <span className="tabular-nums">{currency(detailSubtotal)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                      <span>Desconto</span>
-                      <span className="tabular-nums">- {currency(detailDiscount)}</span>
-                    </div>
+                    {detailDiscount > 0 && (
+                      <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span>Desconto</span>
+                        <span className="tabular-nums">- {currency(detailDiscount)}</span>
+                      </div>
+                    )}
+                    {detailSurcharge > 0 && (
+                      <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        <span>Acréscimo</span>
+                        <span className="tabular-nums">+ {currency(detailSurcharge)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-1 border-t border-border">
                       <div className="text-sm font-semibold">Total</div>
                       <div className="text-lg font-bold tabular-nums text-primary">
@@ -574,16 +620,18 @@ export default function HistoricoPage() {
 
                 {detail.status !== "CANCELADO" && can("historico", "Editar") && (
                   <>
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-full"
-                      onClick={() => {
-                        handleEditSale(detail);
-                        setDetail(null);
-                      }}
-                    >
-                      <BoxIcon name="edit-alt" className="mr-2 text-base" /> Editar venda
-                    </Button>
+                    {isSaleEditable(detail) && (
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full"
+                        onClick={() => {
+                          handleEditSale(detail);
+                          setDetail(null);
+                        }}
+                      >
+                        <BoxIcon name="edit-alt" className="mr-2 text-base" /> Editar venda
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full rounded-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"

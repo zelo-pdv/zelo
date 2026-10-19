@@ -1,9 +1,14 @@
 export type ModuleKey =
   | "dashboard"
   | "produtos"
+  | "estoque"
   | "nova-venda"
   | "clientes"
-  | "historico";
+  | "historico"
+  | "usuarios"
+  | "relatorios"
+  | "registros"
+  | "configuracoes";
 
 export type ActionKey = "Visualizar" | "Adicionar" | "Editar" | "Excluir";
 
@@ -46,6 +51,20 @@ export const MODULES: ModuleDef[] = [
       {
         key: "Excluir",
         label: "Excluir",
+      },
+    ],
+  },
+  {
+    key: "estoque",
+    label: "Estoque",
+    actions: [
+      {
+        key: "Visualizar",
+        label: "Visualizar",
+      },
+      {
+        key: "Adicionar",
+        label: "Registrar movimentação",
       },
     ],
   },
@@ -99,7 +118,63 @@ export const MODULES: ModuleDef[] = [
       },
       {
         key: "Excluir",
+        label: "Cancelar venda",
+      },
+    ],
+  },
+  {
+    key: "usuarios",
+    label: "Usuários",
+    actions: [
+      {
+        key: "Visualizar",
+        label: "Visualizar",
+      },
+      {
+        key: "Adicionar",
+        label: "Adicionar",
+      },
+      {
+        key: "Editar",
+        label: "Editar",
+      },
+      {
+        key: "Excluir",
         label: "Excluir",
+      },
+    ],
+  },
+  {
+    key: "relatorios",
+    label: "Relatórios",
+    actions: [
+      {
+        key: "Visualizar",
+        label: "Visualizar",
+      },
+    ],
+  },
+  {
+    key: "registros",
+    label: "Registros de Auditoria",
+    actions: [
+      {
+        key: "Visualizar",
+        label: "Visualizar",
+      },
+    ],
+  },
+  {
+    key: "configuracoes",
+    label: "Configurações",
+    actions: [
+      {
+        key: "Visualizar",
+        label: "Visualizar",
+      },
+      {
+        key: "Editar",
+        label: "Editar",
       },
     ],
   },

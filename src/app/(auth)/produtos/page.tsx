@@ -30,7 +30,6 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { MobileActionFab } from "@/components/ui/mobile-action-fab";
 import { handleExportProducts } from "@/lib/export";
 import { ProductsImportModal } from "@/components/produtos/products-import-modal";
-import { ProductsConfigModal } from "@/components/produtos/products-config-modal";
 
 export type FormVariantState = {
   id?: string;
@@ -85,7 +84,6 @@ export default function ProdutosPage() {
   const [products, setProducts] = useState<ProductFrontend[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   const [editing, setEditing] = useState<ProductFrontend | null>(null);
@@ -185,7 +183,6 @@ export default function ProdutosPage() {
         data={products}
         categories={categoryNames}
         onCreateClick={() => setCreating(true)}
-        onConfigClick={() => setIsConfigOpen(true)}
         onImportClick={() => setIsImportOpen(true)}
         onExportClick={handleExport}
         isExporting={isExporting}
@@ -201,18 +198,12 @@ export default function ProdutosPage() {
         page="produtos"
         onAdd={() => setCreating(true)}
         onExport={handleExport}
-        onConfig={() => setIsConfigOpen(true)}
         onImport={() => setIsImportOpen(true)}
         isExporting={isExporting}
       />
       <ProductsImportModal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
-      />
-
-      <ProductsConfigModal
-        isOpen={isConfigOpen}
-        onClose={() => setIsConfigOpen(false)}
       />
 
       <ProductForm

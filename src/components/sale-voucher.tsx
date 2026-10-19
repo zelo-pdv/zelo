@@ -182,9 +182,20 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
     if (typeof sale.discount === "number" && sale.discount > 0) {
       return sale.discount;
     }
+    if (typeof sale.surcharge === "number" && sale.surcharge > 0) {
+      return 0;
+    }
     const diff = itemsSubtotal - Number(sale.total);
     return diff > 0.01 ? diff : 0;
   }, [sale, itemsSubtotal]);
+
+  const voucherSurcharge = useMemo(() => {
+    if (!sale) return 0;
+    if (typeof sale.surcharge === "number" && sale.surcharge > 0) {
+      return sale.surcharge;
+    }
+    return 0;
+  }, [sale]);
 
   const voucherFooterText = useMemo(() => {
     const raw = voucher?.footerText?.trim();
@@ -410,17 +421,23 @@ export function SaleVoucher({ sale, open, onClose, clientPhone }: Props) {
 
       {/* 9. Totais */}
       <div className="space-y-1 text-xs text-slate-950">
+        {(voucherDiscount > 0 || voucherSurcharge > 0) && (
+          <div className="flex justify-between items-center text-xs text-slate-700">
+            <span>Subtotal R$</span>
+            <span>{currency(itemsSubtotal).replace("R$", "").trim()}</span>
+          </div>
+        )}
         {voucherDiscount > 0 && (
-          <>
-            <div className="flex justify-between items-center text-xs text-slate-700">
-              <span>Subtotal R$</span>
-              <span>{currency(itemsSubtotal).replace("R$", "").trim()}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold">
-              <span>Desconto R$</span>
-              <span>- {currency(voucherDiscount).replace("R$", "").trim()}</span>
-            </div>
-          </>
+          <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold">
+            <span>Desconto R$</span>
+            <span>- {currency(voucherDiscount).replace("R$", "").trim()}</span>
+          </div>
+        )}
+        {voucherSurcharge > 0 && (
+          <div className="flex justify-between items-center text-xs text-blue-800 font-semibold">
+            <span>Acréscimo R$</span>
+            <span>+ {currency(voucherSurcharge).replace("R$", "").trim()}</span>
+          </div>
         )}
         <div className="flex justify-between items-center text-sm font-extrabold text-slate-950">
           <span>Total da Nota R$</span>

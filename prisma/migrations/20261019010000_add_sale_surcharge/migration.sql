@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "surcharge" DECIMAL(10, 2) DEFAULT 0.00;
