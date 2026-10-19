@@ -199,9 +199,9 @@ Em dispositivos móveis, as linhas da tabela se transformam em uma lista densa e
 
 O Zelo possui um componente compartilhado dedicado: **`<TablePagination />`** (`src/components/ui/table-pagination.tsx`).
 
-### 5.1. Posição Recomendada
-- O padrão predominante em `/clientes`, `/historico` e `/registros` posiciona a paginação **acima da listagem** (`mb-3 px-0.5`).
-- Isso permite que o usuário veja a contagem de registros e navegue pelas páginas imediatamente, sem precisar rolar até a base de telas com muitos itens.
+### 5.1. Posição Oficial (Híbrida Responsiva)
+- **No Mobile (`< 768px`):** O componente `<TablePagination />` é posicionado **acima da listagem** (`md:hidden mb-3 px-0.5`), permitindo que o usuário visualize o total de registros e navegue pelas páginas imediatamente, sem rolar até a base do celular.
+- **No Desktop (`>= 768px`):** O componente `<TablePagination />` é posicionado **abaixo da tabela** (`hidden md:block mt-4`), mantendo o cabeçalho limpo após a barra de pesquisa/filtros e seguindo o fluxo natural de leitura de tabelas de dados.
 
 ### 5.2. Estrutura do Controle
 - **Lado Esquerdo:** Indicador textual: `"1–8 de 24"` ou `"0 de 0"` em `text-sm font-medium text-muted-foreground`.

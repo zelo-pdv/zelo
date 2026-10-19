@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -16,23 +17,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { GlobalLoader } from "@/components/ui/global-loader";
+import { MobileActionFab } from "@/components/ui/mobile-action-fab";
 import { usePermissions } from "@/components/auth/permissions-provider";
 import { useSettingsStore } from "@/store/useSettingsStore";
-import { useDataSync } from "@/hooks/use-data-sync";
+import { useDataSync, notifyLocalSync } from "@/hooks/use-data-sync";
 import { dateTime } from "@/lib/format";
+import { handleExportStockMovements } from "@/lib/export";
+import { cn } from "@/lib/utils";
 import {
   stockMovementsService,
   type StockMovementFrontend,
 } from "@/services/stock-movements.service";
 import { StockMovementDialog } from "@/components/estoque/stock-movement-dialog";
-import Link from "next/link";
+import { StockMovementDetailDialog } from "@/components/estoque/stock-movement-detail-dialog";
 
 export default function EstoquePage() {
   const { can } = usePermissions();
@@ -49,10 +70,22 @@ export default function EstoquePage() {
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Detalhes e Reversão
+  const [selectedMovementForDetail, setSelectedMovementForDetail] =
+    useState<StockMovementFrontend | null>(null);
+  const [movementToRevert, setMovementToRevert] =
+    useState<StockMovementFrontend | null>(null);
+  const [isReverting, setIsReverting] = useState(false);
 
   const canAdd = can("estoque", "Adicionar");
   const canView = can("estoque", "Visualizar");
+  const canEdit = can("estoque", "Editar");
+
+  const activeFiltersCount = typeFilter !== "ALL" ? 1 : 0;
 
   const fetchMovements = useCallback(
     async (silent = false) => {
@@ -88,13 +121,44 @@ export default function EstoquePage() {
     fetchMovements(false);
   }, [fetchMovements]);
 
-  // Sincronização em tempo real entre abas
+  // Sincronização automática em tempo real entre abas e dispositivos
   useDataSync({
     types: ["products", "sales"],
     onSync: () => {
       fetchMovements(true);
     },
   });
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await handleExportStockMovements(typeFilter, search);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleConfirmRevert = async () => {
+    if (!movementToRevert) return;
+    setIsReverting(true);
+    try {
+      await stockMovementsService.revert(movementToRevert.id);
+      toast.success(
+        "Movimentação revertida com sucesso! Uma nova movimentação contrária foi gerada.",
+      );
+      notifyLocalSync("products");
+      setMovementToRevert(null);
+      fetchMovements(false);
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Erro ao tentar reverter movimentação.";
+      toast.error(msg);
+    } finally {
+      setIsReverting(false);
+    }
+  };
 
   const getTypeBadge = (type: StockMovementFrontend["type"]) => {
     switch (type) {
@@ -178,30 +242,25 @@ export default function EstoquePage() {
   }
 
   return (
-    <div className="w-full px-4 space-y-4 pb-20 md:pb-6">
-      {/* Banner de aviso se o controle de estoque estiver desativado */}
+    <div className="w-full px-4 space-y-4 pb-24 md:pb-6">
+      {/* Alerta caso o controle de estoque esteja desativado */}
       {!trackStock && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
-          <BoxIcon name="info-circle" className="text-xl shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <span className="font-semibold">
-              Controle de estoque desativado:
-            </span>{" "}
-            O registro e a consulta de movimentações permanecem disponíveis, mas
-            o bloqueio de vendas e os alertas de estoque mínimo no dashboard
-            estão inativos. Você pode ativar o controle a qualquer momento nas
-            configurações.
-          </div>
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+          <BoxIcon name="info-circle" className="text-xl shrink-0" />
+          <p className="flex-1">
+            O <strong>controle de estoque está desativado</strong> nas configurações da sua loja. O registro de novas movimentações está temporariamente desabilitado, mas você pode consultar todo o histórico abaixo.
+          </p>
         </div>
       )}
 
       {/* Barra de Filtros e Ações */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between w-full">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="relative flex-1 sm:max-w-xs">
+          {/* Campo de Busca */}
+          <div className="relative w-full sm:w-[40%] sm:max-w-[40%] min-w-0">
             <BoxIcon
               name="search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base pointer-events-none"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none"
             />
             <Input
               placeholder="Buscar por produto, código, nota..."
@@ -210,87 +269,105 @@ export default function EstoquePage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9 h-9 text-sm"
+              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-base md:text-sm shadow-xs"
             />
           </div>
 
-          <div className="w-44 shrink-0">
-            <Select
-              value={typeFilter}
-              onValueChange={(val) => {
-                if (val) {
-                  setTypeFilter(val as string);
-                  setPage(1);
-                }
-              }}>
-              <SelectTrigger className="w-full h-9 rounded-md text-xs justify-between">
-                <SelectValue placeholder="Tipo de movimentação">
-                  {typeFilter === "ALL"
-                    ? "Todos os tipos"
-                    : typeFilter === "ENTRY"
-                      ? "Entradas (+)"
-                      : typeFilter === "OUT"
-                        ? "Saídas (-)"
-                        : typeFilter === "ADJUSTMENT"
-                          ? "Ajustes (=)"
-                          : typeFilter === "SALE"
-                            ? "Vendas"
-                            : "Estornos"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL" className="text-xs">
-                  Todos os tipos
-                </SelectItem>
-                <SelectItem value="ENTRY" className="text-xs">
-                  Entradas (+)
-                </SelectItem>
-                <SelectItem value="OUT" className="text-xs">
-                  Saídas (-)
-                </SelectItem>
-                <SelectItem value="ADJUSTMENT" className="text-xs">
-                  Ajustes (=)
-                </SelectItem>
-                <SelectItem value="SALE" className="text-xs">
-                  Vendas
-                </SelectItem>
-                <SelectItem value="SALE_CANCEL" className="text-xs">
-                  Estornos de venda
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Filtro em Popover Padronizado */}
+          <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="outline"
+                  className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer"
+                  aria-label="Abrir filtros">
+                  <BoxIcon name="slider-alt" className="text-lg" />
+                  <span className="hidden sm:inline">Filtros</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+              }
+            />
+            <PopoverContent align="start" className="w-80 p-4 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <span className="font-semibold text-sm">
+                  Filtros de Estoque
+                </span>
+              </div>
+
+              {/* Tipo de Operação */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Tipo de Operação
+                </Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: "ALL", label: "Todos" },
+                    { id: "ENTRY", label: "Entradas (+)" },
+                    { id: "OUT", label: "Saídas (-)" },
+                    { id: "ADJUSTMENT", label: "Ajustes (=)" },
+                    { id: "SALE", label: "Vendas" },
+                    { id: "SALE_CANCEL", label: "Estornos" },
+                  ].map((t) => (
+                    <Button
+                      key={t.id}
+                      type="button"
+                      variant={typeFilter === t.id ? "default" : "outline"}
+                      size="sm"
+                      className="h-8 text-xs justify-start"
+                      onClick={() => {
+                        setTypeFilter(t.id);
+                        setPage(1);
+                      }}>
+                      {t.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="w-full text-xs font-medium"
+                  onClick={() => {
+                    setTypeFilter("ALL");
+                    setPage(1);
+                  }}
+                  disabled={activeFiltersCount === 0}>
+                  Limpar filtros
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Link href="/produtos">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-full gap-1.5 cursor-pointer text-xs">
-              <BoxIcon name="package" className="text-base" />
-              <span className="hidden sm:inline">Ver Catálogo</span>
-            </Button>
-          </Link>
-
+        {/* Ações no Desktop */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => fetchMovements(false)}
-            className="h-9 rounded-full gap-1 cursor-pointer text-xs"
-            title="Atualizar lista">
-            <BoxIcon name="refresh" className="text-base" />
-            <span className="hidden sm:inline">Atualizar</span>
+            onClick={handleExport}
+            disabled={isExporting}
+            className="h-9 rounded-full gap-1.5 cursor-pointer text-xs font-medium">
+            <BoxIcon
+              name={isExporting ? "loader-alt" : "download"}
+              className={cn("text-base", isExporting && "bx-spin")}
+            />
+            <span>Exportar</span>
           </Button>
 
-          {canAdd && (
+          {trackStock && canAdd && (
             <Button
               type="button"
               size="sm"
               onClick={() => setIsDialogOpen(true)}
-              className="h-9 rounded-full gap-1 cursor-pointer text-xs font-medium">
+              className="h-9 rounded-full gap-1.5 cursor-pointer text-xs font-semibold">
               <BoxIcon name="plus" className="text-base" />
               <span>Nova movimentação</span>
             </Button>
@@ -308,7 +385,7 @@ export default function EstoquePage() {
             <p className="text-sm font-medium">
               Nenhuma movimentação de estoque encontrada.
             </p>
-            {canAdd && (
+            {trackStock && canAdd && (
               <Button
                 type="button"
                 variant="outline"
@@ -322,24 +399,84 @@ export default function EstoquePage() {
         </Card>
       ) : (
         <>
-          {/* Visualização em Cards para Mobile */}
-          <div className="grid grid-cols-1 gap-2.5 md:hidden">
+          {/* Paginação Mobile (acima da listagem) */}
+          <div className="md:hidden">
+            <TablePagination
+              pageIndex={page - 1}
+              pageSize={25}
+              totalFiltered={total}
+              pageCount={totalPages}
+              canPreviousPage={page > 1 && !loading}
+              canNextPage={page < totalPages && !loading}
+              onPreviousPage={() => setPage((p) => Math.max(1, p - 1))}
+              onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
+            />
+          </div>
+
+          {/* Visualização em Card Único com divide-y para Mobile */}
+          <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
             {movements.map((item) => (
-              <Card
+              <div
                 key={item.id}
-                className="border-border/70 p-3.5 space-y-2.5">
+                className="p-3.5 space-y-2.5 hover:bg-muted/30 transition-colors">
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5 min-w-0">
-                    <span className="font-semibold text-sm block truncate text-foreground">
-                      {item.product?.name || "Produto indisponível"}
-                    </span>
-                    {item.variant && (
-                      <span className="text-xs text-muted-foreground block truncate">
-                        Variação: {item.variant.name}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-semibold text-sm text-foreground">
+                        {item.title || "Movimentação de Estoque"}
                       </span>
-                    )}
+                      {item.isReverted && (
+                        <Badge
+                          variant="outline"
+                          className="border-rose-500/40 text-rose-600 bg-rose-500/10 text-[10px] font-bold px-1.5 py-0">
+                          Revertida
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground block truncate">
+                      {item.product?.name || "Produto indisponível"}
+                      {item.variant ? ` • ${item.variant.name}` : ""}
+                    </span>
                   </div>
-                  <div className="shrink-0">{getTypeBadge(item.type)}</div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {getTypeBadge(item.type)}
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground"
+                            aria-label="Opções da movimentação">
+                            <BoxIcon
+                              name="dots-vertical-rounded"
+                              className="text-lg"
+                            />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => setSelectedMovementForDetail(item)}>
+                          <BoxIcon name="show" className="text-base mr-2" />
+                          <span>Ver detalhes</span>
+                        </DropdownMenuItem>
+
+                        {(canAdd || canEdit) && !item.isReverted && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setMovementToRevert(item)}>
+                              <BoxIcon name="undo" className="text-base mr-2" />
+                              <span>Reverter movimentação</span>
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs border-y border-border/50 py-2">
@@ -367,7 +504,7 @@ export default function EstoquePage() {
                     {item.notes}
                   </p>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
 
@@ -378,13 +515,15 @@ export default function EstoquePage() {
                 <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-35">Data/Hora</TableHead>
-                      <TableHead className="w-30">Operação</TableHead>
+                      <TableHead className="w-32">Data/Hora</TableHead>
+                      <TableHead className="w-44">Título</TableHead>
+                      <TableHead className="w-28">Operação</TableHead>
                       <TableHead>Produto / Variação</TableHead>
-                      <TableHead className="text-right w-27.5">Qtd</TableHead>
-                      <TableHead className="text-right w-35">Saldo</TableHead>
-                      <TableHead className="w-35">Responsável</TableHead>
-                      <TableHead className="max-w-50">Observações</TableHead>
+                      <TableHead className="text-right w-24">Qtd</TableHead>
+                      <TableHead className="text-right w-32">Saldo</TableHead>
+                      <TableHead className="w-32">Responsável</TableHead>
+                      <TableHead className="max-w-44">Observações</TableHead>
+                      <TableHead className="w-12 text-right"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -392,6 +531,22 @@ export default function EstoquePage() {
                       <TableRow key={item.id} className="hover:bg-muted/30">
                         <TableCell className="text-xs text-muted-foreground tabular-nums">
                           {dateTime(item.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            <span
+                              className="font-semibold text-xs text-foreground truncate max-w-40"
+                              title={item.title}>
+                              {item.title || "Movimentação de Estoque"}
+                            </span>
+                            {item.isReverted && (
+                              <Badge
+                                variant="outline"
+                                className="border-rose-500/40 text-rose-600 bg-rose-500/10 text-[10px] font-bold px-1.5 py-0 w-fit">
+                                Revertida
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>{getTypeBadge(item.type)}</TableCell>
                         <TableCell>
@@ -421,8 +576,53 @@ export default function EstoquePage() {
                         <TableCell className="text-xs text-muted-foreground truncate">
                           {item.user?.name || "Sistema"}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground truncate max-w-50">
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-44">
                           {item.notes || "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                                  aria-label="Ações da linha">
+                                  <BoxIcon
+                                    name="dots-vertical-rounded"
+                                    className="text-base"
+                                  />
+                                </Button>
+                              }
+                            />
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setSelectedMovementForDetail(item)
+                                }>
+                                <BoxIcon
+                                  name="show"
+                                  className="text-base mr-2"
+                                />
+                                <span>Ver detalhes</span>
+                              </DropdownMenuItem>
+
+                              {(canAdd || canEdit) && !item.isReverted && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setMovementToRevert(item)}>
+                                    <BoxIcon
+                                      name="undo"
+                                      className="text-base mr-2"
+                                    />
+                                    <span>Reverter movimentação</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -430,49 +630,98 @@ export default function EstoquePage() {
                 </Table>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Paginação */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-            <div>
-              Total:{" "}
-              <span className="font-semibold text-foreground">{total}</span>
+            {/* Paginação Desktop (abaixo da tabela) */}
+            <div className="hidden md:block mt-4">
+              <TablePagination
+                pageIndex={page - 1}
+                pageSize={25}
+                totalFiltered={total}
+                pageCount={totalPages}
+                canPreviousPage={page > 1 && !loading}
+                canNextPage={page < totalPages && !loading}
+                onPreviousPage={() => setPage((p) => Math.max(1, p - 1))}
+                onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
+              />
             </div>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer">
-                  Anterior
-                </Button>
-                <span className="px-2 font-medium">
-                  {page} de {totalPages}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="h-8 px-2.5 rounded-md text-xs cursor-pointer">
-                  Próxima
-                </Button>
-              </div>
-            )}
           </div>
         </>
       )}
 
-      {/* Modal/Drawer de Nova Movimentação */}
+      {/* FAB Mobile Flutuante */}
+      <MobileActionFab
+        page="estoque"
+        onAdd={trackStock && canAdd ? () => setIsDialogOpen(true) : undefined}
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
+
+      {/* Modal/Drawer de Detalhes da Movimentação */}
+      <StockMovementDetailDialog
+        movement={selectedMovementForDetail}
+        open={Boolean(selectedMovementForDetail)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedMovementForDetail(null);
+        }}
+        onRevert={(m) => setMovementToRevert(m)}
+        canRevert={canAdd || canEdit}
+      />
+
+      {/* Modal/Drawer de Nova Movimentação (Suporta Múltiplos Produtos) */}
       <StockMovementDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onSuccess={() => fetchMovements(false)}
       />
+
+      {/* Diálogo de Confirmação para Reverter Movimentação */}
+      <AlertDialog
+        open={Boolean(movementToRevert)}
+        onOpenChange={(open) => {
+          if (!open && !isReverting) setMovementToRevert(null);
+        }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reverter Movimentação de Estoque?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-xs sm:text-sm">
+              <p>
+                Esta ação gerará automaticamente uma{" "}
+                <strong>nova movimentação contrária</strong> para restaurar o
+                saldo anterior da movimentação{" "}
+                <strong>
+                  &ldquo;{movementToRevert?.title || "Movimentação de Estoque"}&rdquo;
+                </strong>{" "}
+                referente ao produto{" "}
+                <strong>
+                  &ldquo;{movementToRevert?.product?.name}
+                  {movementToRevert?.variant
+                    ? ` (${movementToRevert.variant.name})`
+                    : ""}&rdquo;
+                </strong>
+                .
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Atenção:</strong> após reverter, esta movimentação será
+                marcada como revertida e não será possível revertê-la novamente.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isReverting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmRevert();
+              }}
+              disabled={isReverting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isReverting ? "Revertendo..." : "Confirmar Reversão"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

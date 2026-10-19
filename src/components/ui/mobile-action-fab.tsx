@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MobileActionFabProps {
-  onAdd: () => void;
-  onExport: () => void;
+  onAdd?: () => void;
+  onExport?: () => void;
   onConfig?: () => void;
   onImport?: () => void;
   isExporting?: boolean;
-  page: "produtos" | "usuarios";
+  page: "produtos" | "usuarios" | "estoque";
 }
 
 export function MobileActionFab({
@@ -25,7 +25,8 @@ export function MobileActionFab({
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!isMobile) return null;
+  const hasActions = Boolean(onAdd || onExport || onConfig || onImport);
+  if (!isMobile || !hasActions) return null;
 
   return (
     <>
@@ -75,28 +76,30 @@ export function MobileActionFab({
           )}
 
           {/* Export Button */}
-          <button
-            onClick={() => {
-              onExport();
-              setIsOpen(false);
-            }}
-            disabled={isExporting}
-            className={cn(
-              "flex items-center gap-3 rounded-full bg-background border border-border pr-6 pl-1.5 py-1.5 shadow-lg transition-all duration-300 pointer-events-auto",
-              isOpen
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-8 pointer-events-none",
-            )}
-            style={{ transitionDelay: isOpen ? "100ms" : "0ms" }}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-              {isExporting ? (
-                <BoxIcon name="loader-alt" className="text-xl bx-spin" />
-              ) : (
-                <BoxIcon name="download" className="text-xl" />
+          {onExport && (
+            <button
+              onClick={() => {
+                onExport();
+                setIsOpen(false);
+              }}
+              disabled={isExporting}
+              className={cn(
+                "flex items-center gap-3 rounded-full bg-background border border-border pr-6 pl-1.5 py-1.5 shadow-lg transition-all duration-300 pointer-events-auto",
+                isOpen
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8 pointer-events-none",
               )}
-            </div>
-            <span className="text-sm font-semibold">Exportar</span>
-          </button>
+              style={{ transitionDelay: isOpen ? "100ms" : "0ms" }}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                {isExporting ? (
+                  <BoxIcon name="loader-alt" className="text-xl bx-spin" />
+                ) : (
+                  <BoxIcon name="download" className="text-xl" />
+                )}
+              </div>
+              <span className="text-sm font-semibold">Exportar</span>
+            </button>
+          )}
 
           {/* Config Button */}
           {onConfig && (
@@ -120,26 +123,36 @@ export function MobileActionFab({
           )}
 
           {/* Add Button */}
-          <button
-            onClick={() => {
-              onAdd();
-              setIsOpen(false);
-            }}
-            className={cn(
-              "flex items-center gap-3 rounded-full bg-background border border-border pr-6 pl-1.5 py-1.5 shadow-lg transition-all duration-300 pointer-events-auto",
-              isOpen
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-4 pointer-events-none",
-            )}
-            style={{ transitionDelay: isOpen ? "50ms" : "50ms" }}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-              <BoxIcon
-                name={page === "produtos" ? "package" : "user-plus"}
-                className="text-xl"
-              />
-            </div>
-            <span className="text-sm font-semibold">Novo</span>
-          </button>
+          {onAdd && (
+            <button
+              onClick={() => {
+                onAdd();
+                setIsOpen(false);
+              }}
+              className={cn(
+                "flex items-center gap-3 rounded-full bg-background border border-border pr-6 pl-1.5 py-1.5 shadow-lg transition-all duration-300 pointer-events-auto",
+                isOpen
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4 pointer-events-none",
+              )}
+              style={{ transitionDelay: isOpen ? "50ms" : "50ms" }}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                <BoxIcon
+                  name={
+                    page === "produtos"
+                      ? "package"
+                      : page === "estoque"
+                        ? "transfer"
+                        : "user-plus"
+                  }
+                  className="text-xl"
+                />
+              </div>
+              <span className="text-sm font-semibold">
+                {page === "estoque" ? "Nova movimentação" : "Novo"}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </>

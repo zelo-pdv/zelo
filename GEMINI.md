@@ -190,4 +190,6 @@ src/
 > 5. **Ações:** Botão pílula `rounded-full` no cabeçalho desktop e `MobileActionFab` flutuante no mobile.
 > 6. **Ícones:** Uso exclusivo de Boxicons via `<BoxIcon name="..." />`.
 > 7. **RBAC:** Proteção mandatória com `<Can module="..." action="...">` ou `usePermissions`.
+> 8. **Paginação Híbrida:** `<TablePagination />` acima da listagem no mobile (`md:hidden mb-3`) e abaixo da tabela no desktop (`hidden md:block mt-4`).
+
 

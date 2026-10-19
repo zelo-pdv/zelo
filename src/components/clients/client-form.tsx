@@ -474,7 +474,8 @@ export function ClientForm({
       <LoadingButton
         loading={loading}
         disabled={form.name.trim().length < 2 || loading}
-        onClick={submit}>
+        onClick={submit}
+        className="rounded-xl h-11 px-7 text-sm font-semibold">
         Salvar
       </LoadingButton>
     </div>

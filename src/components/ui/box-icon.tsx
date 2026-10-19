@@ -37,6 +37,8 @@ const ONLY_BX_ICONS = new Set([
   "dots-vertical",
   "dots-horizontal-rounded",
   "dots-vertical-rounded",
+  "transfer",
+  "transfer-alt",
 ]);
 
 const ONLY_BXS_ICONS = new Set([

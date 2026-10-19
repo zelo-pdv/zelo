@@ -12,7 +12,7 @@ export const shortDate = (iso: string) =>
     year: "2-digit",
   });
 
-export const dateTime = (iso: string) =>
+export const dateTime = (iso: string | Date) =>
   new Date(iso).toLocaleString("pt-BR", {
     day: "2-digit",
     month: "2-digit",

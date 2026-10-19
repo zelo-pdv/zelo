@@ -1,13 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { createStockMovementSchema } from "@/lib/validations/stock-movement";
+import {
+  createStockMovementSchema,
+  createBatchStockMovementSchema,
+} from "@/lib/validations/stock-movement";
 import { hasPermission } from "@/lib/permissions";
-import { MODULES, defaultGroups } from "@/store/useSettingsStore";
+import { MODULES, defaultGroups, type Permissions } from "@/store/useSettingsStore";
 import { getProductTotalStock } from "@/lib/stock";
 
 describe("Estoque", () => {
   describe("1. Validação de Dados (createStockMovementSchema)", () => {
-    it("deve aceitar movimentação de entrada válida com quantidade inteira", () => {
+    it("deve aceitar movimentação de entrada válida com quantidade inteira e título", () => {
       const result = createStockMovementSchema.safeParse({
+        title: "Recebimento de carga",
         productId: "prod-1",
         type: "ENTRY",
         quantity: 10,
@@ -15,13 +19,32 @@ describe("Estoque", () => {
       });
       expect(result.success).toBe(true);
       if (result.success) {
+        expect(result.data.title).toBe("Recebimento de carga");
         expect(result.data.quantity).toBe(10);
         expect(result.data.type).toBe("ENTRY");
       }
     });
 
+    it("deve rejeitar movimentação sem título ou com título vazio", () => {
+      const missingTitle = createStockMovementSchema.safeParse({
+        productId: "prod-1",
+        type: "ENTRY",
+        quantity: 10,
+      });
+      expect(missingTitle.success).toBe(false);
+
+      const emptyTitle = createStockMovementSchema.safeParse({
+        title: "   ",
+        productId: "prod-1",
+        type: "ENTRY",
+        quantity: 10,
+      });
+      expect(emptyTitle.success).toBe(false);
+    });
+
     it("deve aceitar movimentação com quantidade decimal (Decimal 10,3)", () => {
       const result = createStockMovementSchema.safeParse({
+        title: "Entrada fracionada",
         productId: "prod-1",
         variantId: "var-1",
         type: "ENTRY",
@@ -36,6 +59,7 @@ describe("Estoque", () => {
 
     it("deve rejeitar quantidade menor ou igual a zero", () => {
       const zeroResult = createStockMovementSchema.safeParse({
+        title: "Entrada inválida",
         productId: "prod-1",
         type: "ENTRY",
         quantity: 0,
@@ -43,6 +67,7 @@ describe("Estoque", () => {
       expect(zeroResult.success).toBe(false);
 
       const negativeResult = createStockMovementSchema.safeParse({
+        title: "Entrada inválida",
         productId: "prod-1",
         type: "ENTRY",
         quantity: -5,
@@ -52,6 +77,7 @@ describe("Estoque", () => {
 
     it("deve rejeitar quando o produto não for informado", () => {
       const result = createStockMovementSchema.safeParse({
+        title: "Sem produto",
         productId: "",
         type: "ENTRY",
         quantity: 5,
@@ -61,6 +87,7 @@ describe("Estoque", () => {
 
     it("deve aceitar operações de saída (OUT) e ajuste (ADJUSTMENT)", () => {
       const outResult = createStockMovementSchema.safeParse({
+        title: "Descarte de avaria",
         productId: "prod-1",
         type: "OUT",
         quantity: 3,
@@ -69,6 +96,7 @@ describe("Estoque", () => {
       expect(outResult.success).toBe(true);
 
       const adjResult = createStockMovementSchema.safeParse({
+        title: "Ajuste de inventário",
         productId: "prod-1",
         type: "ADJUSTMENT",
         quantity: 15,
@@ -79,6 +107,7 @@ describe("Estoque", () => {
 
     it("deve rejeitar observações com mais de 500 caracteres", () => {
       const result = createStockMovementSchema.safeParse({
+        title: "Obs longa",
         productId: "prod-1",
         type: "ENTRY",
         quantity: 5,
@@ -153,7 +182,7 @@ describe("Estoque", () => {
     });
 
     it("deve herdar permissão de produtos para grupos legados sem a chave estoque explicitada", () => {
-      const legacyPermissions = {
+      const legacyPermissions: Permissions = {
         produtos: ["Visualizar", "Editar"],
       };
 
@@ -174,7 +203,7 @@ describe("Estoque", () => {
     });
 
     it("deve respeitar permissões explícitas quando configuradas no grupo", () => {
-      const explicitPermissions = {
+      const explicitPermissions: Permissions = {
         produtos: ["Visualizar", "Editar"],
         estoque: ["Visualizar"], // Somente visualizar estoque, sem permissão de adicionar
       };
@@ -187,4 +216,56 @@ describe("Estoque", () => {
       );
     });
   });
+
+  describe("4. Validação em Lote (createBatchStockMovementSchema)", () => {
+    it("deve aceitar movimentação em lote com múltiplos produtos válidos", () => {
+      const result = createBatchStockMovementSchema.safeParse({
+        title: "Recebimento mensal de estoque",
+        notes: "Entrada geral de fornecedor",
+        items: [
+          { productId: "prod-1", type: "ENTRY", quantity: 10 },
+          {
+            productId: "prod-2",
+            variantId: "var-1",
+            type: "ENTRY",
+            quantity: 5.5,
+          },
+          { productId: "prod-3", type: "OUT", quantity: 2 },
+        ],
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.title).toBe("Recebimento mensal de estoque");
+        expect(result.data.items).toHaveLength(3);
+      }
+    });
+
+    it("deve rejeitar lote sem título", () => {
+      const result = createBatchStockMovementSchema.safeParse({
+        items: [{ productId: "prod-1", type: "ENTRY", quantity: 10 }],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar lote com lista de itens vazia", () => {
+      const result = createBatchStockMovementSchema.safeParse({
+        title: "Lote vazio",
+        notes: "Lote vazio",
+        items: [],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar lote se algum item tiver quantidade inválida", () => {
+      const result = createBatchStockMovementSchema.safeParse({
+        title: "Lote inválido",
+        items: [
+          { productId: "prod-1", type: "ENTRY", quantity: 10 },
+          { productId: "prod-2", type: "ENTRY", quantity: -5 },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
+  });
 });
+

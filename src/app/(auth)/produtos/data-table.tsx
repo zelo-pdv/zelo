@@ -43,9 +43,15 @@ import {
 } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductThumb } from "@/components/product-thumb";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { currency } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { isProductLowStock, getProductTotalStock, getProductLowStockVariants, type ProductFrontend } from "./columns";
+import {
+  isProductLowStock,
+  getProductTotalStock,
+  getProductLowStockVariants,
+  type ProductFrontend,
+} from "./columns";
 
 interface ProductsDataTableProps {
   columns: ColumnDef<ProductFrontend>[];
@@ -233,9 +239,10 @@ export function ProductsDataTable({
                     const finalVal = val || "Todas";
                     table
                       .getColumn("category")
-                      ?.setFilterValue(finalVal === "Todas" ? undefined : finalVal);
-                  }}
-                >
+                      ?.setFilterValue(
+                        finalVal === "Todas" ? undefined : finalVal,
+                      );
+                  }}>
                   <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
                     <SelectValue placeholder="Todas as categorias">
                       {categoryFilter === "Todas"
@@ -272,17 +279,6 @@ export function ProductsDataTable({
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
-          <Link href="/estoque">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-full shrink-0 gap-1.5 cursor-pointer">
-              <BoxIcon name="transfer" className="text-base" />
-              <span>Movimentações</span>
-            </Button>
-          </Link>
-
           {onConfigClick && (
             <Button
               type="button"
@@ -332,38 +328,17 @@ export function ProductsDataTable({
       </div>
 
       {/* Paginação Mobile (acima da listagem) */}
-      <div className="flex md:hidden items-center justify-between gap-2 mb-3 px-0.5">
-        <div className="text-sm font-medium text-muted-foreground">
-          {totalFiltered === 0
-            ? "0 de 0"
-            : `${pageIndex * pageSize + 1}–${Math.min(
-                (pageIndex + 1) * pageSize,
-                totalFiltered,
-              )} de ${totalFiltered}`}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 rounded-xl border border-border/70 bg-white dark:bg-card text-foreground hover:bg-muted cursor-pointer"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-            aria-label="Página anterior">
-            <BoxIcon name="chevron-left" className="text-lg" />
-          </Button>
-          <div className="text-sm tabular-nums text-muted-foreground font-medium px-1">
-            {pageIndex + 1} / {table.getPageCount() || 1}
-          </div>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 rounded-xl border border-border/70 bg-white dark:bg-card text-foreground hover:bg-muted cursor-pointer"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-            aria-label="Próxima página">
-            <BoxIcon name="chevron-right" className="text-lg" />
-          </Button>
-        </div>
+      <div className="md:hidden">
+        <TablePagination
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          totalFiltered={totalFiltered}
+          pageCount={table.getPageCount()}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+        />
       </div>
 
       {/* Listagem Mobile com visual de tabela/card */}
@@ -374,7 +349,9 @@ export function ProductsDataTable({
             const stockNum = getProductTotalStock(product);
             const isNegative = stockNum < 0;
             const isLow = trackStock && isProductLowStock(product, trackStock);
-            const lowVariants = trackStock ? getProductLowStockVariants(product, trackStock) : [];
+            const lowVariants = trackStock
+              ? getProductLowStockVariants(product, trackStock)
+              : [];
 
             const hasMobileRowActions = canEdit || canDelete;
 
@@ -410,9 +387,11 @@ export function ProductsDataTable({
                         title={
                           lowVariants.length > 0
                             ? `Baixo nas variações: ${lowVariants.map((v: any) => `${v.name} (${Number(v.stock ?? 0)} un)`).join(", ")}`
-                            : isLow && product.minStock !== null && product.minStock !== undefined
-                            ? `Estoque baixo: mín. ${Number(product.minStock)}`
-                            : undefined
+                            : isLow &&
+                                product.minStock !== null &&
+                                product.minStock !== undefined
+                              ? `Estoque baixo: mín. ${Number(product.minStock)}`
+                              : undefined
                         }
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums",
@@ -505,9 +484,7 @@ export function ProductsDataTable({
                         </Button>
                       )}
 
-                      {canEdit && canDelete && (
-                        <Separator className="my-1" />
-                      )}
+                      {canEdit && canDelete && <Separator className="my-1" />}
 
                       {canDelete && onDelete && (
                         <Button
@@ -587,35 +564,17 @@ export function ProductsDataTable({
         </Card>
 
         {/* Paginação Desktop (abaixo da tabela) */}
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <div className="text-xs text-muted-foreground">
-            {totalFiltered === 0 ? 0 : pageIndex * pageSize + 1}–
-            {Math.min((pageIndex + 1) * pageSize, totalFiltered)} de{" "}
-            {totalFiltered}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 cursor-pointer"
-              disabled={!table.getCanPreviousPage()}
-              onClick={() => table.previousPage()}
-              aria-label="Página anterior">
-              <BoxIcon name="chevron-left" className="text-base" />
-            </Button>
-            <div className="text-xs tabular-nums text-muted-foreground">
-              {pageIndex + 1} / {table.getPageCount() || 1}
-            </div>
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 cursor-pointer"
-              disabled={!table.getCanNextPage()}
-              onClick={() => table.nextPage()}
-              aria-label="Próxima página">
-              <BoxIcon name="chevron-right" className="text-base" />
-            </Button>
-          </div>
+        <div className="hidden md:block mt-4">
+          <TablePagination
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            totalFiltered={totalFiltered}
+            pageCount={table.getPageCount()}
+            canPreviousPage={table.getCanPreviousPage()}
+            canNextPage={table.getCanNextPage()}
+            onPreviousPage={() => table.previousPage()}
+            onNextPage={() => table.nextPage()}
+          />
         </div>
       </div>
     </div>

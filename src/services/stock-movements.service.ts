@@ -1,13 +1,19 @@
 import { apiRequest } from "@/lib/api-request";
-import type { CreateStockMovementInput } from "@/lib/validations/stock-movement";
+import type {
+  CreateStockMovementInput,
+  CreateBatchStockMovementInput,
+} from "@/lib/validations/stock-movement";
 
 export type StockMovementFrontend = {
   id: string;
+  title: string;
   type: "ENTRY" | "OUT" | "ADJUSTMENT" | "SALE" | "SALE_CANCEL";
   quantity: number;
   previousStock: number;
   resultStock: number;
   notes?: string | null;
+  isReverted: boolean;
+  revertedAt?: string | null;
   productId: string;
   variantId?: string | null;
   lojaId: string;
@@ -60,10 +66,22 @@ export const stockMovementsService = {
     return apiRequest<StockMovementsListResponse>(url);
   },
 
-  async create(data: CreateStockMovementInput): Promise<StockMovementFrontend> {
-    return apiRequest<StockMovementFrontend>("/stock-movements", {
+  async create(
+    data: CreateStockMovementInput | CreateBatchStockMovementInput,
+  ): Promise<StockMovementFrontend | StockMovementFrontend[]> {
+    return apiRequest<StockMovementFrontend | StockMovementFrontend[]>(
+      "/stock-movements",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
+  },
+
+  async revert(id: string): Promise<StockMovementFrontend> {
+    return apiRequest<StockMovementFrontend>(`/stock-movements/${id}/revert`, {
       method: "POST",
-      body: JSON.stringify(data),
     });
   },
 };
+

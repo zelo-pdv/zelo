@@ -444,7 +444,7 @@ export default function RelatoriosPage() {
             size="sm"
             onClick={() => setIsFilterDrawerOpen(true)}
             className="h-9 gap-1.5 text-xs px-3 shadow-xs">
-            <BoxIcon name="filter" className="text-base" />
+            <BoxIcon name="slider-alt" className="text-base" />
             <span>Filtros</span>
             {activeFiltersCount > 0 && (
               <span className="ml-1 size-5 rounded-full bg-primary-foreground text-primary font-bold text-[10px] inline-flex items-center justify-center">

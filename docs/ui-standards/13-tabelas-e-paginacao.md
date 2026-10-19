@@ -125,21 +125,15 @@ O Zelo centraliza o controle de paginação no componente **`<TablePagination />
 
 ---
 
-## 4. Paginação: Padrões e Inconsistências Identificadas
+## 4. Paginação: Regra Oficial de Posicionamento Responsivo
 
-### 4.1. [PADRÃO CONFIRMADO]: Paginação Acima da Listagem
-Nas telas `/clientes`, `/historico` e `/registros`, o componente `<TablePagination />` é posicionado **acima da listagem** (`mb-3 px-0.5`).
-- **Vantagem:** O usuário visualiza o volume de dados e navega entre páginas sem necessidade de rolar tabelas extensas.
-
-### 4.2. [INCONSISTÊNCIA ENCONTRADA]: Paginação em `/produtos`
-Na tela `/produtos`:
-- No **mobile**, a paginação fica acima da listagem.
-- No **desktop**, a paginação fica **abaixo da tabela**, implementada com markup inline (botões `h-8 w-8`) em vez de reutilizar `<TablePagination />`.
-- **Recomendação para novos desenvolvimentos:** Utilizar o componente compartilhado `<TablePagination />` acima da listagem.
-
-### 4.3. [INCONSISTÊNCIA ENCONTRADA]: Paginação em `/estoque`
-Na tela `/estoque`:
-- A paginação é feita via backend com botões textuais ("Anterior" / "Próxima") abaixo da tabela, sem o componente `<TablePagination />`.
+> [!IMPORTANT]
+> **REGRA OFICIAL UNIFICADA: PAGINAÇÃO HÍBRIDA RESPONSIVA**
+>
+> 1. **No Mobile (`< 768px`):** O componente `<TablePagination />` deve ficar posicionado **acima da listagem** (`md:hidden mb-3 px-0.5`). Isso permite que o usuário veja imediatamente o volume total de dados e mude de página sem precisar rolar até o final da tela no celular.
+> 2. **No Desktop (`>= 768px`):** O componente `<TablePagination />` deve ficar posicionado **abaixo da tabela** (`hidden md:block mt-4`). Isso mantém a barra superior limpa (com foco na busca e nos filtros) e segue o fluxo natural de leitura ocular de tabelas completas.
+>
+> Ambas as visualizações utilizam o mesmo componente compartilhado `<TablePagination />` sincronizado com os mesmos estados do TanStack Table ou paginação do servidor.
 
 ---
 

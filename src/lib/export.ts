@@ -2,6 +2,7 @@ import { clientsService } from "@/services/clients.service";
 import { usersService } from "@/services/users.service";
 import { productsService } from "@/services/products.service";
 import { salesService } from "@/services/sales.service";
+import { stockMovementsService } from "@/services/stock-movements.service";
 import { currency, dateTime } from "@/lib/format";
 import { maskPhone } from "@/lib/masks";
 import { PaymentMethod, PAYMENT_LABELS } from "@/types";
@@ -349,5 +350,68 @@ export const handleDownloadClientTemplate = () => {
 
   downloadCsv("modelo_clientes_zelo.csv", headers, rows);
   toast.success("Modelo oficial de clientes baixado com sucesso!");
+};
+
+export const handleExportStockMovements = async (typeFilter?: string, search?: string) => {
+  try {
+    const res = await stockMovementsService.list({
+      page: 1,
+      limit: 1000,
+      type: typeFilter,
+      q: search,
+    });
+    const movements = res.items;
+    if (!movements || movements.length === 0) {
+      toast.warning("Nenhuma movimentação de estoque encontrada para exportar.");
+      return;
+    }
+
+    const headers = [
+      "Data e Hora",
+      "Título",
+      "Tipo",
+      "Status",
+      "Produto",
+      "Código",
+      "Código de Barras",
+      "Variação",
+      "Quantidade",
+      "Saldo Anterior",
+      "Saldo Resultante",
+      "Responsável",
+      "Observações",
+    ];
+
+    const typeLabels: Record<string, string> = {
+      ENTRY: "Entrada",
+      OUT: "Saída",
+      ADJUSTMENT: "Ajuste",
+      SALE: "Venda",
+      SALE_CANCEL: "Estorno de Venda",
+    };
+
+    const rows = movements.map((m) => [
+      dateTime(m.createdAt),
+      m.title || "Movimentação de Estoque",
+      typeLabels[m.type] || m.type,
+      m.isReverted ? "Revertida" : "Ativa",
+      m.product?.name || "Produto indisponível",
+      m.product?.code || "",
+      m.product?.barcode || "",
+      m.variant?.name || "",
+      m.quantity,
+      m.previousStock,
+      m.resultStock,
+      m.user?.name || "Sistema",
+      m.notes || "",
+    ]);
+
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsv(`estoque_movimentacoes_zelo_${today}.csv`, headers, rows);
+    toast.success(`${movements.length} movimentação(ões) exportada(s) com sucesso!`);
+  } catch (error) {
+    console.error(error);
+    toast.error("Erro ao exportar movimentações de estoque.");
+  }
 };
 

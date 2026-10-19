@@ -662,7 +662,7 @@ function UserForm({
       <LoadingButton
         onClick={submit}
         loading={isSubmitting}
-        className="min-w-28">
+        className="rounded-xl h-11 px-7 text-sm font-semibold min-w-28">
         Salvar
       </LoadingButton>
     </div>

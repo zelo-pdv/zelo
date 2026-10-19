@@ -60,3 +60,7 @@ Ao receber uma demanda de frontend, consulte imediatamente o arquivo especializa
 7. **Validação e Feedbacks:**
    - Validações de entrada sempre via schemas Zod tolerantes (`.nullable().optional()`).
    - Feedbacks ao usuário via `toast.success` e `toast.error` da biblioteca `sonner`.
+
+8. **Paginação Híbrida Responsiva:**
+   - Componente `<TablePagination />` posicionado **acima da listagem** no mobile (`md:hidden mb-3`) e **abaixo da tabela** no desktop (`hidden md:block mt-4`).
+

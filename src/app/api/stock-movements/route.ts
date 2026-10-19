@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
-import { createStockMovementSchema } from "@/lib/validations/stock-movement";
+import { createStockMovementSchema, createBatchStockMovementSchema } from "@/lib/validations/stock-movement";
 import { createAuditLog } from "@/lib/audit";
 import { Prisma, StockMovementType } from "@/prisma/client";
 
@@ -39,6 +39,7 @@ export async function GET(request: Request) {
 
     if (q) {
       where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
         { product: { name: { contains: q, mode: "insensitive" } } },
         { product: { code: { contains: q, mode: "insensitive" } } },
         { variant: { name: { contains: q, mode: "insensitive" } } },
@@ -112,174 +113,222 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const validation = createStockMovementSchema.safeParse(body);
+    const isBatch = Array.isArray(body?.items);
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: "Dados inválidos: " + validation.error.issues[0].message },
-        { status: 400 },
-      );
-    }
+    type ItemPayload = {
+      productId: string;
+      variantId?: string | null;
+      type: StockMovementType;
+      quantity: number;
+      notes?: string | null;
+    };
 
-    const { productId, variantId, type, quantity, notes } = validation.data;
+    let itemsToProcess: ItemPayload[] = [];
+    let generalNotes = typeof body?.notes === "string" ? body.notes.trim() : null;
+    let movementTitle = "Movimentação de Estoque";
 
-    // Multi-tenant check
-    const product = await prisma.product.findFirst({
-      where: {
-        id: productId,
-        lojaId: auth.user.lojaId,
-        deletedAt: null,
-      },
-      include: {
-        variants: {
-          where: { deletedAt: null },
-        },
-      },
-    });
-
-    if (!product) {
-      return NextResponse.json(
-        { error: "Produto não encontrado ou não pertence a esta loja." },
-        { status: 404 },
-      );
-    }
-
-    const hasVariants = product.variants && product.variants.length > 0;
-
-    if (hasVariants) {
-      if (!variantId) {
+    if (isBatch) {
+      const validation = createBatchStockMovementSchema.safeParse(body);
+      if (!validation.success) {
         return NextResponse.json(
-          {
-            error:
-              "Este produto possui variações. Selecione uma variação para movimentar o estoque.",
-          },
+          { error: "Dados inválidos: " + validation.error.issues[0].message },
           { status: 400 },
         );
       }
-
-      const variant = product.variants.find((v) => v.id === variantId);
-      if (!variant) {
+      itemsToProcess = validation.data.items as ItemPayload[];
+      generalNotes = validation.data.notes?.trim() || null;
+      movementTitle = validation.data.title.trim();
+    } else {
+      const validation = createStockMovementSchema.safeParse(body);
+      if (!validation.success) {
         return NextResponse.json(
-          { error: "Variação inválida ou não pertence a este produto." },
+          { error: "Dados inválidos: " + validation.error.issues[0].message },
           { status: 400 },
         );
       }
-    } else if (variantId) {
-      return NextResponse.json(
-        { error: "Este produto não possui variações." },
-        { status: 400 },
-      );
+      itemsToProcess = [validation.data as ItemPayload];
+      movementTitle = validation.data.title.trim();
     }
 
-    const movement = await prisma.$transaction(async (tx) => {
-      let prevStock = 0;
-      let newStock = 0;
-
-      if (variantId) {
-        const currentVariant = await tx.productVariant.findUniqueOrThrow({
-          where: { id: variantId },
-        });
-        prevStock = Number(currentVariant.stock ?? 0);
-
-        if (type === "ENTRY") {
-          newStock = prevStock + quantity;
-        } else if (type === "OUT") {
-          newStock = prevStock - quantity;
-        } else if (type === "ADJUSTMENT") {
-          newStock = quantity;
-        }
-
-        await tx.productVariant.update({
-          where: { id: variantId },
-          data: { stock: newStock },
-        });
-      } else {
-        const currentProduct = await tx.product.findUniqueOrThrow({
-          where: { id: productId },
-        });
-        prevStock = Number(currentProduct.stock ?? 0);
-
-        if (type === "ENTRY") {
-          newStock = prevStock + quantity;
-        } else if (type === "OUT") {
-          newStock = prevStock - quantity;
-        } else if (type === "ADJUSTMENT") {
-          newStock = quantity;
-        }
-
-        await tx.product.update({
-          where: { id: productId },
-          data: { stock: newStock },
-        });
-      }
-
-      const created = await tx.stockMovement.create({
-        data: {
+    // Pré-validação de cada produto no contexto multi-tenant
+    for (const item of itemsToProcess) {
+      const product = await prisma.product.findFirst({
+        where: {
+          id: item.productId,
           lojaId: auth.user.lojaId,
-          type,
-          productId,
-          variantId: variantId || null,
-          quantity,
-          previousStock: prevStock,
-          resultStock: newStock,
-          notes: notes?.trim() || null,
-          userId: auth.user.id,
+          deletedAt: null,
         },
         include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-              barcode: true,
-            },
-          },
-          variant: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-              barcode: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+          variants: {
+            where: { deletedAt: null },
           },
         },
       });
 
-      return created;
+      if (!product) {
+        return NextResponse.json(
+          { error: `Produto ID ${item.productId} não encontrado ou não pertence a esta loja.` },
+          { status: 404 },
+        );
+      }
+
+      const hasVariants = product.variants && product.variants.length > 0;
+      if (hasVariants) {
+        if (!item.variantId) {
+          return NextResponse.json(
+            {
+              error: `O produto "${product.name}" possui variações. Selecione uma variação para cada movimentação.`,
+            },
+            { status: 400 },
+          );
+        }
+
+        const variant = product.variants.find((v) => v.id === item.variantId);
+        if (!variant) {
+          return NextResponse.json(
+            { error: `Variação inválida para o produto "${product.name}".` },
+            { status: 400 },
+          );
+        }
+      } else if (item.variantId) {
+        return NextResponse.json(
+          { error: `O produto "${product.name}" não possui variações.` },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Executa a transação atômica para todos os itens
+    const createdMovements = await prisma.$transaction(async (tx) => {
+      const results = [];
+
+      for (const item of itemsToProcess) {
+        let prevStock = 0;
+        let newStock = 0;
+
+        if (item.variantId) {
+          const currentVariant = await tx.productVariant.findUniqueOrThrow({
+            where: { id: item.variantId },
+          });
+          prevStock = Number(currentVariant.stock ?? 0);
+
+          if (item.type === "ENTRY") {
+            newStock = prevStock + item.quantity;
+          } else if (item.type === "OUT") {
+            newStock = prevStock - item.quantity;
+          } else if (item.type === "ADJUSTMENT") {
+            newStock = item.quantity;
+          }
+
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: newStock },
+          });
+        } else {
+          const currentProduct = await tx.product.findUniqueOrThrow({
+            where: { id: item.productId },
+          });
+          prevStock = Number(currentProduct.stock ?? 0);
+
+          if (item.type === "ENTRY") {
+            newStock = prevStock + item.quantity;
+          } else if (item.type === "OUT") {
+            newStock = prevStock - item.quantity;
+          } else if (item.type === "ADJUSTMENT") {
+            newStock = item.quantity;
+          }
+
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: newStock },
+          });
+        }
+
+        const finalNotes = item.notes?.trim() || generalNotes || null;
+
+        const created = await tx.stockMovement.create({
+          data: {
+            lojaId: auth.user.lojaId,
+            title: movementTitle,
+            type: item.type,
+            productId: item.productId,
+            variantId: item.variantId || null,
+            quantity: item.quantity,
+            previousStock: prevStock,
+            resultStock: newStock,
+            notes: finalNotes,
+            userId: auth.user.id,
+          },
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                barcode: true,
+              },
+            },
+            variant: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                barcode: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        });
+
+        results.push(created);
+      }
+
+      return results;
     });
 
-    await createAuditLog({
-      action: "STOCK_ENTRY",
-      entity: "StockMovement",
-      entityId: movement.id,
-      details: {
-        type: movement.type,
-        productId: movement.productId,
-        productName: movement.product?.name,
-        variantId: movement.variantId,
-        variantName: movement.variant?.name,
-        quantity: Number(movement.quantity),
-        previousStock: Number(movement.previousStock),
-        resultStock: Number(movement.resultStock),
-        notes: movement.notes,
-      },
-      userId: auth.user.id,
-      lojaId: auth.user.lojaId,
-    });
+    // Registra logs de auditoria para cada item
+    for (const mov of createdMovements) {
+      await createAuditLog({
+        action: "STOCK_ENTRY",
+        entity: "StockMovement",
+        entityId: mov.id,
+        details: {
+          type: mov.type,
+          productId: mov.productId,
+          productName: mov.product?.name,
+          variantId: mov.variantId,
+          variantName: mov.variant?.name,
+          quantity: Number(mov.quantity),
+          previousStock: Number(mov.previousStock),
+          resultStock: Number(mov.resultStock),
+          notes: mov.notes,
+        },
+        userId: auth.user.id,
+        lojaId: auth.user.lojaId,
+      });
+    }
+
+    const serialized = createdMovements.map((mov) => ({
+      ...mov,
+      quantity: Number(mov.quantity),
+      previousStock: Number(mov.previousStock),
+      resultStock: Number(mov.resultStock),
+    }));
+
+    if (!isBatch) {
+      return NextResponse.json(serialized[0], { status: 201 });
+    }
 
     return NextResponse.json(
       {
-        ...movement,
-        quantity: Number(movement.quantity),
-        previousStock: Number(movement.previousStock),
-        resultStock: Number(movement.resultStock),
+        count: serialized.length,
+        items: serialized,
       },
       { status: 201 },
     );

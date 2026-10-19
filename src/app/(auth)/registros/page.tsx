@@ -420,17 +420,19 @@ export default function RegistrosPage() {
         </div>
       )}
 
-      {/* Paginação unificada acima da listagem */}
-      <TablePagination
-        pageIndex={page - 1}
-        pageSize={40}
-        totalFiltered={totalCount}
-        pageCount={totalPages}
-        canPreviousPage={page > 1 && !loading}
-        canNextPage={page < totalPages && !loading}
-        onPreviousPage={() => fetchLogs(page - 1)}
-        onNextPage={() => fetchLogs(page + 1)}
-      />
+      {/* Paginação Mobile (acima da listagem) */}
+      <div className="md:hidden">
+        <TablePagination
+          pageIndex={page - 1}
+          pageSize={40}
+          totalFiltered={totalCount}
+          pageCount={totalPages}
+          canPreviousPage={page > 1 && !loading}
+          canNextPage={page < totalPages && !loading}
+          onPreviousPage={() => fetchLogs(page - 1)}
+          onNextPage={() => fetchLogs(page + 1)}
+        />
+      </div>
 
       {/* Lista Principal de Registros (Ocupa 100% da visualização livre) */}
       <Card className="border shadow-xs overflow-hidden">
@@ -551,6 +553,20 @@ export default function RegistrosPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Paginação Desktop (abaixo da lista) */}
+      <div className="hidden md:block mt-4">
+        <TablePagination
+          pageIndex={page - 1}
+          pageSize={40}
+          totalFiltered={totalCount}
+          pageCount={totalPages}
+          canPreviousPage={page > 1 && !loading}
+          canNextPage={page < totalPages && !loading}
+          onPreviousPage={() => fetchLogs(page - 1)}
+          onNextPage={() => fetchLogs(page + 1)}
+        />
+      </div>
 
       {/* FILTROS HÍBRIDOS: Drawer no celular e Dialog no PC */}
       {(() => {

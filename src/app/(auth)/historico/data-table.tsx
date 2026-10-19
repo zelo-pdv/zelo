@@ -408,17 +408,19 @@ export function SalesDataTable({
         </div>
       </div>
 
-      {/* Paginação unificada acima da listagem */}
-      <TablePagination
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        totalFiltered={totalFiltered}
-        pageCount={table.getPageCount()}
-        canPreviousPage={table.getCanPreviousPage()}
-        canNextPage={table.getCanNextPage()}
-        onPreviousPage={() => table.previousPage()}
-        onNextPage={() => table.nextPage()}
-      />
+      {/* Paginação Mobile (acima da listagem) */}
+      <div className="md:hidden">
+        <TablePagination
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          totalFiltered={totalFiltered}
+          pageCount={table.getPageCount()}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+        />
+      </div>
 
       {/* Listagem Mobile com visual de tabela/card */}
       <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
@@ -622,6 +624,20 @@ export function SalesDataTable({
             </div>
           </CardContent>
         </Card>
+
+        {/* Paginação Desktop (abaixo da tabela) */}
+        <div className="hidden md:block mt-4">
+          <TablePagination
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            totalFiltered={totalFiltered}
+            pageCount={table.getPageCount()}
+            canPreviousPage={table.getCanPreviousPage()}
+            canNextPage={table.getCanNextPage()}
+            onPreviousPage={() => table.previousPage()}
+            onNextPage={() => table.nextPage()}
+          />
+        </div>
       </div>
     </div>
   );

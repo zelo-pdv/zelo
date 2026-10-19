@@ -308,7 +308,10 @@ model StockMovement {
   quantity      Decimal           @db.Decimal(10, 3)
   previousStock Decimal           @db.Decimal(10, 3)
   resultStock   Decimal           @db.Decimal(10, 3)
+  title         String            @default("Movimentação de Estoque")
   notes         String?
+  isReverted    Boolean           @default(false)
+  revertedAt    DateTime?
   
   productId     String
   product       Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -327,6 +330,7 @@ model StockMovement {
   @@index([lojaId])
   @@index([lojaId, createdAt])
   @@index([lojaId, type])
+  @@index([isReverted])
   @@index([productId])
   @@index([variantId])
   @@index([userId])

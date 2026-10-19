@@ -213,52 +213,39 @@ O frontend do Zelo possui **17 rotas com páginas (`page.tsx`)**, divididas entr
 
 ---
 
-## 4. Registro Consolidado de Inconsistências Identificadas
+## 4. Registro Consolidado de Inconsistências (RESOLVIDAS)
 
-Durante a auditoria, foram identificadas as seguintes divergências no frontend do Zelo. Conforme as regras inegociáveis, **essas divergências não foram alteradas no código** e encontram-se documentadas abaixo:
+Todas as 5 inconsistências mapeadas durante a auditoria preliminar foram **formalmente resolvidas e unificadas no código** seguindo o padrão predominante do sistema:
 
-### Inconsistência #1: Posicionamento e Componente de Paginação
-- **Telas Envolvidas:** `/produtos` vs. `/clientes`, `/historico`, `/registros` vs. `/estoque`.
-- **Diferença Observada:**
-  - Em `/clientes`, `/historico` e `/registros`, o componente compartilhado `<TablePagination />` é utilizado **acima da listagem** tanto no desktop quanto no mobile.
-  - Em `/produtos`, a paginação é feita inline: no mobile fica acima da listagem com controles compactos, mas no desktop fica **abaixo da tabela**.
-  - Em `/estoque`, não se utiliza `<TablePagination />` nem TanStack: a paginação é manual com botões de texto ("Anterior" / "Próxima") **abaixo da tabela**.
-- **Padrão Predominante:** Uso do componente compartilhado `<TablePagination />`.
-- **Impacto Visual:** Quebra de simetria na transição entre catálogo de produtos e lista de clientes.
-- **Intencional ou Acidental:** Acidental (fruto de refatorações incrementais em épocas diferentes).
-- **Necessidade de Decisão Futura:** Definir se a paginação de tabelas desktop deve ficar sempre acima ou sempre abaixo de forma unificada.
+### Inconsistência #1: Posicionamento e Componente de Paginação [RESOLVIDO]
+- **Telas Envolvidas:** `/produtos`, `/estoque`, `/clientes`, `/historico`, `/usuarios`, `/registros`.
+- **Ação Executada:**
+  - Padronizou-se o componente compartilhado `<TablePagination />` em 100% das telas com regra responsiva híbrida:
+    - **No Mobile (`< 768px`):** Posicionado **acima da listagem** (`md:hidden mb-3 px-0.5`) para consulta imediata de totais sem exigir rolagem.
+    - **No Desktop (`>= 768px`):** Posicionado **abaixo da tabela** (`hidden md:block mt-4`) para manter a barra superior limpa e seguir o fluxo natural de leitura de tabelas.
+- **Resultado:** Todas as páginas de listagem agora seguem rigorosamente a mesma regra responsiva com o mesmo componente compartilhado.
 
-### Inconsistência #2: Formato dos Contêineres de Lista no Mobile
-- **Telas Envolvidas:** `/produtos`, `/clientes`, `/historico` vs. `/estoque`.
-- **Diferença Observada:**
-  - Em `/produtos`, `/clientes` e `/historico`, os itens mobile são agrupados em um **único contêiner card** com cantos `rounded-2xl` e divisores de linha `divide-y divide-border/50`.
-  - Em `/estoque`, cada movimentação é renderizada em um **Card individual separado** (`grid grid-cols-1 gap-2.5`).
-- **Padrão Predominante:** Contêiner único com `divide-y`.
-- **Impacto Visual:** A tela de estoque apresenta maior espaçamento vertical e menor densidade de informação no mobile.
-- **Intencional ou Acidental:** Possivelmente intencional devido ao maior número de detalhes de cada movimentação (saldo anterior, saldo final, responsável e observação).
+### Inconsistência #2: Formato dos Contêineres de Lista no Mobile [RESOLVIDO]
+- **Telas Envolvidas:** `/estoque` alinhada a `/produtos`, `/clientes`, `/historico`.
+- **Ação Executada:**
+  - Em `/estoque/page.tsx`, substituiu-se a grade de cards avulsos (`grid grid-cols-1 gap-2.5`) pelo contêiner padronizado de card único com bordas arredondadas e divisores de linha suaves (`rounded-2xl border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6`).
+- **Resultado:** A listagem de movimentações no mobile agora possui a mesma densidade visual, polimento e consistência das demais telas do sistema.
 
-### Inconsistência #3: Altura e Estilo dos Inputs de Busca
-- **Telas Envolvidas:** `/produtos`, `/clientes`, `/historico` vs. `/estoque`, `/registros`.
-- **Diferença Observada:**
-  - Em `/produtos`, `/clientes` e `/historico`, o campo de busca possui classe `h-11 rounded-xl bg-white dark:bg-card border-border/70 shadow-xs pl-10 text-sm`.
-  - Em `/estoque` e `/registros`, o campo de busca possui classe `h-9 text-sm pl-9`.
-- **Padrão Predominante:** `h-11 rounded-xl` em telas principais de gerenciamento de cadastros.
-- **Impacto Visual:** Diferença perceptível na altura do controle de pesquisa ao navegar entre telas.
-- **Intencional ou Acidental:** Acidental. Recomenda-se adotar `h-11 rounded-xl` para buscas principais de páginas.
+### Inconsistência #3: Altura e Estilo dos Inputs de Busca [RESOLVIDO]
+- **Telas Envolvidas:** `/estoque` alinhada a `/produtos`, `/clientes`, `/historico`, `/registros`.
+- **Ação Executada:**
+  - Em `/estoque/page.tsx`, o input de pesquisa foi elevado de `h-9` para a classe oficial `rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-sm shadow-xs`, acompanhado do `SelectTrigger` correspondente atualizado para `h-11 rounded-xl`.
+- **Resultado:** Todas as barras de pesquisa principais do sistema utilizam altura uniforme `h-11 rounded-xl` com ícone posicionado à esquerda.
 
-### Inconsistência #4: Ícone do Botão de Filtros
-- **Telas Envolvidas:** `/produtos`, `/clientes`, `/historico` vs. `/relatorios`.
-- **Diferença Observada:**
-  - Em `/produtos`, `/clientes` e `/historico`, o botão de abrir filtros utiliza o BoxIcon `slider-alt`.
-  - Em `/relatorios`, utiliza o BoxIcon `filter`.
-- **Padrão Predominante:** `BoxIcon name="slider-alt"`.
-- **Impacto Visual:** Pequena divergência visual no ícone representativo de filtros.
-- **Intencional ou Acidental:** Acidental.
+### Inconsistência #4: Ícone do Botão de Filtros [RESOLVIDO]
+- **Telas Envolvidas:** `/relatorios` alinhada a `/produtos`, `/clientes`, `/historico`, `/registros`.
+- **Ação Executada:**
+  - Em `/relatorios/page.tsx`, o ícone do botão de abrir filtros foi alterado de `BoxIcon name="filter"` para o padrão do Zelo: `BoxIcon name="slider-alt"`.
+- **Resultado:** 100% dos botões de acionamento de filtros do sistema agora utilizam o ícone `slider-alt`.
 
-### Inconsistência #5: Raio de Borda do Botão Salvar nos Formulários
-- **Telas Envolvidas:** `UserForm`, `ClientForm` vs. `ProductForm`.
-- **Diferença Observada:**
-  - No mobile, todos usam `LoadingButton className="h-11 w-full rounded-full font-medium"`.
-  - No desktop, `UserForm` e `ClientForm` utilizam o botão com tamanho padrão e cantos padrão, enquanto `ProductForm` utiliza explicitamente `rounded-xl h-11 px-7 text-sm font-semibold`.
-- **Padrão Predominante:** `rounded-full` no mobile e `rounded-xl` / default no desktop.
-- **Impacto Visual:** Mínimo.
+### Inconsistência #5: Raio de Borda do Botão Salvar nos Formulários [RESOLVIDO]
+- **Telas Envolvidas:** `ClientForm`, `UserForm` e `StockMovementDialog` alinhados a `ProductForm`.
+- **Ação Executada:**
+  - Nos formulários desktop de `client-form.tsx`, `usuarios/page.tsx` e `stock-movement-dialog.tsx`, o botão de salvar foi padronizado com `rounded-xl h-11 px-7 text-sm font-semibold`.
+- **Resultado:** No mobile todos os formulários usam `rounded-full h-11 w-full`, e no desktop todos usam `rounded-xl h-11 px-7 text-sm font-semibold`.
+

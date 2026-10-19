@@ -157,10 +157,24 @@ export default function ExemploListPage() {
         </div>
       </div>
 
-      {/* 3. VISUALIZAÇÃO DE DADOS (Híbrida: Tabela no Desktop / Cards no Mobile) */}
+      {/* 3. PAGINAÇÃO MOBILE (Acima da listagem) */}
+      <div className="md:hidden">
+        <TablePagination
+          pageIndex={page}
+          pageSize={10}
+          totalFiltered={50}
+          pageCount={5}
+          canPreviousPage={page > 1}
+          canNextPage={page < 5}
+          onPreviousPage={() => setPage(page - 1)}
+          onNextPage={() => setPage(page + 1)}
+        />
+      </div>
+
+      {/* 4. VISUALIZAÇÃO DE DADOS (Híbrida: Tabela no Desktop / Cards no Mobile) */}
       {isMobile ? (
         // Mobile: Card com divisão interna suave
-        <Card className="rounded-2xl border border-border/70 bg-card p-0 overflow-hidden divide-y divide-border/50 shadow-xs">
+        <Card className="rounded-2xl border border-border/70 bg-card p-0 overflow-hidden divide-y divide-border/50 shadow-xs mb-6">
           {/* Mapeamento de itens mobile */}
         </Card>
       ) : (
@@ -183,14 +197,19 @@ export default function ExemploListPage() {
         </Card>
       )}
 
-      {/* 4. PAGINAÇÃO PADRONIZADA */}
-      <TablePagination
-        pageIndex={page}
-        pageSize={10}
-        pageCount={5}
-        totalItems={50}
-        onPageChange={(newPage) => setPage(newPage)}
-      />
+      {/* 5. PAGINAÇÃO DESKTOP (Abaixo da tabela) */}
+      <div className="hidden md:block mt-4">
+        <TablePagination
+          pageIndex={page}
+          pageSize={10}
+          totalFiltered={50}
+          pageCount={5}
+          canPreviousPage={page > 1}
+          canNextPage={page < 5}
+          onPreviousPage={() => setPage(page - 1)}
+          onNextPage={() => setPage(page + 1)}
+        />
+      </div>
 
       {/* 5. AÇÃO PRIMÁRIA MOBILE (FAB Flutuante) */}
       <Can module="novo-modulo" action="Adicionar">
