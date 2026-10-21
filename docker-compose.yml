@@ -1,0 +1,66 @@
+# ==============================================================================
+# Zelo - Docker Compose (Stack Completa: Aplicação + Banco PostgreSQL)
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Banco de Dados PostgreSQL
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: zelo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-zelo}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zelo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zelo-network
+
+  # ----------------------------------------------------------------------------
+  # Aplicação Zelo (Next.js 15)
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zelo-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-zelo}?schema=public
+      - DIRECT_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-zelo}?schema=public
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET:-zelo-secret-jwt-token-production-change-me}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - zelo-network
+
+# ------------------------------------------------------------------------------
+# Volumes Persistentes e Redes
+# ------------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    name: zelo_postgres_data
+
+networks:
+  zelo-network:
+    name: zelo-network
+    driver: bridge

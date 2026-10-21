@@ -19,6 +19,8 @@ pnpm dev              # Inicia o servidor de desenvolvimento
 pnpm build            # Executa o prisma generate e o build de produção do Next.js
 pnpm lint             # Executa a verificação do ESLint
 pnpm test:e2e         # Executa testes ponta a ponta
+docker compose up -d  # Sobe a stack completa (App + PostgreSQL) em containers
+docker compose down   # Para todos os containers preservando dados nos volumes
 ```
 
 ---
@@ -42,6 +44,7 @@ pnpm test:e2e         # Executa testes ponta a ponta
   - Tokens JWT assinados com `jose` e `jsonwebtoken`.
   - Hashing seguro de senhas com `bcrypt` / `bcryptjs`.
 - **PWA & Offline:** `@serwist/next` (Service Worker para cache, manifesto e instalação PWA).
+- **Containerização & Deploy:** Docker (Multi-stage build com Node 20 Alpine) e Docker Compose para orquestração de ambiente local e produção.
 - **Manipulação de Documentos e Mídia:**
   - Exportação e relatórios: `jspdf`, `jspdf-autotable`, `papaparse` (CSV).
   - Captura e comprovantes: `html-to-image`.
@@ -191,5 +194,52 @@ src/
 > 6. **Ícones:** Uso exclusivo de Boxicons via `<BoxIcon name="..." />`.
 > 7. **RBAC:** Proteção mandatória com `<Can module="..." action="...">` ou `usePermissions`.
 > 8. **Paginação Híbrida:** `<TablePagination />` acima da listagem no mobile (`md:hidden mb-3`) e abaixo da tabela no desktop (`hidden md:block mt-4`).
+
+---
+
+## 8. Diretrizes e Governança do Docker (Containerização)
+
+> [!IMPORTANT]
+> **REGRAS OBRIGATÓRIAS DE MANUTENÇÃO DO DOCKER**
+>
+> O ecossistema Zelo possui suporte oficial a containers via `Dockerfile` e `docker-compose.yml`. Sempre que o projeto evoluir, o Docker DEVE ser mantido atualizado seguindo as diretrizes abaixo:
+
+### 1. Novas Variáveis de Ambiente
+- Toda nova variável de ambiente (`process.env.<NOME>`) adicionada ao projeto DEVE ser registrada imediatamente em:
+  1. `.env.example`: com comentários explicativos e valores seguros de exemplo.
+  2. `docker-compose.yml`: na seção `environment` do serviço `app` (ex.: `NOVA_VAR: ${NOVA_VAR:-valor_padrao}`).
+  3. `Dockerfile`: se a variável for estritamente necessária durante o build do Next.js (via declaração `ARG` e `ENV` no estágio `builder`).
+
+### 2. Novas Dependências e Pacotes
+- Ao instalar novas dependências com `pnpm add <pacote>`, certifique-se de commitar o arquivo `pnpm-lock.yaml`.
+- Caso a nova dependência requeira compilação nativa em C/C++ (node-gyp, bindings nativos de C++), garanta que os pacotes de compilação necessários estejam presentes no estágio `deps` do `Dockerfile` (`apk add --no-cache python3 make g++`).
+
+### 3. Modelos e Migrações do Prisma
+- No arquivo `prisma/schema.prisma`, mantenha sempre a diretiva `binaryTargets` configurada:
+  ```prisma
+  generator client {
+    provider      = "prisma-client-js"
+    output        = "../src/prisma"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  }
+  ```
+  Isso assegura que o Prisma gere as bibliotecas de engine corretas tanto para o sistema host (Windows/macOS) quanto para a distribuição Linux Alpine utilizada no container.
+- Para rodar migrações do banco dentro do container Docker em produção:
+  ```bash
+  docker compose exec app npx prisma migrate deploy
+  ```
+
+### 4. Configuração do Next.js (Standalone)
+- Mantenha no `next.config.ts`:
+  ```ts
+  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
+  ```
+  Isso viabiliza a geração de build standalone ultra-leve dentro do container Linux sem disparar conflitos de links simbólicos (`EPERM`) no ambiente host Windows.
+
+### 5. Boas Práticas do Dockerfile Multi-Stage
+- **Segurança (Non-Root):** O container de produção final nunca roda como `root`. Ele executa sob o usuário `nextjs` e grupo `nodejs` (UID/GID 1001).
+- **Cache de Camadas:** Nunca copie todo o código-fonte antes de rodar `pnpm install`. Copie apenas `package.json`, `pnpm-lock.yaml` e a pasta `prisma/` para que alterações em páginas ou componentes não invalidem o cache de dependências do Docker.
+- **Tamanho da Imagem:** O container final deve conter apenas o output `.next/standalone`, as pastas `public/` e `.next/static/`, mantendo a imagem compacta (< 200MB) e de rápido deployment.
+
 
 

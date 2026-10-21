@@ -26,6 +26,7 @@ Diferente de um PDV tradicional de varejo — que foca em caixas físicos, cupon
 - **Estilização:** [Tailwind CSS](https://tailwindcss.com/) com componentes shadcn/ui
 - **Autenticação & Segurança:** Autenticação via JWT cookies com isolamento de Multi-Tenancy nativo via Middleware (`proxy.ts`).
 - **PWA & Offline:** Service Worker e Web Manifest para instalação como aplicativo mobile.
+- **Containerização:** Docker & Docker Compose com multi-stage build otimizado para produção.
 - **Testes:** [Vitest](https://vitest.dev/) para suíte de testes de regressão E2E.
 
 ---
@@ -43,11 +44,47 @@ O Zelo conta com uma camada rigorosa de proteção e isolamento:
 
 ## ⚙️ Instalação e Execução
 
-### Pré-requisitos
+### Opção 1: Execução com Docker e Docker Compose (Recomendado)
+
+O Docker empacota a aplicação Next.js e provisiona um banco PostgreSQL local automaticamente em containers isolados.
+
+#### Pré-requisitos:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e em execução.
+
+#### Passos:
+1. Clone o repositório e configure as variáveis de ambiente:
+   ```bash
+   git clone <repo>
+   cd zelo
+   cp .env.example .env
+   ```
+
+2. Suba toda a stack (Next.js + PostgreSQL) em containers:
+   ```bash
+   docker compose up --build -d
+   ```
+
+3. Aplique as migrações e seed do banco no container:
+   ```bash
+   docker compose exec app npx prisma migrate deploy
+   ```
+
+4. Acesse o sistema em [http://localhost:3000](http://localhost:3000).
+
+5. Para parar os containers:
+   ```bash
+   docker compose down
+   ```
+
+---
+
+### Opção 2: Execução Local com Node.js e pnpm
+
+#### Pré-requisitos:
 - Node.js >= 18
 - [pnpm](https://pnpm.io/) instalado
 
-### Passos
+#### Passos:
 
 1. Clone o repositório e instale as dependências:
    ```bash

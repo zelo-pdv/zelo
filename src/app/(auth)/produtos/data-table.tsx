@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   type ColumnDef,
@@ -277,7 +276,6 @@ export function ProductsDataTable({
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
-
           {onImportClick && (
             <Button
               type="button"

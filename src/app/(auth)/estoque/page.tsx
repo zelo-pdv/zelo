@@ -38,7 +38,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { MobileActionFab } from "@/components/ui/mobile-action-fab";
@@ -248,7 +247,10 @@ export default function EstoquePage() {
         <div className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
           <BoxIcon name="info-circle" className="text-xl shrink-0" />
           <p className="flex-1">
-            O <strong>controle de estoque está desativado</strong> nas configurações da sua loja. O registro de novas movimentações está temporariamente desabilitado, mas você pode consultar todo o histórico abaixo.
+            O <strong>controle de estoque está desativado</strong> nas
+            configurações da sua loja. O registro de novas movimentações está
+            temporariamente desabilitado, mas você pode consultar todo o
+            histórico abaixo.
           </p>
         </div>
       )}
@@ -682,21 +684,25 @@ export default function EstoquePage() {
         }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reverter Movimentação de Estoque?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Reverter Movimentação de Estoque?
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 text-xs sm:text-sm">
               <p>
                 Esta ação gerará automaticamente uma{" "}
                 <strong>nova movimentação contrária</strong> para restaurar o
                 saldo anterior da movimentação{" "}
                 <strong>
-                  &ldquo;{movementToRevert?.title || "Movimentação de Estoque"}&rdquo;
+                  &ldquo;{movementToRevert?.title || "Movimentação de Estoque"}
+                  &rdquo;
                 </strong>{" "}
                 referente ao produto{" "}
                 <strong>
                   &ldquo;{movementToRevert?.product?.name}
                   {movementToRevert?.variant
                     ? ` (${movementToRevert.variant.name})`
-                    : ""}&rdquo;
+                    : ""}
+                  &rdquo;
                 </strong>
                 .
               </p>
