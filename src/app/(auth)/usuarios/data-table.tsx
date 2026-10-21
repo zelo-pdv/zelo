@@ -32,13 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserTableData } from "./columns";
 import type { AppUser } from "./page";
@@ -211,26 +205,26 @@ export function UsersDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                   Grupo de Acesso
                 </Label>
-                <Select
+                <Combobox
                   value={groupFilter}
-                  onValueChange={(val) => setGroupFilter(val || "Todos")}
-                >
-                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
-                    <SelectValue placeholder="Todos os grupos">
-                      {groupFilter === "Todos" ? "Todos os grupos" : groupFilter}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Todos" className="text-xs">
-                      Todos os grupos
-                    </SelectItem>
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={g.name} className="text-xs">
-                        {g.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onValueChange={(val) => {
+                    const finalVal = val || "Todos";
+                    setGroupFilter(finalVal);
+                    table
+                      .getColumn("accessGroup")
+                      ?.setFilterValue(
+                        finalVal === "Todos" ? undefined : finalVal,
+                      );
+                  }}
+                  options={[
+                    { value: "Todos", label: "Todos os grupos" },
+                    ...groups.map((g) => ({ value: g.name, label: g.name })),
+                  ]}
+                  placeholder="Todos os grupos"
+                  searchPlaceholder="Buscar grupo..."
+                  size="sm"
+                  triggerClassName="w-full h-8 rounded-md text-xs justify-between"
+                />
               </div>
 
               <div className="pt-2">

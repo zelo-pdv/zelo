@@ -11,13 +11,7 @@ import {
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Drawer,
   DrawerContent,
@@ -603,22 +597,16 @@ export default function RegistrosPage() {
               <label className="text-xs font-semibold text-foreground">
                 Período
               </label>
-              <Select
+              <Combobox
                 value={datePreset}
                 onValueChange={(val) => {
                   if (val) setDatePreset(val);
-                }}>
-                <SelectTrigger className="h-9 text-xs w-full">
-                  <SelectValue placeholder="Selecione o período" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_PRESETS.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs">
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+                options={DATE_PRESETS.map((p) => ({ value: p.id, label: p.label }))}
+                placeholder="Selecione o período"
+                searchPlaceholder="Buscar período..."
+                triggerClassName="h-9 text-xs w-full"
+              />
 
               {datePreset === "personalizado" && (
                 <div className="grid grid-cols-2 gap-2 pt-2">
@@ -653,25 +641,19 @@ export default function RegistrosPage() {
               <label className="text-xs font-semibold text-foreground">
                 Quem realizou a ação
               </label>
-              <Select
+              <Combobox
                 value={selectedUser}
                 onValueChange={(val) => {
                   if (val) setSelectedUser(val);
-                }}>
-                <SelectTrigger className="h-9 text-xs w-full">
-                  <SelectValue placeholder="Todos os operadores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos" className="text-xs">
-                    Todos os operadores
-                  </SelectItem>
-                  {storeUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id} className="text-xs">
-                      {u.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+                options={[
+                  { value: "todos", label: "Todos os operadores" },
+                  ...storeUsers.map((u) => ({ value: u.id, label: u.name })),
+                ]}
+                placeholder="Todos os operadores"
+                searchPlaceholder="Buscar operador..."
+                triggerClassName="h-9 text-xs w-full"
+              />
             </div>
 
             {/* Filtros de Vendas (Status e Pagamento) */}
@@ -685,56 +667,43 @@ export default function RegistrosPage() {
                   <span className="text-[11px] text-muted-foreground block mb-1">
                     Status da Venda
                   </span>
-                  <Select
+                  <Combobox
                     value={saleStatus}
                     onValueChange={(val) => {
                       if (val) setSaleStatus(val);
-                    }}>
-                    <SelectTrigger className="h-9 text-xs w-full">
-                      <SelectValue placeholder="Todos os status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos" className="text-xs">
-                        Todos os status
-                      </SelectItem>
-                      <SelectItem value="PAGO" className="text-xs">
-                        Vendas Pagas
-                      </SelectItem>
-                      <SelectItem value="PENDENTE" className="text-xs">
-                        Vendas Pendentes / Fiado
-                      </SelectItem>
-                      <SelectItem value="CANCELADO" className="text-xs">
-                        Vendas Canceladas
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    }}
+                    options={[
+                      { value: "todos", label: "Todos os status" },
+                      { value: "PAGO", label: "Vendas Pagas" },
+                      { value: "PENDENTE", label: "Vendas Pendentes / Fiado" },
+                      { value: "CANCELADO", label: "Vendas Canceladas" },
+                    ]}
+                    placeholder="Todos os status"
+                    searchPlaceholder="Buscar status..."
+                    triggerClassName="h-9 text-xs w-full"
+                  />
                 </div>
 
                 <div>
                   <span className="text-[11px] text-muted-foreground block mb-1">
                     Forma de Pagamento
                   </span>
-                  <Select
+                  <Combobox
                     value={paymentMethod}
                     onValueChange={(val) => {
                       if (val) setPaymentMethod(val);
-                    }}>
-                    <SelectTrigger className="h-9 text-xs w-full">
-                      <SelectValue placeholder="Todas as formas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos" className="text-xs">
-                        Todas as formas
-                      </SelectItem>
-                      {Object.entries(PAYMENT_METHOD_NAMES).map(
-                        ([key, label]) => (
-                          <SelectItem key={key} value={key} className="text-xs">
-                            {label}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
+                    }}
+                    options={[
+                      { value: "todos", label: "Todas as formas" },
+                      ...Object.entries(PAYMENT_METHOD_NAMES).map(([key, label]) => ({
+                        value: key,
+                        label,
+                      })),
+                    ]}
+                    placeholder="Todas as formas"
+                    searchPlaceholder="Buscar forma..."
+                    triggerClassName="h-9 text-xs w-full"
+                  />
                 </div>
               </div>
             </div>

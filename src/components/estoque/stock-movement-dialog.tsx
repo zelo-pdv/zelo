@@ -20,13 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -360,7 +354,7 @@ export function StockMovementDialog({
         {/* Seletor de Produto */}
         <div className="space-y-1.5">
           <Label className="text-xs font-medium">Produto</Label>
-          <Select
+          <Combobox
             value={selectedProductId}
             onValueChange={(val) => {
               if (val) {
@@ -368,43 +362,38 @@ export function StockMovementDialog({
                 setSelectedVariantId("");
               }
             }}
-            disabled={loadingProducts || busy}>
-            <SelectTrigger className="w-full h-9 rounded-lg text-xs sm:text-sm justify-between">
-              <SelectValue placeholder="Selecione o produto">
-                {currentProduct ? currentProduct.name : "Selecione o produto"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {products.map((p) => (
-                <SelectItem key={p.id} value={p.id} className="text-xs">
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={products.map((p) => ({
+              value: p.id,
+              label: p.name,
+              keywords: [p.code || "", p.category?.name || ""],
+            }))}
+            placeholder="Selecione o produto"
+            searchPlaceholder="Buscar produto..."
+            emptyText="Nenhum produto encontrado"
+            disabled={loadingProducts || busy}
+            triggerClassName="w-full h-9 rounded-lg text-xs sm:text-sm justify-between"
+          />
         </div>
 
         {/* Seletor de Variação (se houver) */}
         {hasVariants && (
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Variação do Produto</Label>
-            <Select
+            <Combobox
               value={selectedVariantId}
               onValueChange={(val) => {
                 if (val) setSelectedVariantId(val);
               }}
-              disabled={busy}>
-              <SelectTrigger className="w-full h-9 rounded-lg text-xs sm:text-sm justify-between">
-                <SelectValue placeholder="Selecione a variação" />
-              </SelectTrigger>
-              <SelectContent>
-                {currentActiveVariants.map((v: any) => (
-                  <SelectItem key={v.id} value={v.id} className="text-xs">
-                    {v.name} (atual: {Number(v.stock ?? 0)} un)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={currentActiveVariants.map((v: any) => ({
+                value: v.id,
+                label: `${v.name} (atual: ${Number(v.stock ?? 0)} un)`,
+              }))}
+              placeholder="Selecione a variação"
+              searchPlaceholder="Buscar variação..."
+              emptyText="Nenhuma variação encontrada"
+              disabled={busy}
+              triggerClassName="w-full h-9 rounded-lg text-xs sm:text-sm justify-between"
+            />
           </div>
         )}
 
@@ -412,27 +401,21 @@ export function StockMovementDialog({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Tipo de operação</Label>
-            <Select
+            <Combobox
               value={selectedType}
               onValueChange={(val) => {
                 if (val) setSelectedType(val as any);
               }}
-              disabled={busy}>
-              <SelectTrigger className="w-full h-9 rounded-lg text-xs sm:text-sm justify-between">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ENTRY" className="text-xs">
-                  Entrada (+)
-                </SelectItem>
-                <SelectItem value="OUT" className="text-xs">
-                  Saída (-)
-                </SelectItem>
-                <SelectItem value="ADJUSTMENT" className="text-xs">
-                  Ajuste de saldo (=)
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "ENTRY", label: "Entrada (+)" },
+                { value: "OUT", label: "Saída (-)" },
+                { value: "ADJUSTMENT", label: "Ajuste de saldo (=)" },
+              ]}
+              placeholder="Selecione o tipo"
+              searchPlaceholder="Buscar tipo de operação..."
+              disabled={busy}
+              triggerClassName="w-full h-9 rounded-lg text-xs sm:text-sm justify-between"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -618,16 +601,18 @@ export function StockMovementDialog({
         blur
         preventEscapeClose={true}
         disablePointerDismissal={true}>
-        <DrawerContent className="p-4 max-h-[92vh]">
-          <DrawerHeader className="px-0 text-center">
+        <DrawerContent className="p-4 max-h-[92vh] flex flex-col">
+          <DrawerHeader className="px-0 text-center shrink-0">
             <DrawerTitle className="text-center">
               Nova Movimentação de Estoque
             </DrawerTitle>
           </DrawerHeader>
 
-          {ContentBody}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1">
+            {ContentBody}
+          </div>
 
-          <div className="flex flex-col gap-2 pt-3 w-full">
+          <div className="shrink-0 flex flex-col gap-2 pt-3 w-full border-t border-border mt-auto">
             <LoadingButton
               loading={busy}
               disabled={!isReadyToSubmit}
@@ -659,13 +644,15 @@ export function StockMovementDialog({
       preventEscapeClose={true}
       disablePointerDismissal={true}>
       <DialogContent className="sm:max-w-xl md:max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle>Nova Movimentação de Estoque</DialogTitle>
         </DialogHeader>
 
-        {ContentBody}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+          {ContentBody}
+        </div>
 
-        <DialogFooter>{ActionButtons}</DialogFooter>
+        <DialogFooter className="shrink-0">{ActionButtons}</DialogFooter>
       </DialogContent>
     </Dialog>
   );

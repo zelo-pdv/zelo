@@ -33,13 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { currency } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -1015,21 +1009,18 @@ export default function NovaVenda() {
 
                     <div className="mb-4 flex flex-col gap-2">
                       <Label>Forma de pagamento</Label>
-                      <Select
+                      <Combobox
                         value={payment}
                         onValueChange={(v) => setPayment(v as PaymentMethod)}
-                      >
-                        <SelectTrigger className="w-2/5 border-primary/50 focus:ring-primary/50 bg-primary/3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {paymentMethodsList.map((pm) => (
-                            <SelectItem key={pm} value={pm}>
-                              {PAYMENT_LABELS[pm] || pm.replace(/_/g, " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={paymentMethodsList.map((pm) => ({
+                          value: pm,
+                          label: PAYMENT_LABELS[pm] || pm.replace(/_/g, " "),
+                        }))}
+                        placeholder="Selecione a forma"
+                        searchPlaceholder="Buscar forma..."
+                        className="w-2/5"
+                        triggerClassName="w-full border-primary/50 focus:ring-primary/50 bg-primary/3"
+                      />
                     </div>
 
                     <div className="mb-4">
@@ -1331,21 +1322,18 @@ export default function NovaVenda() {
 
               <div className="mb-3 flex flex-col gap-2">
                 <Label required>Forma de pagamento</Label>
-                <Select
+                <Combobox
                   value={payment}
                   onValueChange={(v) => setPayment(v as PaymentMethod)}
-                >
-                  <SelectTrigger className="w-2/5 border-primary/50 focus:ring-primary/50 bg-primary/3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethodsList.map((pm) => (
-                      <SelectItem key={pm} value={pm}>
-                        {PAYMENT_LABELS[pm] || pm.replace(/_/g, " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={paymentMethodsList.map((pm) => ({
+                    value: pm,
+                    label: PAYMENT_LABELS[pm] || pm.replace(/_/g, " "),
+                  }))}
+                  placeholder="Selecione a forma"
+                  searchPlaceholder="Buscar forma..."
+                  className="w-2/5"
+                  triggerClassName="w-full border-primary/50 focus:ring-primary/50 bg-primary/3"
+                />
               </div>
 
               <div className="mb-3">

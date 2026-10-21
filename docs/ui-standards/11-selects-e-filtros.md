@@ -1,12 +1,43 @@
-# 11 - Selects e Controles de Filtros
+# 11 - Comboboxes, Selects e Controles de Filtros
 
-Este documento estabelece os padrões visuais e funcionais para componentes de seleção (`Select`), painéis de filtros avançados, chips de filtros ativos e controles temporais no **Zelo**.
+Este documento estabelece os padrões visuais e funcionais para componentes de seleção com busca (`Combobox`), seleção simples (`Select`), painéis de filtros avançados, chips de filtros ativos e controles temporais no **Zelo**.
 
 ---
 
-## 1. O Componente Select Compartilhado
+## 1. O Componente Combobox Compartilhado (Padrão Oficial do Sistema)
 
-O Zelo adota uma implementação personalizada de **`Select`** baseada em `@base-ui/react/select` (`src/components/ui/select.tsx`).
+O Zelo adota o **`Combobox`** (`src/components/ui/combobox.tsx`) como padrão oficial de seleção em todo o ecossistema (formulários, filtros e tabelas). Ele é construído sobre o padrão Shadcn UI compondo `Popover` (`@base-ui/react/popover`) e `Command` (`cmdk` / `src/components/ui/command.tsx`).
+
+### 1.1. Anatomia e Uso
+```tsx
+import { Combobox } from "@/components/ui/combobox";
+
+<Combobox
+  value={value}
+  onValueChange={setValue}
+  options={[
+    { value: "opcao-1", label: "Opção 1" },
+    { value: "opcao-2", label: "Opção 2" },
+  ]}
+  placeholder="Selecione uma opção"
+  searchPlaceholder="Buscar opção..."
+  emptyText="Nenhum resultado encontrado."
+  triggerClassName="w-full h-9 rounded-lg text-xs sm:text-sm justify-between"
+/>
+```
+
+### 1.2. Características Técnicas:
+- **Gatilho com Indicador de Rotação:** BoxIcon `chevron-down` com opacidade sutil (`opacity-70 text-muted-foreground`), que rotaciona 180° quando o popup está aberto.
+- **Campo de Busca Integrado:** Input `CommandInput` no topo do menu com BoxIcon `search`, permitindo filtrar opções instantaneamente por texto, valor ou palavras-chave (`keywords`).
+- **Indicador de Item Selecionado:** BoxIcon `check` exibido à direita da opção selecionada.
+- **Ancoragem e Responsividade:** Ancorado via `Popover` com Floating UI (`w-(--anchor-width)`), auto-flip em viewports reduzidos e altura limitada a `min(var(--available-height), 15rem)` com rolagem interna suave.
+- **Tamanhos e Variantes:** Suporta `size="default"` (`h-8` ou `h-9` nos formulários) e `size="sm"` (`h-8` compacto em filtros de tabelas).
+
+---
+
+## 2. O Componente Select Legado
+
+Para cenários onde um dropdown simples sem campo de busca for necessário, o projeto mantém `src/components/ui/select.tsx` baseado em `@base-ui/react/select`.
 
 ### 1.1. Anatomia do Select
 ```tsx

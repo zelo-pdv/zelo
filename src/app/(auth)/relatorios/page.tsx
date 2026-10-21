@@ -11,13 +11,7 @@ import {
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Drawer,
   DrawerContent,
@@ -1073,22 +1067,16 @@ export default function RelatoriosPage() {
               <label className="text-xs font-semibold text-foreground">
                 Período de Análise
               </label>
-              <Select
+              <Combobox
                 value={datePreset}
                 onValueChange={(val) => {
                   if (val) setDatePreset(val);
-                }}>
-                <SelectTrigger className="h-9 text-xs w-full">
-                  <SelectValue placeholder="Selecione o período" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_PRESETS.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs">
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+                options={DATE_PRESETS.map((p) => ({ value: p.id, label: p.label }))}
+                placeholder="Selecione o período"
+                searchPlaceholder="Buscar período..."
+                triggerClassName="h-9 text-xs w-full"
+              />
 
               {datePreset === "personalizado" && (
                 <div className="grid grid-cols-2 gap-2 pt-2">
@@ -1125,25 +1113,19 @@ export default function RelatoriosPage() {
                 <label className="text-xs font-semibold text-foreground">
                   Categoria do Produto
                 </label>
-                <Select
+                <Combobox
                   value={selectedCategory}
                   onValueChange={(val) => {
                     if (val) setSelectedCategory(val);
-                  }}>
-                  <SelectTrigger className="h-9 text-xs w-full">
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos" className="text-xs">
-                      Todas as categorias
-                    </SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs">
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  }}
+                  options={[
+                    { value: "todos", label: "Todas as categorias" },
+                    ...categories.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  placeholder="Todas as categorias"
+                  searchPlaceholder="Buscar categoria..."
+                  triggerClassName="h-9 text-xs w-full"
+                />
               </div>
             )}
 

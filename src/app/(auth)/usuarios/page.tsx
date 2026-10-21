@@ -37,13 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getUserColumns } from "./columns";
 import { UsersDataTable } from "./data-table";
@@ -525,27 +519,19 @@ function UserForm({
       <div className="sm:col-span-2 flex gap-4">
         <div className="flex-1 space-y-2">
           <Label required>Tipo de acesso</Label>
-          <Select
+          <Combobox
             value={form.groupId}
-            onValueChange={(v) => setForm({ ...form, groupId: v as string })}>
-            <SelectTrigger className={requiredInputClass}>
-              <SelectValue placeholder="Selecione um grupo">
-                {groups.find((g) => g.id === form.groupId)?.name}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {selectableGroups.length === 0 && (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                  Nenhum grupo ativo cadastrado.
-                </div>
-              )}
-              {selectableGroups.map((g) => (
-                <SelectItem key={g.id} value={g.id!}>
-                  {g.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={(v) => setForm({ ...form, groupId: v })}
+            options={selectableGroups.map((g) => ({
+              value: g.id!,
+              label: g.name,
+              keywords: [g.description || ""],
+            }))}
+            placeholder="Selecione um grupo"
+            searchPlaceholder="Buscar grupo de acesso..."
+            emptyText="Nenhum grupo ativo cadastrado."
+            triggerClassName={requiredInputClass}
+          />
         </div>
 
         <div className="shrink-0 space-y-2">

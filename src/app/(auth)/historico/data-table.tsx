@@ -30,13 +30,7 @@ import {
 import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { currency, dateTime } from "@/lib/format";
 import { textIncludes } from "@/lib/search";
@@ -284,28 +278,21 @@ export function SalesDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Forma de Pagamento
                 </Label>
-                <Select
+                <Combobox
                   value={paymentFilter}
                   onValueChange={(val) => setPaymentFilter(val || "all")}
-                >
-                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
-                    <SelectValue placeholder="Todas as formas">
-                      {paymentFilter === "all"
-                        ? "Todas as formas"
-                        : getPaymentLabel(paymentFilter)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">
-                      Todas as formas
-                    </SelectItem>
-                    {paymentMethodsList.map((pm) => (
-                      <SelectItem key={pm} value={pm} className="text-xs">
-                        {getPaymentLabel(pm)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "all", label: "Todas as formas" },
+                    ...paymentMethodsList.map((pm) => ({
+                      value: pm,
+                      label: getPaymentLabel(pm),
+                    })),
+                  ]}
+                  placeholder="Todas as formas"
+                  searchPlaceholder="Buscar forma..."
+                  size="sm"
+                  triggerClassName="w-full h-8 rounded-md text-xs justify-between"
+                />
               </div>
 
               {/* Item #19: Filtro por Período */}

@@ -18,13 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Switch } from "@/components/ui/switch";
 import { BoxIcon } from "@/components/ui/box-icon";
@@ -306,26 +300,15 @@ export function ProductForm({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Categoria</Label>
-                    <Select
+                    <Combobox
                       value={form.categoryId || ""}
-                      onValueChange={(v) => updateField("categoryId", v)}>
-                      <SelectTrigger
-                        className={cn(inputClass, "w-full justify-between")}>
-                        <SelectValue placeholder="Selecione uma categoria">
-                          {
-                            categories.find((c) => c.id === form.categoryId)
-                              ?.name
-                          }
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(v) => updateField("categoryId", v)}
+                      options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                      placeholder="Selecione uma categoria"
+                      searchPlaceholder="Buscar categoria..."
+                      emptyText="Nenhuma categoria encontrada."
+                      triggerClassName={cn(inputClass, "w-full justify-between")}
+                    />
                   </div>
 
                   <div className="space-y-2">

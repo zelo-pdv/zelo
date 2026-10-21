@@ -11,13 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { PaymentMethod, PAYMENT_LABELS, SaleStatus, type Product } from "@/types";
 import { getLoja, updateLoja, deleteLoja, purgeLojaData } from "@/services/loja.service";
@@ -990,7 +984,7 @@ function SalesConfigSection() {
               </p>
             </div>
             <div className="shrink-0 w-full sm:w-auto">
-              <Select
+              <Combobox
                 value={salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO}
                 onValueChange={async (val) => {
                   if (!val) return;
@@ -1002,24 +996,14 @@ function SalesConfigSection() {
                     toast.error(err?.message || "Erro ao salvar forma de pagamento padrão.");
                   }
                 }}
-              >
-                <SelectTrigger className="h-9 w-full sm:w-[220px] justify-between">
-                  <SelectValue placeholder="Selecione a forma padrão">
-                    {PAYMENT_LABELS[
-                      (salesSettings.defaultPaymentMethod || PaymentMethod.DINHEIRO) as PaymentMethod
-                    ] ||
-                      salesSettings.defaultPaymentMethod?.replace(/_/g, " ") ||
-                      PAYMENT_LABELS[PaymentMethod.DINHEIRO]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((pm) => (
-                    <SelectItem key={pm} value={pm}>
-                      {PAYMENT_LABELS[pm] || pm.replace(/_/g, " ")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={paymentMethods.map((pm) => ({
+                  value: pm,
+                  label: PAYMENT_LABELS[pm] || pm.replace(/_/g, " "),
+                }))}
+                placeholder="Selecione a forma padrão"
+                searchPlaceholder="Buscar forma de pagamento..."
+                triggerClassName="h-9 w-full sm:w-[220px] justify-between"
+              />
             </div>
           </div>
 
@@ -1072,7 +1056,7 @@ function SalesConfigSection() {
               </p>
             </div>
             <div className="shrink-0 w-full sm:w-auto">
-              <Select
+              <Combobox
                 value={salesSettings.defaultSaleStatus || SaleStatus.PAGO}
                 onValueChange={async (val) => {
                   if (!val) return;
@@ -1086,19 +1070,14 @@ function SalesConfigSection() {
                     toast.error(err?.message || "Erro ao salvar status padrão da venda.");
                   }
                 }}
-              >
-                <SelectTrigger className="h-9 w-full sm:w-[160px] justify-between">
-                  <SelectValue placeholder="Selecione o status padrão">
-                    {(salesSettings.defaultSaleStatus || SaleStatus.PAGO) === SaleStatus.PAGO
-                      ? "Pago"
-                      : "Pendente"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SaleStatus.PAGO}>Pago</SelectItem>
-                  <SelectItem value={SaleStatus.PENDENTE}>Pendente</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: SaleStatus.PAGO, label: "Pago" },
+                  { value: SaleStatus.PENDENTE, label: "Pendente" },
+                ]}
+                placeholder="Selecione o status padrão"
+                searchPlaceholder="Buscar status..."
+                triggerClassName="h-9 w-full sm:w-[160px] justify-between"
+              />
             </div>
           </div>
         </CardContent>

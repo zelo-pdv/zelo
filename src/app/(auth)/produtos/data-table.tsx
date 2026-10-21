@@ -18,13 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { textIncludes } from "@/lib/search";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -230,7 +224,7 @@ export function ProductsDataTable({
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                   Categorias
                 </Label>
-                <Select
+                <Combobox
                   value={categoryFilter}
                   onValueChange={(val) => {
                     const finalVal = val || "Todas";
@@ -239,25 +233,16 @@ export function ProductsDataTable({
                       ?.setFilterValue(
                         finalVal === "Todas" ? undefined : finalVal,
                       );
-                  }}>
-                  <SelectTrigger className="w-full h-8 rounded-md text-xs justify-between">
-                    <SelectValue placeholder="Todas as categorias">
-                      {categoryFilter === "Todas"
-                        ? "Todas as categorias"
-                        : categoryFilter}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Todas" className="text-xs">
-                      Todas as categorias
-                    </SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c} className="text-xs">
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  }}
+                  options={[
+                    { value: "Todas", label: "Todas as categorias" },
+                    ...categories.map((c) => ({ value: c, label: c })),
+                  ]}
+                  placeholder="Todas as categorias"
+                  searchPlaceholder="Buscar categoria..."
+                  size="sm"
+                  triggerClassName="w-full h-8 rounded-md text-xs justify-between"
+                />
               </div>
 
               <div className="pt-2">

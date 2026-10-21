@@ -60,6 +60,11 @@ export default function EstoquePage() {
     trackStock: false,
   };
   const trackStock = productsSettings.trackStock ?? false;
+  const fetchSettings = useSettingsStore((s) => s.fetchSettings);
+
+  useEffect(() => {
+    void fetchSettings();
+  }, [fetchSettings]);
 
   const [movements, setMovements] = useState<StockMovementFrontend[]>([]);
   const [loading, setLoading] = useState(true);
