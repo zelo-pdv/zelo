@@ -4,16 +4,26 @@ import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
 import { cn } from "@/lib/utils"
+import { textIncludes } from "@/lib/search"
 import { BoxIcon } from "@/components/ui/box-icon"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 function Command({
   className,
+  filter,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
       data-slot="command"
+      filter={
+        filter ??
+        ((value, search, keywords) => {
+          if (textIncludes(value, search)) return 1
+          if (keywords && keywords.some((kw) => textIncludes(kw, search))) return 1
+          return 0
+        })
+      }
       className={cn(
         "flex h-full w-full flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground",
         className

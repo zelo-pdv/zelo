@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   Popover,
@@ -32,6 +33,38 @@ export function getUserColumns({
   currentUserId,
 }: UserActions): ColumnDef<UserTableData>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center pl-2 w-8">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Selecionar todos os usuários da página"
+          />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const u = row.original;
+        const isProtected = u.isFirstUser || u.id === currentUserId;
+        return (
+          <div className="flex items-center justify-center pl-2 w-8" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={row.getIsSelected()}
+              disabled={!row.getCanSelect() || isProtected}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label={`Selecionar ${u.name}`}
+            />
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+      size: 36,
+    },
     {
       accessorKey: "name",
       header: "Usuário",

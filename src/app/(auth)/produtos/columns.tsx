@@ -4,6 +4,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
 import {
@@ -60,6 +61,34 @@ export function getProductColumns({
   const hasAnyAction = canEdit || canDelete;
 
   const columns: ColumnDef<ProductFrontend>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center pl-2 w-8">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Selecionar todos os produtos da página"
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center pl-2 w-8" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Selecionar ${row.original.name}`}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 36,
+    },
     {
       accessorKey: "name",
 

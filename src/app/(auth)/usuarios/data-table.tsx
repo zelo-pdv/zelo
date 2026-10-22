@@ -32,7 +32,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DataTableBulkActions } from "@/components/ui/data-table-bulk-actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Combobox } from "@/components/ui/combobox";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserTableData } from "./columns";
 import type { AppUser } from "./page";
@@ -49,6 +62,10 @@ export function UsersDataTable({
   onToggleActive,
   onDelete,
   currentUserId,
+  canEdit = true,
+  canDelete = false,
+  onBulkToggleActive,
+  onBulkDelete,
 }: {
   columns: ColumnDef<UserTableData>[];
   data: UserTableData[];
@@ -61,6 +78,10 @@ export function UsersDataTable({
   onToggleActive?: (id: string) => void;
   onDelete?: (u: AppUser) => void;
   currentUserId?: string;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  onBulkToggleActive?: (users: UserTableData[], active: boolean) => Promise<void>;
+  onBulkDelete?: (users: UserTableData[]) => Promise<void>;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -68,13 +89,18 @@ export function UsersDataTable({
   const [groupFilter, setGroupFilter] = useState("Todos");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter, columnFilters },
+    state: { globalFilter, columnFilters, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: (row) => !row.original.isFirstUser,
     globalFilterFn: (row, _id, value) => {
       if (!value) return true;
       const u = row.original;
@@ -281,6 +307,25 @@ export function UsersDataTable({
         />
       </div>
 
+      {/* Selecionar todos no mobile */}
+      <div className="md:hidden flex items-center justify-between px-2 mb-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2 cursor-pointer font-medium select-none">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
+          />
+          <span>Selecionar todos da página</span>
+        </label>
+        {table.getSelectedRowModel().rows.length > 0 && (
+          <span className="font-semibold text-primary">
+            {table.getSelectedRowModel().rows.length} selecionado{table.getSelectedRowModel().rows.length > 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
       {/* Listagem Mobile com visual de tabela/card */}
       <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
         {rows.length ? (
@@ -293,7 +338,24 @@ export function UsersDataTable({
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
+                onClick={() => {
+                  if (!isSelfOrFirst) row.toggleSelected();
+                }}
+                className={cn(
+                  "p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20 cursor-pointer",
+                  row.getIsSelected() && "bg-primary/5 dark:bg-primary/10"
+                )}>
+                {!isSelfOrFirst ? (
+                  <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={row.getIsSelected()}
+                      onCheckedChange={(val) => row.toggleSelected(!!val)}
+                      aria-label={`Selecionar ${u.name}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-4 shrink-0" />
+                )}
                 {/* Dados do Usuário */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">
@@ -499,6 +561,80 @@ export function UsersDataTable({
           />
         </div>
       </div>
+      {/* Barra de Ações em Massa */}
+      <DataTableBulkActions
+        selectedCount={table.getSelectedRowModel().rows.length}
+        onClearSelection={() => table.resetRowSelection()}
+        actions={[
+          ...(canEdit && onBulkToggleActive
+            ? [
+                {
+                  label: "Ativar",
+                  icon: "check-circle",
+                  onClick: async () => {
+                    const selected = table.getSelectedRowModel().rows.map((r) => r.original);
+                    await onBulkToggleActive(selected, true);
+                    table.resetRowSelection();
+                  },
+                },
+                {
+                  label: "Desativar",
+                  icon: "x-circle",
+                  onClick: async () => {
+                    const selected = table.getSelectedRowModel().rows.map((r) => r.original);
+                    await onBulkToggleActive(selected, false);
+                    table.resetRowSelection();
+                  },
+                },
+              ]
+            : []),
+          ...(canDelete && onBulkDelete
+            ? [
+                {
+                  label: "Excluir",
+                  icon: "trash",
+                  variant: "destructive" as const,
+                  onClick: () => setShowBulkDeleteConfirm(true),
+                },
+              ]
+            : []),
+        ]}
+      />
+
+      {/* Confirmação de Exclusão em Massa */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Excluir {table.getSelectedRowModel().rows.length} usuário(s) selecionado(s)?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação removerá o acesso dos usuários selecionados à loja.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground cursor-pointer"
+              disabled={isBulkDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsBulkDeleting(true);
+                try {
+                  const selected = table.getSelectedRowModel().rows.map((r) => r.original);
+                  await onBulkDelete?.(selected);
+                  table.resetRowSelection();
+                  setShowBulkDeleteConfirm(false);
+                } finally {
+                  setIsBulkDeleting(false);
+                }
+              }}
+            >
+              {isBulkDeleting ? "Excluindo..." : "Confirmar Exclusão"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

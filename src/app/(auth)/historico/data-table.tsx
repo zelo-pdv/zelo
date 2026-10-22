@@ -30,6 +30,18 @@ import {
 import { SaleStatusBadge } from "@/components/sale-status-badge";
 import { Separator } from "@/components/ui/separator";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DataTableBulkActions } from "@/components/ui/data-table-bulk-actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Combobox } from "@/components/ui/combobox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { currency, dateTime } from "@/lib/format";
@@ -45,6 +57,8 @@ export function SalesDataTable({
   onVoucher,
   onEdit,
   onCancel,
+  onBulkCancel,
+  onBulkExport,
 }: {
   columns: ColumnDef<Sale>[];
   data: Sale[];
@@ -52,6 +66,8 @@ export function SalesDataTable({
   onVoucher?: (s: Sale) => void;
   onEdit?: (s: Sale) => void;
   onCancel?: (s: Sale) => void;
+  onBulkCancel?: (sales: Sale[]) => Promise<void>;
+  onBulkExport?: (sales: Sale[]) => void;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -63,6 +79,9 @@ export function SalesDataTable({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [showBulkCancelConfirm, setShowBulkCancelConfirm] = useState(false);
+  const [isBulkCancelling, setIsBulkCancelling] = useState(false);
 
   const salesSettings = useSettingsStore((s) => s.sales);
   const paymentMethodsList = salesSettings?.paymentMethods?.length
@@ -144,8 +163,9 @@ export function SalesDataTable({
   const table = useReactTable({
     data: filteredData,
     columns,
-    state: { globalFilter },
+    state: { globalFilter, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
     globalFilterFn: (row, _id, value) => {
       if (!value) return true;
       const clientName = row.original.clientName || "Consumidor Final";
@@ -409,6 +429,25 @@ export function SalesDataTable({
         />
       </div>
 
+      {/* Selecionar todos no mobile */}
+      <div className="md:hidden flex items-center justify-between px-2 mb-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2 cursor-pointer font-medium select-none">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
+          />
+          <span>Selecionar todas as vendas da página</span>
+        </label>
+        {table.getSelectedRowModel().rows.length > 0 && (
+          <span className="font-semibold text-primary">
+            {table.getSelectedRowModel().rows.length} selecionada{table.getSelectedRowModel().rows.length > 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
       {/* Listagem Mobile com visual de tabela/card */}
       <div className="md:hidden rounded-2xl bg-white dark:bg-card border border-border/70 shadow-xs divide-y divide-border/50 overflow-hidden mb-6">
         {rows.length ? (
@@ -626,6 +665,70 @@ export function SalesDataTable({
           />
         </div>
       </div>
+      {/* Barra de Ações em Massa */}
+      <DataTableBulkActions
+        selectedCount={table.getSelectedRowModel().rows.length}
+        onClearSelection={() => table.resetRowSelection()}
+        actions={[
+          ...(onBulkExport
+            ? [
+                {
+                  label: "Exportar",
+                  icon: "download",
+                  onClick: () => {
+                    const selected = table.getSelectedRowModel().rows.map((r) => r.original);
+                    onBulkExport(selected);
+                  },
+                },
+              ]
+            : []),
+          ...(onBulkCancel
+            ? [
+                {
+                  label: "Cancelar Vendas",
+                  icon: "x-circle",
+                  variant: "destructive" as const,
+                  onClick: () => setShowBulkCancelConfirm(true),
+                },
+              ]
+            : []),
+        ]}
+      />
+
+      {/* Confirmação de Cancelamento em Massa */}
+      <AlertDialog open={showBulkCancelConfirm} onOpenChange={setShowBulkCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Cancelar {table.getSelectedRowModel().rows.length} venda(s) selecionada(s)?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação cancelará as vendas selecionadas elegíveis e restabelecerá as quantidades dos produtos no estoque automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkCancelling}>Fechar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground cursor-pointer"
+              disabled={isBulkCancelling}
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsBulkCancelling(true);
+                try {
+                  const selected = table.getSelectedRowModel().rows.map((r) => r.original);
+                  await onBulkCancel?.(selected);
+                  table.resetRowSelection();
+                  setShowBulkCancelConfirm(false);
+                } finally {
+                  setIsBulkCancelling(false);
+                }
+              }}
+            >
+              {isBulkCancelling ? "Cancelando..." : "Confirmar Cancelamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

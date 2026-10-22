@@ -1,5 +1,7 @@
 "use client";
 
+import Papa from "papaparse";
+
 import { ProductForm } from "@/components/produtos/product-form";
 
 import { useEffect, useMemo, useState } from "react";
@@ -136,6 +138,80 @@ export default function ProdutosPage() {
     [categories],
   );
 
+  const handleBulkToggleActive = async (selected: ProductFrontend[], active: boolean) => {
+    try {
+      if (selected.length === 0) return;
+      const results = await Promise.allSettled(
+        selected.map((p) => productsService.update(p.id, { active }))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? selected[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setProducts((prev) =>
+        prev.map((p) => (successfulIds.has(p.id) ? { ...p, active } : p))
+      );
+
+      toast.success(
+        `${successfulIds.size} produto(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+      );
+      notifyLocalSync("products");
+    } catch {
+      toast.error("Erro ao alterar status dos produtos em massa.");
+    }
+  };
+
+  const handleBulkDelete = async (selected: ProductFrontend[]) => {
+    try {
+      if (selected.length === 0) return;
+      const results = await Promise.allSettled(
+        selected.map((p) => productsService.remove(p.id))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? selected[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setProducts((prev) => prev.filter((p) => !successfulIds.has(p.id)));
+      toast.success(`${successfulIds.size} produto(s) excluído(s) com sucesso!`);
+      notifyLocalSync("products");
+    } catch {
+      toast.error("Erro ao excluir produtos em massa.");
+    }
+  };
+
+  const handleBulkExport = (selected: ProductFrontend[]) => {
+    try {
+      const csvData = selected.map((p) => ({
+        Nome: p.name,
+        Categoria: p.category?.name || "Sem categoria",
+        "Preço de Custo": p.costPrice || 0,
+        "Preço de Venda": p.salePrice || 0,
+        Estoque: p.stock || 0,
+        Código: p.code || "",
+        Status: p.active ? "Ativo" : "Inativo",
+      }));
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `produtos_selecionados_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`${selected.length} produto(s) exportado(s) com sucesso!`);
+    } catch {
+      toast.error("Erro ao exportar produtos selecionados.");
+    }
+  };
+
   const handleToggleActive = async (product: ProductFrontend) => {
     try {
       const newStatus = !(product.active ?? true);
@@ -192,6 +268,9 @@ export default function ProdutosPage() {
         trackStock={productsSettings.trackStock ?? false}
         canEdit={can("produtos", "Editar")}
         canDelete={can("produtos", "Excluir")}
+        onBulkToggleActive={handleBulkToggleActive}
+        onBulkDelete={handleBulkDelete}
+        onBulkExport={handleBulkExport}
       />
 
       <MobileActionFab

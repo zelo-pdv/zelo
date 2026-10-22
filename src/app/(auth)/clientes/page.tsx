@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { clientsService } from "@/services/clients.service";
 import { salesService } from "@/services/sales.service";
-import { getClientColumns } from "./columns";
+import { getClientColumns, type ClientTableData } from "./columns";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { ClientsDataTable } from "./data-table";
 import { ClientForm } from "@/components/clients/client-form";
@@ -91,6 +91,61 @@ export default function ClientesPage() {
     });
   }, [clients, sales]);
 
+  const handleBulkToggleActive = async (selected: ClientTableData[], active: boolean) => {
+    try {
+      const validClients = selected.filter(
+        (c) => c.name.trim().toLowerCase() !== "consumidor final"
+      );
+      if (validClients.length === 0) return;
+
+      const results = await Promise.allSettled(
+        validClients.map((c) => clientsService.update(c.id, { active }))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? validClients[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setClients((prev) =>
+        prev.map((c) => (successfulIds.has(c.id) ? { ...c, active } : c))
+      );
+
+      toast.success(
+        `${successfulIds.size} cliente(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+      );
+      notifyLocalSync("clients");
+    } catch {
+      toast.error("Erro ao alterar status dos clientes em massa.");
+    }
+  };
+
+  const handleBulkDelete = async (selected: ClientTableData[]) => {
+    try {
+      const validClients = selected.filter(
+        (c) => c.name.trim().toLowerCase() !== "consumidor final"
+      );
+      if (validClients.length === 0) return;
+
+      const results = await Promise.allSettled(
+        validClients.map((c) => clientsService.remove(c.id))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? validClients[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setClients((prev) => prev.filter((c) => !successfulIds.has(c.id)));
+      toast.success(`${successfulIds.size} cliente(s) excluído(s) com sucesso!`);
+      notifyLocalSync("clients");
+    } catch {
+      toast.error("Erro ao excluir clientes em massa.");
+    }
+  };
+
   const handleToggleActive = async (client: ClientWithAddress) => {
     try {
       const newStatus = !(client.active ?? true);
@@ -164,6 +219,8 @@ export default function ClientesPage() {
         onToggleActive={handleToggleActive}
         canEdit={can("clientes", "Editar")}
         canDelete={can("clientes", "Excluir")}
+        onBulkToggleActive={handleBulkToggleActive}
+        onBulkDelete={handleBulkDelete}
       />
 
       {can("clientes", "Adicionar") && (

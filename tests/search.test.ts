@@ -145,3 +145,29 @@ describe("textEquals (Comparação exata insensível a acentos)", () => {
     expect(textEquals("Calçado", "Calçados")).toBe(false);
   });
 });
+
+describe("Command / Combobox filter com normalização de acentos e maiúsculas/minúsculas", () => {
+  const commandFilter = (value: string, search: string, keywords?: string[]) => {
+    if (textIncludes(value, search)) return 1;
+    if (keywords && keywords.some((kw) => textIncludes(kw, search))) return 1;
+    return 0;
+  };
+
+  it("deve encontrar itens com acento mesmo pesquisando sem acento", () => {
+    expect(commandFilter("Maçã Verde", "maca")).toBe(1);
+    expect(commandFilter("Pão de Queijo", "pao")).toBe(1);
+    expect(commandFilter("Açaí 500ml", "acai")).toBe(1);
+    expect(commandFilter("Café Expresso", "cafe")).toBe(1);
+  });
+
+  it("deve encontrar itens sem acento pesquisando com acento", () => {
+    expect(commandFilter("Maca Verde", "maçã")).toBe(1);
+    expect(commandFilter("Cafe Expresso", "café")).toBe(1);
+  });
+
+  it("deve encontrar itens utilizando keywords com insensibilidade a acentos", () => {
+    expect(commandFilter("Item 1", "fruta", ["Maçã", "Alimentação"])).toBe(0);
+    expect(commandFilter("Item 1", "maca", ["Maçã", "Alimentação"])).toBe(1);
+    expect(commandFilter("Item 1", "alimentacao", ["Maçã", "Alimentação"])).toBe(1);
+  });
+});

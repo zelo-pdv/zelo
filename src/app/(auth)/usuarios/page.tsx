@@ -39,7 +39,7 @@ import { GlobalLoader } from "@/components/ui/global-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Combobox } from "@/components/ui/combobox";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getUserColumns } from "./columns";
+import { getUserColumns, type UserTableData } from "./columns";
 import { UsersDataTable } from "./data-table";
 import { maskPhone } from "@/lib/masks";
 
@@ -111,7 +111,7 @@ const userFormSchema = z.object({
 
 export default function UsuariosPage() {
   const router = useRouter();
-  const { user: currentUser, isAdmin } = usePermissions();
+  const { user: currentUser, isAdmin, can } = usePermissions();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [groups, setGroups] = useState<AccessGroupDTO[]>([]);
   const [lojaOwnerId, setLojaOwnerId] = useState<string>("");
@@ -182,6 +182,57 @@ export default function UsuariosPage() {
     });
   }, [users, groups, lojaOwnerId]);
 
+  const handleBulkToggleActive = async (selected: UserTableData[], active: boolean) => {
+    try {
+      const validUsers = selected.filter((u) => !u.isFirstUser && u.id !== currentUser?.sub);
+      if (validUsers.length === 0) return;
+
+      const results = await Promise.allSettled(
+        validUsers.map((u) => usersService.update(u.id, { active }))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? validUsers[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setUsers((prev) =>
+        prev.map((u) => (successfulIds.has(u.id) ? { ...u, active } : u))
+      );
+
+      toast.success(
+        `${successfulIds.size} usuário(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+      );
+      notifyLocalSync("users");
+    } catch {
+      toast.error("Erro ao alterar status dos usuários em massa.");
+    }
+  };
+
+  const handleBulkDelete = async (selected: UserTableData[]) => {
+    try {
+      const validUsers = selected.filter((u) => !u.isFirstUser && u.id !== currentUser?.sub);
+      if (validUsers.length === 0) return;
+
+      const results = await Promise.allSettled(
+        validUsers.map((u) => usersService.delete(u.id))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? validUsers[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setUsers((prev) => prev.filter((u) => !successfulIds.has(u.id)));
+      toast.success(`${successfulIds.size} usuário(s) excluído(s) com sucesso!`);
+      notifyLocalSync("users");
+    } catch {
+      toast.error("Erro ao excluir usuários em massa.");
+    }
+  };
+
   const handleToggleStatus = async (id: string) => {
     try {
       const user = users.find((u) => u.id === id);
@@ -238,6 +289,8 @@ export default function UsuariosPage() {
         onToggleActive={handleToggleStatus}
         onDelete={(u) => setDeleting(u as AppUser)}
         currentUserId={currentUser?.sub}
+        onBulkToggleActive={can("usuarios", "Editar") ? handleBulkToggleActive : undefined}
+        onBulkDelete={isAdmin ? handleBulkDelete : undefined}
       />
 
       <MobileActionFab

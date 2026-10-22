@@ -1,5 +1,7 @@
 "use client";
 
+import Papa from "papaparse";
+
 import { useEffect, useMemo, useState } from "react";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { toast } from "sonner";
@@ -227,6 +229,67 @@ export default function HistoricoPage() {
     }
   };
 
+  const handleBulkCancel = async (selected: Sale[]) => {
+    try {
+      const activeSales = selected.filter((s) => s.status !== "CANCELADO");
+      if (activeSales.length === 0) {
+        toast.info("Nenhuma das vendas selecionadas está ativa para cancelamento.");
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        activeSales.map((s) => apiRequest(`/sales/${s.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "CANCELADO" }),
+        }))
+      );
+
+      const successfulIds = new Set(
+        results
+          .map((res, index) => (res.status === "fulfilled" ? activeSales[index].id : null))
+          .filter(Boolean) as string[]
+      );
+
+      setSales((prev) =>
+        prev.map((s) => (successfulIds.has(s.id) ? { ...s, status: "CANCELADO" as any } : s))
+      );
+
+      toast.success(
+        `${successfulIds.size} venda(s) cancelada(s) com sucesso! O estoque foi restabelecido.`
+      );
+      notifyLocalSync("sales");
+      notifyLocalSync("products");
+    } catch {
+      toast.error("Erro ao cancelar vendas em massa.");
+    }
+  };
+
+  const handleBulkExport = (selected: Sale[]) => {
+    try {
+      const csvData = selected.map((s) => ({
+        "Número": s.saleNumber || s.id.slice(-6),
+        "Data": s.date ? new Date(s.date).toLocaleDateString("pt-BR") : "",
+        "Cliente": s.clientName || "Consumidor Final",
+        "Forma de Pagamento": s.paymentMethod || "",
+        "Status": s.status,
+        "Total (R$)": Number(s.total || 0).toFixed(2),
+      }));
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `vendas_selecionadas_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`${selected.length} venda(s) exportada(s) com sucesso!`);
+    } catch {
+      toast.error("Erro ao exportar vendas selecionadas.");
+    }
+  };
+
   const handleConfirmCancelSale = async () => {
     if (!saleToCancel) return;
     try {
@@ -315,6 +378,8 @@ export default function HistoricoPage() {
         }}
         onEdit={can("historico", "Editar") ? handleEditSale : undefined}
         onCancel={can("historico", "Editar") ? (sale) => setSaleToCancel(sale) : undefined}
+        onBulkCancel={can("historico", "Editar") ? handleBulkCancel : undefined}
+        onBulkExport={handleBulkExport}
       />
 
       {/* Modal/Drawer de Detalhes da Venda */}

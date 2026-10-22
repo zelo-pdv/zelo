@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SaleStatusBadge } from "@/components/sale-status-badge";
 import {
   Popover,
@@ -27,6 +28,34 @@ export function getSaleColumns({
   onCancel,
 }: SaleActions): ColumnDef<Sale>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center pl-2 w-8">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Selecionar todas as vendas da página"
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center pl-2 w-8" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Selecionar venda #${row.original.saleNumber || row.original.id.slice(-6)}`}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 36,
+    },
     {
       accessorKey: "clientName",
       header: "Cliente",
