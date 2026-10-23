@@ -10,6 +10,7 @@ interface MobileActionFabProps {
   onExport?: () => void;
   onConfig?: () => void;
   onImport?: () => void;
+  onCatalogImport?: () => void;
   isExporting?: boolean;
   page: "produtos" | "usuarios" | "estoque";
 }
@@ -19,13 +20,14 @@ export function MobileActionFab({
   onExport,
   onConfig,
   onImport,
+  onCatalogImport,
   isExporting,
   page,
 }: MobileActionFabProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasActions = Boolean(onAdd || onExport || onConfig || onImport);
+  const hasActions = Boolean(onAdd || onExport || onConfig || onImport || onCatalogImport);
   if (!isMobile || !hasActions) return null;
 
   return (
@@ -54,6 +56,27 @@ export function MobileActionFab({
 
         {/* Action Buttons */}
         <div className="flex flex-col items-end gap-3">
+          {/* Catalog Import Button */}
+          {onCatalogImport && (
+            <button
+              onClick={() => {
+                onCatalogImport();
+                setIsOpen(false);
+              }}
+              className={cn(
+                "flex items-center gap-3 rounded-full bg-background border border-border pr-6 pl-1.5 py-1.5 shadow-lg transition-all duration-300 pointer-events-auto cursor-pointer",
+                isOpen
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4 pointer-events-none",
+              )}
+              style={{ transitionDelay: isOpen ? "50ms" : "50ms" }}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <BoxIcon name="book-content" className="text-xl" />
+              </div>
+              <span className="text-sm font-semibold">Catálogos</span>
+            </button>
+          )}
+
           {/* Import Button */}
           {onImport && (
             <button

@@ -30,11 +30,18 @@ export async function GET(
           select: { id: true, name: true, slug: true, logoUrl: true },
         },
         products: {
+          where: {
+            curationStatus: "APPROVED",
+          },
           include: {
             globalProduct: {
               include: {
                 globalCategory: {
                   select: { id: true, name: true, icon: true },
+                },
+                variants: {
+                  where: { active: true },
+                  orderBy: [{ size: "asc" }, { colorName: "asc" }],
                 },
               },
             },

@@ -110,3 +110,20 @@ export async function getSignedCatalogUrl(
 
   return data.signedUrl;
 }
+
+export async function downloadCatalogPdf(path: string): Promise<Buffer> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET_CATALOGS)
+    .download(path);
+
+  if (error || !data) {
+    throw new Error(
+      `Falha ao baixar o PDF do catálogo (${path}): ${error?.message || "Arquivo não encontrado"}`,
+    );
+  }
+
+  const arrayBuffer = await data.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}

@@ -415,26 +415,51 @@ model GlobalCategory {
 
 enum CatalogStatus {
   DRAFT
+  CURATION
   PUBLISHED
   ARCHIVED
 }
 
-model Catalog {
-  id          String        @id @default(cuid())
-  title       String
-  brandId     String
-  brand       Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  cycle       String?
-  description String?
-  coverUrl    String?
-  pdfPath     String?
-  status      CatalogStatus @default(DRAFT)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+enum CatalogItemCurationStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  FLAGGED
+}
 
-  products    CatalogProduct[]
+enum IngestionJobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum SheetStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+model Catalog {
+  id             String                @id @default(cuid())
+  title          String
+  brandId        String
+  brand          Brand                 @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  cycle          String?
+  description    String?
+  coverUrl       String?
+  pdfPath        String?
+  status         CatalogStatus         @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  products       CatalogProduct[]
+  ingestionJobs  CatalogIngestionJob[]
 
   @@index([brandId])
   @@index([status])
@@ -443,25 +468,27 @@ model Catalog {
 }
 
 model GlobalProduct {
-  id               String          @id @default(cuid())
+  id               String                 @id @default(cuid())
   name             String
   brandId          String
-  brand            Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brand            Brand                  @relation(fields: [brandId], references: [id], onDelete: Cascade)
   globalCategoryId String?
-  globalCategory   GlobalCategory? @relation(fields: [globalCategoryId], references: [id], onDelete: SetNull)
+  globalCategory   GlobalCategory?        @relation(fields: [globalCategoryId], references: [id], onDelete: SetNull)
   barcode          String?
   referenceSku     String?
   description      String?
   imageUrl         String?
-  suggestedPrice   Decimal?        @db.Decimal(10, 2)
-  costPrice        Decimal?        @db.Decimal(10, 2)
-  active           Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  suggestedPrice   Decimal?               @db.Decimal(10, 2)
+  costPrice        Decimal?               @db.Decimal(10, 2)
+  active           Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   catalogProducts  CatalogProduct[]
   storeProducts    Product[]
+  variants         GlobalProductVariant[]
 
+  @@unique([brandId, referenceSku])
   @@index([brandId])
   @@index([globalCategoryId])
   @@index([barcode])
@@ -469,17 +496,92 @@ model GlobalProduct {
   @@index([active])
 }
 
-model CatalogProduct {
+model GlobalProductVariant {
   id              String        @id @default(cuid())
-  catalogId       String
-  catalog         Catalog       @relation(fields: [catalogId], references: [id], onDelete: Cascade)
   globalProductId String
   globalProduct   GlobalProduct @relation(fields: [globalProductId], references: [id], onDelete: Cascade)
-  pageNumber      Int?
-  cyclePrice      Decimal?      @db.Decimal(10, 2)
+  name            String
+  size            String?
+  colorName       String?
+  colorCode       String?
+  barcode         String?
+  skuSuffix       String?
+  priceOverride   Decimal?      @db.Decimal(10, 2)
+  active          Boolean       @default(true)
   createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([globalProductId, size, colorCode])
+  @@index([globalProductId])
+  @@index([barcode])
+}
+
+model CatalogProduct {
+  id               String                    @id @default(cuid())
+  catalogId        String
+  catalog          Catalog                   @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  globalProductId  String
+  globalProduct    GlobalProduct             @relation(fields: [globalProductId], references: [id], onDelete: Cascade)
+  pageNumber       Int?
+  cyclePrice       Decimal?                  @db.Decimal(10, 2)
+  regularPrice     Decimal?                  @db.Decimal(10, 2)
+  promoPrice       Decimal?                  @db.Decimal(10, 2)
+  promoMinQuantity Int?                      @default(1)
+  promoRule        String?
+  cropBox          Json?
+  cropUrl          String?
+  curationStatus   CatalogItemCurationStatus @default(PENDING_REVIEW)
+  curationNotes    String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @default(now()) @updatedAt
 
   @@unique([catalogId, globalProductId])
   @@index([catalogId])
   @@index([globalProductId])
+  @@index([curationStatus])
+}
+
+model CatalogIngestionJob {
+  id                 String                  @id @default(cuid())
+  catalogId          String
+  catalog            Catalog                 @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  status             IngestionJobStatus      @default(QUEUED)
+  totalPages         Int
+  processedPages     Int                     @default(0)
+  failedPages        Int                     @default(0)
+  totalProductsFound Int                     @default(0)
+  totalTokensUsed    Int                     @default(0)
+  estimatedCostUsd   Decimal?                @db.Decimal(10, 4)
+  currentSheet       Int?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  errorMessage       String?
+  sheets             CatalogIngestionSheet[]
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@index([catalogId])
+  @@index([status])
+}
+
+model CatalogIngestionSheet {
+  id             String              @id @default(cuid())
+  jobId          String
+  job            CatalogIngestionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sheetNumber    Int
+  editorialPages String?
+  status         SheetStatus         @default(PENDING)
+  attempts       Int                 @default(0)
+  modelUsed      String?
+  durationMs     Int?
+  inputTokens    Int?
+  outputTokens   Int?
+  extractedCount Int                 @default(0)
+  rawExtraction  Json?
+  errorMessage   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([jobId, sheetNumber])
+  @@index([jobId, status])
 }

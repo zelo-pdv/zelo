@@ -32,6 +32,7 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { MobileActionFab } from "@/components/ui/mobile-action-fab";
 import { handleExportProducts } from "@/lib/export";
 import { ProductsImportModal } from "@/components/produtos/products-import-modal";
+import { CatalogImportModal } from "@/components/produtos/catalog-import-modal";
 
 export type FormVariantState = {
   id?: string;
@@ -87,6 +88,7 @@ export default function ProdutosPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isCatalogImportOpen, setIsCatalogImportOpen] = useState(false);
 
   const [editing, setEditing] = useState<ProductFrontend | null>(null);
   const [creating, setCreating] = useState(false);
@@ -260,6 +262,7 @@ export default function ProdutosPage() {
         categories={categoryNames}
         onCreateClick={() => setCreating(true)}
         onImportClick={() => setIsImportOpen(true)}
+        onCatalogImportClick={() => setIsCatalogImportOpen(true)}
         onExportClick={handleExport}
         isExporting={isExporting}
         onEdit={setEditing}
@@ -278,11 +281,18 @@ export default function ProdutosPage() {
         onAdd={() => setCreating(true)}
         onExport={handleExport}
         onImport={() => setIsImportOpen(true)}
+        onCatalogImport={() => setIsCatalogImportOpen(true)}
         isExporting={isExporting}
       />
       <ProductsImportModal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
+      />
+      <CatalogImportModal
+        isOpen={isCatalogImportOpen}
+        onClose={() => setIsCatalogImportOpen(false)}
+        categories={categories}
+        onSuccess={() => refreshData(true)}
       />
 
       <ProductForm

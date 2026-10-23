@@ -48,9 +48,30 @@ export async function GET(req: Request) {
       orderBy: [{ createdAt: "desc" }],
     });
 
+    const catalogIds = catalogs.map((c) => c.id);
+    const approvedCounts = catalogIds.length > 0
+      ? await prisma.catalogProduct.groupBy({
+          by: ["catalogId"],
+          where: {
+            catalogId: { in: catalogIds },
+            curationStatus: "APPROVED",
+          },
+          _count: { id: true },
+        })
+      : [];
+
+    const approvedMap = new Map(
+      approvedCounts.map((ac) => [ac.catalogId, ac._count.id])
+    );
+
+    const enriched = catalogs.map((c) => ({
+      ...c,
+      approvedProductsCount: approvedMap.get(c.id) || 0,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: catalogs,
+      data: enriched,
     });
   } catch (error) {
     console.error("Erro ao listar catálogos públicos para lojista:", error);

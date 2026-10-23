@@ -64,6 +64,7 @@ interface ProductsDataTableProps {
   categories: string[];
   onCreateClick: () => void;
   onImportClick?: () => void;
+  onCatalogImportClick?: () => void;
   onExportClick?: () => void;
   isExporting?: boolean;
   onEdit?: (product: ProductFrontend) => void;
@@ -84,6 +85,7 @@ export function ProductsDataTable({
   categories,
   onCreateClick,
   onImportClick,
+  onCatalogImportClick,
   onExportClick,
   isExporting,
   onEdit,
@@ -283,6 +285,18 @@ export function ProductsDataTable({
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
+          {onCatalogImportClick && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onCatalogImportClick}
+              className="rounded-full shrink-0 gap-1.5 cursor-pointer border-primary/40 text-primary hover:bg-primary/10">
+              <BoxIcon name="book-content" className="text-base" />
+              <span>Revistas / Catálogos</span>
+            </Button>
+          )}
+
           {onImportClick && (
             <Button
               type="button"

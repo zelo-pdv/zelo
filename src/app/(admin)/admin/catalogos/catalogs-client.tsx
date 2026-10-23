@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "sonner";
 import { BoxIcon } from "@/components/ui/box-icon";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,7 @@ interface CatalogItem {
   description: string | null;
   coverUrl: string | null;
   pdfPath: string | null;
-  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  status: "DRAFT" | "CURATION" | "PUBLISHED" | "ARCHIVED";
   startDate: string | null;
   endDate: string | null;
   createdAt: string;
@@ -74,14 +75,18 @@ export function CatalogsClient() {
 
   // Modal de Criação / Edição
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCatalog, setEditingCatalog] = useState<CatalogItem | null>(null);
+  const [editingCatalog, setEditingCatalog] = useState<CatalogItem | null>(
+    null,
+  );
   const [title, setTitle] = useState("");
   const [brandId, setBrandId] = useState("");
   const [cycle, setCycle] = useState("");
   const [description, setDescription] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [pdfPath, setPdfPath] = useState("");
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">("DRAFT");
+  const [status, setStatus] = useState<
+    "DRAFT" | "CURATION" | "PUBLISHED" | "ARCHIVED"
+  >("DRAFT");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [saving, setSaving] = useState(false);
@@ -90,19 +95,34 @@ export function CatalogsClient() {
 
   // Modal de Exclusão
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [catalogToDelete, setCatalogToDelete] = useState<CatalogItem | null>(null);
+  const [catalogToDelete, setCatalogToDelete] = useState<CatalogItem | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
 
   // Modal de Produtos do Catálogo
   const [productsModalOpen, setProductsModalOpen] = useState(false);
-  const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(null);
+  const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(
+    null,
+  );
   const [catalogProductsList, setCatalogProductsList] = useState<any[]>([]);
-  const [availableProducts, setAvailableProducts] = useState<GlobalProductOption[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<
+    GlobalProductOption[]
+  >([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [productPageNumber, setProductPageNumber] = useState("");
   const [productCyclePrice, setProductCyclePrice] = useState("");
   const [addingProduct, setAddingProduct] = useState(false);
+
+  // Modal de Ingestão com IA
+  const [ingestionModalOpen, setIngestionModalOpen] = useState(false);
+  const [ingestionCatalog, setIngestionCatalog] = useState<CatalogItem | null>(
+    null,
+  );
+  const [activeJob, setActiveJob] = useState<any>(null);
+  const [loadingJob, setLoadingJob] = useState(false);
+  const [startingIngestion, setStartingIngestion] = useState(false);
 
   // Busca lista de marcas para selects
   const fetchBrands = useCallback(async () => {
@@ -183,7 +203,10 @@ export function CatalogsClient() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    if (
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
       toast.error("Selecione um arquivo PDF válido.");
       return;
     }
@@ -204,7 +227,9 @@ export function CatalogsClient() {
       const json = await res.json();
       if (json.success && json.path) {
         setPdfPath(json.path);
-        toast.success("PDF do catálogo enviado com sucesso para o armazenamento seguro.");
+        toast.success(
+          "PDF do catálogo enviado com sucesso para o armazenamento seguro.",
+        );
       } else {
         toast.error(json.error || "Falha no upload do PDF.");
       }
@@ -257,7 +282,7 @@ export function CatalogsClient() {
         toast.success(
           editingCatalog
             ? "Catálogo atualizado com sucesso."
-            : "Catálogo cadastrado com sucesso!"
+            : "Catálogo cadastrado com sucesso!",
         );
         setDialogOpen(false);
         fetchCatalogs();
@@ -273,14 +298,18 @@ export function CatalogsClient() {
 
   const handleOpenPdf = async (catalogId: string) => {
     try {
-      toast.loading("Gerando link seguro de visualização...", { id: "pdf-load" });
+      toast.loading("Gerando link seguro de visualização...", {
+        id: "pdf-load",
+      });
       const res = await fetch(`/api/admin/catalogs/${catalogId}/signed-url`);
       const json = await res.json();
       if (json.success && json.data?.signedUrl) {
         toast.dismiss("pdf-load");
         window.open(json.data.signedUrl, "_blank");
       } else {
-        toast.error(json.error || "Não foi possível abrir o PDF.", { id: "pdf-load" });
+        toast.error(json.error || "Não foi possível abrir o PDF.", {
+          id: "pdf-load",
+        });
       }
     } catch {
       toast.error("Erro ao gerar link de visualização.", { id: "pdf-load" });
@@ -324,7 +353,9 @@ export function CatalogsClient() {
       }
 
       // 2. Busca produtos globais disponíveis dessa marca
-      const resProducts = await fetch(`/api/admin/global-products?brandId=${catalog.brandId}&limit=100`);
+      const resProducts = await fetch(
+        `/api/admin/global-products?brandId=${catalog.brandId}&limit=100`,
+      );
       const jsonProducts = await resProducts.json();
       if (jsonProducts.success && Array.isArray(jsonProducts.data)) {
         setAvailableProducts(jsonProducts.data);
@@ -349,17 +380,24 @@ export function CatalogsClient() {
         products: [
           {
             globalProductId: selectedProductId,
-            pageNumber: productPageNumber ? parseInt(productPageNumber, 10) : null,
-            cyclePrice: productCyclePrice ? parseFloat(productCyclePrice) : null,
+            pageNumber: productPageNumber
+              ? parseInt(productPageNumber, 10)
+              : null,
+            cyclePrice: productCyclePrice
+              ? parseFloat(productCyclePrice)
+              : null,
           },
         ],
       };
 
-      const res = await fetch(`/api/admin/catalogs/${selectedCatalog.id}/products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `/api/admin/catalogs/${selectedCatalog.id}/products`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
 
       const json = await res.json();
       if (json.success) {
@@ -368,7 +406,9 @@ export function CatalogsClient() {
         setProductCyclePrice("");
 
         // Recarrega lista
-        const resReload = await fetch(`/api/admin/catalogs/${selectedCatalog.id}`);
+        const resReload = await fetch(
+          `/api/admin/catalogs/${selectedCatalog.id}`,
+        );
         const jsonReload = await resReload.json();
         if (jsonReload.success) {
           setCatalogProductsList(jsonReload.data.products || []);
@@ -384,14 +424,115 @@ export function CatalogsClient() {
     }
   };
 
+  const fetchJobStatus = useCallback(
+    async (catalogId: string, jobId: string) => {
+      try {
+        const res = await fetch(
+          `/api/admin/catalogs/${catalogId}/jobs/${jobId}`,
+        );
+        const data = await res.json();
+        if (data.success && data.job) {
+          setActiveJob(data.job);
+          if (data.job.status === "COMPLETED") {
+            toast.success("Extração de produtos concluída com sucesso!");
+            fetchCatalogs();
+          }
+        }
+      } catch {
+        // Ignora erro momentâneo de polling
+      }
+    },
+    [fetchCatalogs],
+  );
+
+  useEffect(() => {
+    if (
+      !ingestionModalOpen ||
+      !ingestionCatalog ||
+      !activeJob ||
+      (activeJob.status !== "PROCESSING" && activeJob.status !== "QUEUED")
+    ) {
+      return;
+    }
+    const interval = setInterval(() => {
+      fetchJobStatus(ingestionCatalog.id, activeJob.id);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [ingestionModalOpen, ingestionCatalog, activeJob, fetchJobStatus]);
+
+  const handleOpenIngestionModal = async (cat: CatalogItem) => {
+    setIngestionCatalog(cat);
+    setIngestionModalOpen(true);
+    setLoadingJob(true);
+    try {
+      const res = await fetch(`/api/admin/catalogs/${cat.id}/ingest`);
+      const data = await res.json();
+      if (data.success && data.jobs && data.jobs.length > 0) {
+        const latestJobId = data.jobs[0].id;
+        await fetchJobStatus(cat.id, latestJobId);
+      } else {
+        setActiveJob(null);
+      }
+    } catch {
+      setActiveJob(null);
+    } finally {
+      setLoadingJob(false);
+    }
+  };
+
+  const handleStartIngestion = async () => {
+    if (!ingestionCatalog) return;
+    setStartingIngestion(true);
+    try {
+      const res = await fetch(
+        `/api/admin/catalogs/${ingestionCatalog.id}/ingest`,
+        {
+          method: "POST",
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Processamento iniciado em segundo plano!");
+        await fetchJobStatus(ingestionCatalog.id, data.jobId);
+        fetchCatalogs();
+      } else {
+        toast.error(data.error || "Falha ao iniciar processamento.");
+      }
+    } catch {
+      toast.error("Erro ao iniciar ingestão com IA.");
+    } finally {
+      setStartingIngestion(false);
+    }
+  };
+
   const getStatusBadge = (st: string) => {
     switch (st) {
       case "PUBLISHED":
-        return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white font-medium">Publicado</Badge>;
+        return (
+          <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white font-medium">
+            Publicado
+          </Badge>
+        );
+      case "CURATION":
+        return (
+          <Badge className="bg-amber-600 hover:bg-amber-600 text-white font-medium">
+            Em Curadoria
+          </Badge>
+        );
       case "ARCHIVED":
-        return <Badge variant="outline" className="text-muted-foreground border-border">Arquivado</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-muted-foreground border-border">
+            Arquivado
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary" className="font-medium">Rascunho</Badge>;
+        return (
+          <Badge variant="secondary" className="font-medium">
+            Rascunho
+          </Badge>
+        );
     }
   };
 
@@ -417,8 +558,7 @@ export function CatalogsClient() {
           <select
             value={brandFilter}
             onChange={(e) => setBrandFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
+            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
             <option value="all">Todas as marcas</option>
             {brands.map((b) => (
               <option key={b.id} value={b.id}>
@@ -431,10 +571,10 @@ export function CatalogsClient() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-ring"
-          >
+            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-ring">
             <option value="all">Todos os status</option>
             <option value="DRAFT">Rascunho</option>
+            <option value="CURATION">Em Curadoria</option>
             <option value="PUBLISHED">Publicado</option>
             <option value="ARCHIVED">Arquivado</option>
           </select>
@@ -463,14 +603,19 @@ export function CatalogsClient() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="h-32 text-center text-muted-foreground">
                   Carregando catálogos digitais...
                 </TableCell>
               </TableRow>
             ) : catalogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  Nenhum catálogo encontrado. Clique em &quot;Novo Catálogo&quot; para publicar uma revista.
+                <TableCell
+                  colSpan={7}
+                  className="h-32 text-center text-muted-foreground">
+                  Nenhum catálogo encontrado. Clique em &quot;Novo
+                  Catálogo&quot; para publicar uma revista.
                 </TableCell>
               </TableRow>
             ) : (
@@ -494,9 +639,13 @@ export function CatalogsClient() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="font-semibold text-foreground text-sm">{catalog.title}</div>
+                    <div className="font-semibold text-foreground text-sm">
+                      {catalog.title}
+                    </div>
                     <div className="text-xs text-muted-foreground">
-                      {catalog.cycle ? `Ciclo: ${catalog.cycle}` : "Sem ciclo especificado"}
+                      {catalog.cycle
+                        ? `Ciclo: ${catalog.cycle}`
+                        : "Sem ciclo especificado"}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -516,16 +665,26 @@ export function CatalogsClient() {
                           {catalog.brand.name.substring(0, 2).toUpperCase()}
                         </div>
                       )}
-                      <span className="text-sm font-medium">{catalog.brand.name}</span>
+                      <span className="text-sm font-medium">
+                        {catalog.brand.name}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-xs text-muted-foreground">
                       {catalog.startDate || catalog.endDate ? (
                         <span>
-                          {catalog.startDate ? new Date(catalog.startDate).toLocaleDateString("pt-BR") : "Início"}
+                          {catalog.startDate
+                            ? new Date(catalog.startDate).toLocaleDateString(
+                                "pt-BR",
+                              )
+                            : "Início"}
                           {" até "}
-                          {catalog.endDate ? new Date(catalog.endDate).toLocaleDateString("pt-BR") : "Indeterminado"}
+                          {catalog.endDate
+                            ? new Date(catalog.endDate).toLocaleDateString(
+                                "pt-BR",
+                              )
+                            : "Indeterminado"}
                         </span>
                       ) : (
                         "—"
@@ -546,18 +705,32 @@ export function CatalogsClient() {
                           size="icon"
                           onClick={() => handleOpenPdf(catalog.id)}
                           title="Abrir PDF com link seguro"
-                          className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                        >
+                          className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10">
                           <BoxIcon name="file-pdf" className="size-4" />
                         </Button>
                       )}
+                      {catalog.pdfPath && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenIngestionModal(catalog)}
+                          title="Extração com IA Multimodal"
+                          className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-500/10">
+                          <BoxIcon name="bot" className="size-4" />
+                        </Button>
+                      )}
+                      <Link
+                        href={`/admin/catalogos/${catalog.id}/curadoria`}
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                        title="Curadoria de Produtos (Revisão & Aprovação)">
+                        <BoxIcon name="check-square" className="size-4" />
+                      </Link>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleOpenProductsModal(catalog)}
-                        title="Vincular Produtos"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
+                        title="Vincular Produtos Manualmente"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <BoxIcon name="list-plus" className="size-4" />
                       </Button>
                       <Button
@@ -565,8 +738,7 @@ export function CatalogsClient() {
                         size="icon"
                         onClick={() => handleOpenEdit(catalog)}
                         title="Editar"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <BoxIcon name="edit" className="size-4" />
                       </Button>
                       <Button
@@ -577,8 +749,7 @@ export function CatalogsClient() {
                           setDeleteModalOpen(true);
                         }}
                         title="Excluir"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                      >
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10">
                         <BoxIcon name="trash" className="size-4" />
                       </Button>
                     </div>
@@ -592,13 +763,16 @@ export function CatalogsClient() {
 
       {/* Modal de Criação / Edição de Catálogo */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="sm:max-w-140">
           <DialogHeader>
             <DialogTitle>
-              {editingCatalog ? "Editar Catálogo Digital" : "Novo Catálogo Digital"}
+              {editingCatalog
+                ? "Editar Catálogo Digital"
+                : "Novo Catálogo Digital"}
             </DialogTitle>
             <DialogDescription>
-              Cadastre campanhas e ciclos de revenda anexando o arquivo PDF original.
+              Cadastre campanhas e ciclos de revenda anexando o arquivo PDF
+              original.
             </DialogDescription>
           </DialogHeader>
 
@@ -622,11 +796,14 @@ export function CatalogsClient() {
                   value={brandId}
                   onChange={(e) => setBrandId(e.target.value)}
                   className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  required
-                >
-                  <option value="" disabled>Selecione uma marca</option>
+                  required>
+                  <option value="" disabled>
+                    Selecione uma marca
+                  </option>
                   {brands.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -670,10 +847,12 @@ export function CatalogsClient() {
                 id="cat-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <option value="DRAFT">Rascunho (apenas administradores)</option>
-                <option value="PUBLISHED">Publicado (disponível para lojistas)</option>
+                <option value="CURATION">Em Curadoria (em conferência)</option>
+                <option value="PUBLISHED">
+                  Publicado (disponível para lojistas)
+                </option>
                 <option value="ARCHIVED">Arquivado (vigência encerrada)</option>
               </select>
             </div>
@@ -691,15 +870,20 @@ export function CatalogsClient() {
             {/* Upload do Arquivo PDF */}
             <div className="space-y-2 rounded-lg border p-3 bg-muted/20">
               <div className="flex items-center justify-between">
-                <Label className="font-semibold text-sm">Arquivo PDF da Revista</Label>
+                <Label className="font-semibold text-sm">
+                  Arquivo PDF da Revista
+                </Label>
                 {pdfPath && (
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-300 font-mono text-[10px]">
+                  <Badge
+                    variant="outline"
+                    className="text-emerald-600 border-emerald-300 font-mono text-[10px]">
                     PDF Anexado
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                O arquivo é armazenado no bucket privado e protegido por links assinados temporários.
+                O arquivo é armazenado no bucket privado e protegido por links
+                assinados temporários.
               </p>
 
               <div className="flex items-center gap-2 pt-1">
@@ -716,13 +900,16 @@ export function CatalogsClient() {
                   size="sm"
                   onClick={() => pdfInputRef.current?.click()}
                   disabled={uploadingPdf}
-                  className="gap-2"
-                >
+                  className="gap-2">
                   <BoxIcon name="upload" className="size-4" />
-                  {uploadingPdf ? "Enviando PDF..." : pdfPath ? "Substituir PDF" : "Carregar Arquivo PDF"}
+                  {uploadingPdf
+                    ? "Enviando PDF..."
+                    : pdfPath
+                      ? "Substituir PDF"
+                      : "Carregar Arquivo PDF"}
                 </Button>
                 {pdfPath && (
-                  <span className="text-xs text-muted-foreground truncate max-w-[240px]">
+                  <span className="text-xs text-muted-foreground truncate max-w-60">
                     {pdfPath}
                   </span>
                 )}
@@ -745,12 +932,15 @@ export function CatalogsClient() {
                 type="button"
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
-                disabled={saving}
-              >
+                disabled={saving}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={saving || uploadingPdf}>
-                {saving ? "Salvando..." : editingCatalog ? "Atualizar Catálogo" : "Criar Catálogo"}
+                {saving
+                  ? "Salvando..."
+                  : editingCatalog
+                    ? "Atualizar Catálogo"
+                    : "Criar Catálogo"}
               </Button>
             </DialogFooter>
           </form>
@@ -759,27 +949,31 @@ export function CatalogsClient() {
 
       {/* Modal de Gestão de Produtos do Catálogo */}
       <Dialog open={productsModalOpen} onOpenChange={setProductsModalOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
+        <DialogContent className="sm:max-w-175 max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Produtos do Catálogo: {selectedCatalog?.title}
             </DialogTitle>
             <DialogDescription>
-              Adicione produtos globais a esta revista, especificando a página do PDF e o preço da campanha.
+              Adicione produtos globais a esta revista, especificando a página
+              do PDF e o preço da campanha.
             </DialogDescription>
           </DialogHeader>
 
           {/* Formulário Rápido de Adição */}
           <div className="rounded-lg border p-3 bg-muted/20 space-y-3">
-            <div className="font-semibold text-xs text-foreground">Vincular Novo Produto ao Ciclo</div>
+            <div className="font-semibold text-xs text-foreground">
+              Vincular Novo Produto ao Ciclo
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <div className="sm:col-span-6">
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="" disabled>Selecione um produto</option>
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                  <option value="" disabled>
+                    Selecione um produto
+                  </option>
                   {availableProducts.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} {p.referenceSku ? `(${p.referenceSku})` : ""}
@@ -811,8 +1005,7 @@ export function CatalogsClient() {
                   size="sm"
                   onClick={handleAddProductToCatalog}
                   disabled={addingProduct || !selectedProductId}
-                  className="w-full h-9 text-xs gap-1"
-                >
+                  className="w-full h-9 text-xs gap-1">
                   <BoxIcon name="plus" className="size-3.5" />
                   Adicionar
                 </Button>
@@ -821,7 +1014,7 @@ export function CatalogsClient() {
           </div>
 
           {/* Listagem dos Produtos Vinculados */}
-          <div className="flex-1 overflow-y-auto border rounded-md min-h-[200px]">
+          <div className="flex-1 overflow-y-auto border rounded-md min-h-50">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
@@ -834,13 +1027,17 @@ export function CatalogsClient() {
               <TableBody>
                 {loadingProducts ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-xs text-muted-foreground">
+                    <TableCell
+                      colSpan={4}
+                      className="h-24 text-center text-xs text-muted-foreground">
                       Carregando itens vinculados...
                     </TableCell>
                   </TableRow>
                 ) : catalogProductsList.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-xs text-muted-foreground">
+                    <TableCell
+                      colSpan={4}
+                      className="h-24 text-center text-xs text-muted-foreground">
                       Nenhum produto vinculado ainda a este ciclo.
                     </TableCell>
                   </TableRow>
@@ -851,20 +1048,33 @@ export function CatalogsClient() {
                         {cp.pageNumber ? `pág. ${cp.pageNumber}` : "—"}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium text-xs">{cp.globalProduct?.name}</div>
+                        <div className="font-medium text-xs">
+                          {cp.globalProduct?.name}
+                        </div>
                         <div className="text-[10px] text-muted-foreground">
-                          {cp.globalProduct?.globalCategory?.name || "Sem categoria"}
+                          {cp.globalProduct?.globalCategory?.name ||
+                            "Sem categoria"}
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {cp.globalProduct?.referenceSku || cp.globalProduct?.barcode || "—"}
+                        {cp.globalProduct?.referenceSku ||
+                          cp.globalProduct?.barcode ||
+                          "—"}
                       </TableCell>
                       <TableCell className="font-medium text-xs text-emerald-600">
                         {cp.cyclePrice
-                          ? Number(cp.cyclePrice).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                          ? Number(cp.cyclePrice).toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })
                           : cp.globalProduct?.suggestedPrice
-                          ? Number(cp.globalProduct.suggestedPrice).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                          : "—"}
+                            ? Number(
+                                cp.globalProduct.suggestedPrice,
+                              ).toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })
+                            : "—"}
                       </TableCell>
                     </TableRow>
                   ))
@@ -874,7 +1084,9 @@ export function CatalogsClient() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setProductsModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setProductsModalOpen(false)}>
               Fechar
             </Button>
           </DialogFooter>
@@ -883,28 +1095,164 @@ export function CatalogsClient() {
 
       {/* Modal de Exclusão */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle>Excluir Catálogo Digital?</DialogTitle>
             <DialogDescription>
-              Esta ação removerá o catálogo &quot;{catalogToDelete?.title}&quot; e suas associações. Esta ação não pode ser desfeita.
+              Esta ação removerá o catálogo &quot;{catalogToDelete?.title}&quot;
+              e suas associações. Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDeleteModalOpen(false)}
-              disabled={deleting}
-            >
+              disabled={deleting}>
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteCatalog}
-              disabled={deleting}
-            >
+              disabled={deleting}>
               {deleting ? "Excluindo..." : "Sim, Excluir Catálogo"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Ingestão de Produtos com IA */}
+      <Dialog open={ingestionModalOpen} onOpenChange={setIngestionModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <BoxIcon name="bot" className="size-5 text-indigo-600" />
+              Extração Automática com IA Multimodal
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Processa o PDF da revista, extrai referências, preços, variantes e
+              gera recortes de imagem otimizados.
+            </DialogDescription>
+          </DialogHeader>
+
+          {ingestionCatalog && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-1">
+                <p className="font-semibold text-foreground">
+                  {ingestionCatalog.title}
+                </p>
+                <p className="text-muted-foreground">
+                  Marca: {ingestionCatalog.brand.name}
+                </p>
+                {ingestionCatalog.pdfPath && (
+                  <p className="text-[11px] text-muted-foreground/80 font-mono truncate">
+                    Arquivo: {ingestionCatalog.pdfPath}
+                  </p>
+                )}
+              </div>
+
+              {loadingJob ? (
+                <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+                  <BoxIcon
+                    name="loader-alt"
+                    className="size-5 animate-spin text-primary"
+                  />
+                  <span className="text-xs">
+                    Verificando status de extração...
+                  </span>
+                </div>
+              ) : activeJob ? (
+                <div className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/40 p-3.5 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-indigo-900 dark:text-indigo-300">
+                      Status: {activeJob.status}
+                    </span>
+                    <Badge variant="outline" className="font-mono text-[10px]">
+                      {activeJob.processedPages} / {activeJob.totalPages || "?"}{" "}
+                      folhas
+                    </Badge>
+                  </div>
+
+                  {/* Barra de Progresso */}
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-indigo-600 transition-all duration-500"
+                      style={{
+                        width: `${activeJob.progressPercentage || 0}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>Progresso: {activeJob.progressPercentage || 0}%</span>
+                    <span>
+                      {activeJob.totalProductsFound || 0} produtos encontrados
+                    </span>
+                  </div>
+
+                  {activeJob.status === "PROCESSING" && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-indigo-700 dark:text-indigo-400">
+                      <BoxIcon
+                        name="loader-alt"
+                        className="size-3.5 animate-spin"
+                      />
+                      <span>
+                        Processando folha {activeJob.currentSheet || "atual"}...
+                      </span>
+                    </div>
+                  )}
+
+                  {activeJob.status === "COMPLETED" && (
+                    <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        Extração concluída!
+                      </span>
+                      <Link
+                        href={`/admin/catalogos/${ingestionCatalog.id}/curadoria`}
+                        className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
+                        onClick={() => setIngestionModalOpen(false)}>
+                        Ir para Curadoria{" "}
+                        <BoxIcon name="chevron-right" className="size-3" />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground space-y-2">
+                  <p>Nenhuma extração anterior encontrada para esta edição.</p>
+                  <p className="text-[11px]">
+                    O modelo analisará todas as folhas duplas em segundo plano.
+                    Você poderá acompanhar o progresso em tempo real e revisar
+                    os produtos na tela de curadoria.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIngestionModalOpen(false)}>
+              Fechar
+            </Button>
+            {(!activeJob ||
+              activeJob.status === "COMPLETED" ||
+              activeJob.status === "FAILED" ||
+              activeJob.status === "CANCELLED") && (
+              <Button
+                size="sm"
+                onClick={handleStartIngestion}
+                disabled={startingIngestion}
+                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
+                <BoxIcon name="bot" className="size-4" />
+                {startingIngestion
+                  ? "Iniciando..."
+                  : activeJob
+                    ? "Reprocessar Catálogo"
+                    : "Iniciar Extração com IA"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

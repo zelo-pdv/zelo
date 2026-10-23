@@ -110,3 +110,161 @@ export async function POST(
     );
   }
 }
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requirePlatformAdmin("OPERATOR");
+  if (!auth.authorized) {
+    return auth.response;
+  }
+
+  try {
+    const { id } = await params;
+    const url = new URL(req.url);
+    const status = url.searchParams.get("status");
+    const search = url.searchParams.get("search");
+
+    const where: any = { catalogId: id };
+
+    if (status && status !== "ALL") {
+      where.curationStatus = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { globalProduct: { name: { contains: search, mode: "insensitive" } } },
+        { globalProduct: { referenceSku: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    const items = await prisma.catalogProduct.findMany({
+      where,
+      orderBy: [{ pageNumber: "asc" }, { createdAt: "asc" }],
+      include: {
+        globalProduct: {
+          include: {
+            variants: {
+              orderBy: [{ size: "asc" }, { colorName: "asc" }],
+            },
+          },
+        },
+      },
+    });
+
+    const statusCounts = await prisma.catalogProduct.groupBy({
+      by: ["curationStatus"],
+      where: { catalogId: id },
+      _count: { id: true },
+    });
+
+    const countsMap: Record<string, number> = {
+      TOTAL: 0,
+      PENDING_REVIEW: 0,
+      APPROVED: 0,
+      REJECTED: 0,
+      FLAGGED: 0,
+    };
+
+    statusCounts.forEach((sc) => {
+      countsMap[sc.curationStatus] = sc._count.id;
+      countsMap.TOTAL += sc._count.id;
+    });
+
+    return NextResponse.json({
+      success: true,
+      items,
+      counts: countsMap,
+    });
+  } catch (error) {
+    console.error("Erro ao listar produtos do catálogo:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao listar produtos do catálogo." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requirePlatformAdmin("OPERATOR");
+  if (!auth.authorized) {
+    return auth.response;
+  }
+
+  try {
+    const { id } = await params;
+    const body = await req.json();
+
+    // Ação em lote: Aprovar todos os pendentes
+    if (body.action === "approve_all_pending") {
+      const updateResult = await prisma.catalogProduct.updateMany({
+        where: {
+          catalogId: id,
+          curationStatus: "PENDING_REVIEW",
+        },
+        data: {
+          curationStatus: "APPROVED",
+        },
+      });
+
+      await prisma.platformAuditLog.create({
+        data: {
+          adminId: auth.admin.id,
+          action: "CATALOG_CURATION_BATCH_APPROVED",
+          targetType: "Catalog",
+          targetId: id,
+          details: { updatedCount: updateResult.count },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${updateResult.count} produto(s) aprovado(s) com sucesso.`,
+      });
+    }
+
+    // Atualização de item individual
+    const {
+      catalogProductId,
+      curationStatus,
+      regularPrice,
+      promoPrice,
+      promoRule,
+      curationNotes,
+    } = body;
+
+    if (!catalogProductId) {
+      return NextResponse.json(
+        { error: "ID do produto do catálogo é obrigatório." },
+        { status: 400 }
+      );
+    }
+
+    const updated = await prisma.catalogProduct.update({
+      where: { id: catalogProductId },
+      data: {
+        curationStatus: curationStatus || undefined,
+        regularPrice: regularPrice !== undefined ? regularPrice : undefined,
+        promoPrice: promoPrice !== undefined ? promoPrice : undefined,
+        promoRule: promoRule !== undefined ? promoRule : undefined,
+        curationNotes: curationNotes !== undefined ? curationNotes : undefined,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Item atualizado com sucesso.",
+      item: updated,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar curadoria do produto:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao atualizar curadoria." },
+      { status: 500 }
+    );
+  }
+}
