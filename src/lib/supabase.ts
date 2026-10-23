@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 let supabaseClient: SupabaseClient | null = null;
 
 export const BUCKET_PRODUCTS = "products";
+export const BUCKET_CATALOGS = "catalogs";
 
 export function getSupabaseClient(): SupabaseClient {
   if (supabaseClient) return supabaseClient;
@@ -58,4 +59,54 @@ export async function uploadImageToSupabase(
     url: publicUrlData.publicUrl,
     path: data.path,
   };
+}
+
+export async function uploadCatalogPdf(
+  fileBuffer: Buffer | ArrayBuffer | Uint8Array,
+  fileName: string,
+): Promise<{ path: string }> {
+  const supabase = getSupabaseClient();
+
+  // Garante a existência do bucket privado se ainda não existir
+  try {
+    await supabase.storage.createBucket(BUCKET_CATALOGS, { public: false });
+  } catch {
+    // Ignora se o bucket já existir
+  }
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET_CATALOGS)
+    .upload(fileName, fileBuffer, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error(
+      `Falha no upload do catálogo para o Supabase Storage: ${error.message}`,
+    );
+  }
+
+  return {
+    path: data.path,
+  };
+}
+
+export async function getSignedCatalogUrl(
+  path: string,
+  expiresInSeconds = 3600,
+): Promise<string> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET_CATALOGS)
+    .createSignedUrl(path, expiresInSeconds);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(
+      `Falha ao gerar URL assinada para o catálogo: ${error?.message || "URL vazia"}`,
+    );
+  }
+
+  return data.signedUrl;
 }

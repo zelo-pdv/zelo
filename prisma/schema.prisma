@@ -159,14 +159,16 @@ model Product {
   stock       Decimal          @default(0) @db.Decimal(10, 3)
   minStock    Decimal?         @db.Decimal(10, 3)
   notes       String?
-  lojaId      String
-  categoryId  String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  deletedAt   DateTime?
-  active      Boolean          @default(true)
-  category    Category?        @relation(fields: [categoryId], references: [id])
-  loja        Loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  lojaId          String
+  categoryId      String?
+  globalProductId String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  active          Boolean          @default(true)
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  globalProduct   GlobalProduct?   @relation(fields: [globalProductId], references: [id], onDelete: SetNull)
+  loja            Loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   variants       ProductVariant[]
   saleItems      SaleItem[]
   stockMovements StockMovement[]
@@ -177,6 +179,7 @@ model Product {
   @@index([lojaId, barcode])
   @@index([lojaId, updatedAt])
   @@index([lojaId, deletedAt])
+  @@index([globalProductId])
 }
 
 model ProductVariant {
@@ -378,29 +381,105 @@ model PlatformAuditLog {
 }
 
 model Brand {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  logoUrl     String?
-  description String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String          @id @default(cuid())
+  name           String          @unique
+  slug           String          @unique
+  logoUrl        String?
+  description    String?
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  catalogs       Catalog[]
+  globalProducts GlobalProduct[]
 
   @@index([slug])
   @@index([active])
 }
 
 model GlobalCategory {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  icon        String?  @default("category")
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String          @id @default(cuid())
+  name           String          @unique
+  slug           String          @unique
+  description    String?
+  icon           String?         @default("category")
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  globalProducts GlobalProduct[]
 
   @@index([slug])
   @@index([active])
+}
+
+enum CatalogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Catalog {
+  id          String        @id @default(cuid())
+  title       String
+  brandId     String
+  brand       Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  cycle       String?
+  description String?
+  coverUrl    String?
+  pdfPath     String?
+  status      CatalogStatus @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  products    CatalogProduct[]
+
+  @@index([brandId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model GlobalProduct {
+  id               String          @id @default(cuid())
+  name             String
+  brandId          String
+  brand            Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  globalCategoryId String?
+  globalCategory   GlobalCategory? @relation(fields: [globalCategoryId], references: [id], onDelete: SetNull)
+  barcode          String?
+  referenceSku     String?
+  description      String?
+  imageUrl         String?
+  suggestedPrice   Decimal?        @db.Decimal(10, 2)
+  costPrice        Decimal?        @db.Decimal(10, 2)
+  active           Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  catalogProducts  CatalogProduct[]
+  storeProducts    Product[]
+
+  @@index([brandId])
+  @@index([globalCategoryId])
+  @@index([barcode])
+  @@index([referenceSku])
+  @@index([active])
+}
+
+model CatalogProduct {
+  id              String        @id @default(cuid())
+  catalogId       String
+  catalog         Catalog       @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  globalProductId String
+  globalProduct   GlobalProduct @relation(fields: [globalProductId], references: [id], onDelete: Cascade)
+  pageNumber      Int?
+  cyclePrice      Decimal?      @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+
+  @@unique([catalogId, globalProductId])
+  @@index([catalogId])
+  @@index([globalProductId])
 }
