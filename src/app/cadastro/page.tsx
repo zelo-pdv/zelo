@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { requireGuest } from "../../../proxy";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
@@ -11,9 +10,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function CadastroPage() {
-  // Se o usuário já estiver logado, redireciona adequadamente
-  await requireGuest();
-
+export default function CadastroPage() {
+  // Usuários já autenticados são redirecionados automaticamente pelo middleware.ts
   return <RegisterForm />;
 }

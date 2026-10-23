@@ -337,3 +337,70 @@ model StockMovement {
   @@index([variantId])
   @@index([userId])
 }
+
+enum AdminRole {
+  SUPERADMIN
+  OPERATOR
+  CURATOR
+}
+
+model PlatformAdmin {
+  id           String             @id @default(cuid())
+  name         String
+  email        String             @unique
+  passwordHash String
+  role         AdminRole          @default(OPERATOR)
+  active       Boolean            @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  auditLogs    PlatformAuditLog[]
+
+  @@index([email])
+}
+
+model PlatformAuditLog {
+  id         String        @id @default(cuid())
+  adminId    String
+  admin      PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String
+  targetType String
+  targetId   String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime      @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  logoUrl     String?
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([active])
+}
+
+model GlobalCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  @default("category")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([active])
+}

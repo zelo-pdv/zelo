@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { requireOnboarding } from "../../../proxy";
+import { getCurrentUser } from "@/lib/auth";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 export const metadata = {
@@ -8,9 +8,15 @@ export const metadata = {
   description: "Personalize o funcionamento do Zelo para a sua rotina de revendedora e vendas.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage() {
-  // Garante que o usuário está autenticado e realmente precisa do onboarding
-  const { user } = await requireOnboarding();
+  // A interceptação e validação de sessão/onboarding ocorrem no middleware.ts.
+  // Aqui no Server Component garantimos a autenticação no banco e obtemos os dados da loja.
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
 
   // Busca dados da loja e configurações existentes
   const loja = await prisma.loja.findUnique({
@@ -39,7 +45,7 @@ export default async function OnboardingPage() {
     step: 1,
   };
 
-  // Se já concluiu, manda pro dashboard
+  // Se já concluiu no banco, redireciona para o dashboard
   if (onboardingData.completed) {
     redirect("/dashboard");
   }

@@ -7,7 +7,8 @@
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "vitest run"
+    "test:e2e": "vitest run",
+    "admin:provision": "npx tsx scripts/provision-admin.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

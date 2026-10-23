@@ -44,6 +44,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
           select: {
             name: true,
             ownerId: true,
+            active: true,
             settings: {
               select: { config: true },
             },
@@ -57,6 +58,12 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     }
 
     if (!user.group || !user.group.active) {
+      return null;
+    }
+
+    // Regra de segurança da Sprint 2: Se a loja estiver inativa/desativada pela plataforma,
+    // o acesso da sessão é revogado imediatamente em tempo real.
+    if (!user.loja || !user.loja.active) {
       return null;
     }
 
@@ -85,7 +92,16 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       storeName: user.loja?.name,
       onboardingCompleted,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Relança erros internos de controle de fluxo do Next.js (ex: DYNAMIC_SERVER_USAGE no prerender)
+    if (
+      error?.digest === "DYNAMIC_SERVER_USAGE" ||
+      error?.message?.includes("Dynamic server usage") ||
+      error?.name === "DynamicServerError"
+    ) {
+      throw error;
+    }
+
     console.error("Erro ao obter usuário autenticado:", error);
     return null;
   }

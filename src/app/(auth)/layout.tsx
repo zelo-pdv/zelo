@@ -1,11 +1,14 @@
 import { cookies } from "next/headers";
-import { requireAuth } from "../../../proxy";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { PermissionsProviderWrapper } from "@/components/auth/permissions-provider-wrapper";
 import { userContextSchema, type UserContextData } from "@/lib/validations/user_context";
+
+export const dynamic = "force-dynamic";
 
 async function getServerUserContext(): Promise<UserContextData | null> {
   const cookieStore = await cookies();
@@ -27,9 +30,13 @@ export default async function AuthLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // O proxy entra em ação aqui: se não houver token, ele barra o acesso
-  // e redireciona para o /login antes de renderizar qualquer componente da interface.
-  await requireAuth();
+  // A interceptação preliminar e redirecionamento ocorrem no middleware.ts.
+  // Aqui no Server Component garantimos a integridade no banco (usuário e loja ativos).
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    redirect("/login");
+  }
+
   const initialContext = await getServerUserContext();
 
   return (

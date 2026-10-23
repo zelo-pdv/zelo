@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations/auth";
 import bcrypt from "bcryptjs";
 import { setAuthCookies } from "@/lib/cookies";
-import { withValidation } from "../../../../../proxy";
 import { JWT_SECRET } from "@/lib/jwt-secret";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -12,9 +11,17 @@ export async function POST(req: Request) {
   const rateLimit = checkRateLimit(req);
   if (!rateLimit.success) return rateLimit.response;
 
-  // Padronização e sanitização com Zod
-  return withValidation(loginSchema, req, async (data) => {
-    const { email, password } = data;
+  try {
+    const body = await req.json();
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -23,6 +30,7 @@ export async function POST(req: Request) {
         loja: {
           select: {
             ownerId: true,
+            active: true,
             settings: {
               select: { config: true },
             },
@@ -35,7 +43,7 @@ export async function POST(req: Request) {
     if (user) {
       senhaValida = await bcrypt.compare(password, user.password);
     } else {
-      // Dummy hash comparation to mitigate timing attacks for non-existent users
+      // Dummy hash comparison to mitigate timing attacks for non-existent users
       await bcrypt.compare(password, "$2a$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa");
     }
 
@@ -46,6 +54,10 @@ export async function POST(req: Request) {
 
     if (!user.active) {
       return NextResponse.json({ error: "Este usuário está inativo." }, { status: 403 });
+    }
+
+    if (user.loja && !user.loja.active) {
+      return NextResponse.json({ error: "Esta loja está inativa." }, { status: 403 });
     }
 
     const isOwner = user.loja?.ownerId === user.id;
@@ -76,5 +88,11 @@ export async function POST(req: Request) {
     await setAuthCookies(token, payload);
 
     return NextResponse.json({ success: true, user: payload });
-  });
+  } catch (error) {
+    console.error("Erro no login:", error);
+    return NextResponse.json(
+      { error: "Erro interno do servidor" },
+      { status: 500 }
+    );
+  }
 }
