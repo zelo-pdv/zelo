@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { currency } from "@/lib/format";
 
 interface CurationClientProps {
   catalog: {
@@ -44,8 +45,8 @@ interface CatalogProductItem {
   catalogId: string;
   globalProductId: string;
   pageNumber: number | null;
-  regularPrice: number | null;
-  promoPrice: number | null;
+  regularPrice: number | string | null;
+  promoPrice: number | string | null;
   promoRule: string | null;
   promoMinQuantity: number | null;
   cropUrl: string | null;
@@ -57,7 +58,7 @@ interface CatalogProductItem {
     name: string;
     referenceSku: string | null;
     description: string | null;
-    suggestedPrice: number | null;
+    suggestedPrice: number | string | null;
     variants: ProductVariantItem[];
   };
 }
@@ -393,7 +394,10 @@ export function CurationClient({ catalog }: CurationClientProps) {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((item) => {
-            const hasPromo = item.promoPrice && item.promoPrice > 0;
+            const hasPromo =
+              item.promoPrice !== null &&
+              item.promoPrice !== undefined &&
+              Number(item.promoPrice) > 0;
             return (
               <div
                 key={item.id}
@@ -458,7 +462,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Preço de Tabela:</span>
                         <span className="font-semibold text-foreground">
-                          {item.regularPrice ? `R$ ${item.regularPrice.toFixed(2)}` : "—"}
+                          {item.regularPrice ? currency(item.regularPrice) : "—"}
                         </span>
                       </div>
 
@@ -466,7 +470,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
                         <div className="flex flex-col gap-0.5 pt-1 border-t border-border/60">
                           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
                             <span>Oferta da Edição:</span>
-                            <span>R$ {item.promoPrice?.toFixed(2)}</span>
+                            <span>{currency(item.promoPrice)}</span>
                           </div>
                           {item.promoRule && (
                             <p className="text-[10px] text-muted-foreground italic leading-tight">

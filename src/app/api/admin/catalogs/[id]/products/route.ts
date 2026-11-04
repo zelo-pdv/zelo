@@ -172,9 +172,32 @@ export async function GET(
       countsMap.TOTAL += sc._count.id;
     });
 
+    const serializedItems = items.map((item) => ({
+      ...item,
+      regularPrice: item.regularPrice !== null ? Number(item.regularPrice) : null,
+      promoPrice: item.promoPrice !== null ? Number(item.promoPrice) : null,
+      cyclePrice: item.cyclePrice !== null ? Number(item.cyclePrice) : null,
+      globalProduct: {
+        ...item.globalProduct,
+        suggestedPrice:
+          item.globalProduct.suggestedPrice !== null
+            ? Number(item.globalProduct.suggestedPrice)
+            : null,
+        costPrice:
+          item.globalProduct.costPrice !== null
+            ? Number(item.globalProduct.costPrice)
+            : null,
+        variants: item.globalProduct.variants?.map((v) => ({
+          ...v,
+          priceOverride:
+            v.priceOverride !== null ? Number(v.priceOverride) : null,
+        })),
+      },
+    }));
+
     return NextResponse.json({
       success: true,
-      items,
+      items: serializedItems,
       counts: countsMap,
     });
   } catch (error) {
