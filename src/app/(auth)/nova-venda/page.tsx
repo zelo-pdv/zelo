@@ -60,6 +60,14 @@ import {
 import { maskPhone } from "@/lib/masks";
 import { useDataSync, notifyLocalSync } from "@/hooks/use-data-sync";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import {
+  getOfflineClients,
+  getOfflineProducts,
+  cacheCatalogData,
+  createOfflineClient,
+  createOfflineProduct,
+  createOfflineSale,
+} from "@/lib/offline/offline-service";
 
 type CartItem = {
   cartItemId: string;
@@ -230,45 +238,70 @@ export default function NovaVenda() {
     }
   }, [salesSettings.defaultPaymentMethod, salesSettings.defaultSaleStatus, step, editingSaleId]);
 
-  // Busca os clientes e produtos ao carregar a página com suporte a refresh silencioso
+  // Busca os clientes e produtos ao carregar a página com suporte a modo offline e refresh silencioso
   const refreshData = async (silent = false) => {
     try {
       if (!silent) setLoadingData(true);
-      const [clientsData, productsData] = await Promise.all([
-        clientsService.list(),
-        productsService.list(),
-      ]);
-      const typedClients = (clientsData as Client[]).filter(
-        (c: any) => c.active !== false,
-      );
-      const typedProducts = (productsData as Product[]).filter(
-        (p: any) => p.active !== false,
-      );
 
-      setClients(typedClients);
-      
-      const defaultClient = typedClients.find(
-        (c) =>
-          c.name.toLowerCase() === "consumidor final" ||
-          c.name.toLowerCase() === "ao consumidor",
-      );
-      setClient((prev) => {
-        if (prev?.id) {
-          const match = typedClients.find((c) => c.id === prev.id);
-          if (match) return match;
+      // 1. Tenta carregar imediatamente do banco local (IndexedDB) para exibição instantânea
+      try {
+        const [localClients, localProducts] = await Promise.all([
+          getOfflineClients(),
+          getOfflineProducts(),
+        ]);
+        if (localClients.length > 0 || localProducts.length > 0) {
+          setClients(localClients as any);
+          setProducts(localProducts as any);
+          if (!silent) setLoadingData(false);
         }
-        if (!prev && defaultClient && salesSettings.requireClient) {
-          return defaultClient;
-        }
-        return prev;
-      });
-
-      setProducts(typedProducts);
-    } catch (error) {
-      if (!silent) {
-        toast.error("Erro ao carregar dados. Tente atualizar a página.");
+      } catch (localErr) {
+        console.warn("Aviso ao ler do banco local:", localErr);
       }
-      console.error(error);
+
+      // 2. Se houver conexão, busca dados atualizados no servidor e renova o cache local
+      if (typeof navigator === "undefined" || navigator.onLine) {
+        const [clientsData, productsData] = await Promise.all([
+          clientsService.list(),
+          productsService.list(),
+        ]);
+        const typedClients = (clientsData as Client[]).filter(
+          (c: any) => c.active !== false,
+        );
+        const typedProducts = (productsData as Product[]).filter(
+          (p: any) => p.active !== false,
+        );
+
+        setClients(typedClients);
+        setProducts(typedProducts);
+
+        // Atualiza o IndexedDB em segundo plano
+        void cacheCatalogData({
+          clients: typedClients,
+          products: typedProducts,
+          settings: salesSettings,
+        });
+
+        const defaultClient = typedClients.find(
+          (c) =>
+            c.name.toLowerCase() === "consumidor final" ||
+            c.name.toLowerCase() === "ao consumidor",
+        );
+        setClient((prev) => {
+          if (prev?.id) {
+            const match = typedClients.find((c) => c.id === prev.id);
+            if (match) return match;
+          }
+          if (!prev && defaultClient && salesSettings.requireClient) {
+            return defaultClient;
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      if (!silent && (typeof navigator !== "undefined" && navigator.onLine)) {
+        toast.error("Erro ao sincronizar dados com o servidor.");
+      }
+      console.error("Falha ao sincronizar catálogo:", error);
     } finally {
       if (!silent) setLoadingData(false);
     }
@@ -498,10 +531,15 @@ export default function NovaVenda() {
         clear();
         router.push("/historico");
       } else {
-        await salesService.create({
+        const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+        const salePayload = {
           clientId: client?.id || null,
           clientName: client?.name || "Consumidor Final",
-          items,
+          items: items.map((i) => ({
+            ...i,
+            quantity: Number(i.quantity),
+            unitPrice: Number(i.unitPrice),
+          })),
           total,
           discount: discountAmount > 0 ? discountAmount : undefined,
           surcharge: surchargeAmount > 0 ? surchargeAmount : undefined,
@@ -509,19 +547,92 @@ export default function NovaVenda() {
           status,
           dueDate: status === "PENDENTE" ? dueDate || undefined : undefined,
           notes,
-        });
+        };
 
-        toast.success("Venda registrada com sucesso!");
-        notifyLocalSync("sales");
-        notifyLocalSync("products");
-        notifyLocalSync("clients");
-        clear();
+        if (isOffline) {
+          await createOfflineSale(salePayload);
+          toast.success("Venda salva offline no dispositivo! Será sincronizada automaticamente.");
+          notifyLocalSync("sales");
+          notifyLocalSync("products");
+          clear();
+        } else {
+          try {
+            await salesService.create(salePayload);
+            toast.success("Venda registrada com sucesso!");
+            notifyLocalSync("sales");
+            notifyLocalSync("products");
+            notifyLocalSync("clients");
+            clear();
+          } catch (err: any) {
+            // Se falhou por queda de rede súbita (Failed to fetch)
+            if (
+              (typeof navigator !== "undefined" && !navigator.onLine) ||
+              err?.message?.includes("Failed to fetch") ||
+              err?.message?.includes("NetworkError") ||
+              err?.message?.includes("Load failed")
+            ) {
+              await createOfflineSale(salePayload);
+              toast.warning("Sem conexão no momento. Venda salva offline e será sincronizada assim que a internet voltar.");
+              notifyLocalSync("sales");
+              notifyLocalSync("products");
+              clear();
+            } else {
+              throw err;
+            }
+          }
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao registrar venda.");
     } finally {
       setIsFinalizing(false);
     }
+  };
+
+  const handleQuickCreateClient = async (data: { name: string; phone: string }) => {
+    let newCli: Client;
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      try {
+        newCli = (await clientsService.create({ name: data.name, phone: data.phone } as any)) as any;
+      } catch {
+        newCli = (await createOfflineClient(data)) as any;
+      }
+    } else {
+      newCli = (await createOfflineClient(data)) as any;
+    }
+    setClients((prev) => [newCli, ...prev]);
+    setClient(newCli);
+    setClientPicker(false);
+    toast.success("Cliente cadastrado com sucesso!");
+    notifyLocalSync("clients");
+  };
+
+  const handleQuickCreateProduct = async (data: {
+    name: string;
+    salePrice: number;
+    stock: number;
+    barcode?: string;
+  }) => {
+    let newProd: Product;
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      try {
+        newProd = (await productsService.create({
+          name: data.name,
+          salePrice: data.salePrice,
+          stock: data.stock,
+          barcode: data.barcode || null,
+        })) as any as Product;
+      } catch {
+        newProd = (await createOfflineProduct(data)) as any;
+      }
+    } else {
+      newProd = (await createOfflineProduct(data)) as any;
+    }
+    setProducts((prev) => [newProd, ...prev]);
+    addProduct(newProd as any);
+    setProductPicker(false);
+    toast.success("Produto cadastrado e adicionado ao carrinho!");
+    notifyLocalSync("products");
   };
 
   if (!can("nova-venda", "Visualizar")) {
@@ -765,6 +876,7 @@ export default function NovaVenda() {
           setClientPicker(false);
         }}
         clients={clients as any}
+        onQuickCreate={handleQuickCreateClient}
       />
 
       <VariantPicker
@@ -782,6 +894,7 @@ export default function NovaVenda() {
         onPick={(p) => {
           addProduct(p as any);
         }}
+        onQuickCreate={handleQuickCreateProduct}
       />
 
       {/* Confirmação para limpar carrinho */}

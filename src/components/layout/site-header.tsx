@@ -10,6 +10,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NAV, SECONDARY_NAV, TitlePages } from "@/lib/navigation-data";
 import { ModeToggle } from "./mode-toggle";
 import { usePermissions } from "@/components/auth/permissions-provider";
+import { SyncStatusIndicator } from "./sync-status-indicator";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -56,6 +57,7 @@ export function SiteHeader() {
           {pageTitle}
         </h1>
         <div className="ml-auto flex items-center gap-2">
+          <SyncStatusIndicator />
           <ModeToggle />
         </div>
       </div>

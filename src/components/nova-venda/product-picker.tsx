@@ -5,6 +5,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Drawer,
@@ -27,7 +28,6 @@ import { BarcodeScanner } from "@/components/barcode-scanner";
 
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/useSettingsStore";
-
 import { getProductTotalStock } from "@/lib/stock";
 
 export function ProductPicker({
@@ -36,16 +36,30 @@ export function ProductPicker({
   products,
   cartItems,
   onPick,
+  onQuickCreate,
 }: {
   open: boolean;
   onClose: () => void;
   products: import("@/types").Product[];
   cartItems: { productId: string; quantity: number }[];
   onPick: (p: import("@/types").Product) => void;
+  onQuickCreate?: (data: {
+    name: string;
+    salePrice: number;
+    stock: number;
+    barcode?: string;
+  }) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newStock, setNewStock] = useState("1");
+  const [newBarcode, setNewBarcode] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const isMobile = useIsMobile();
   const trackStock = useSettingsStore((s) => s.products?.trackStock ?? true);
   const blockOutOfStock = useSettingsStore(
@@ -80,6 +94,41 @@ export function ProductPicker({
     }, 800);
   };
 
+  const handleQuickSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) {
+      toast.error("Informe o nome do produto.");
+      return;
+    }
+    const cleanPrice = parseFloat(newPrice.replace(",", "."));
+    if (isNaN(cleanPrice) || cleanPrice < 0) {
+      toast.error("Informe um preço de venda válido.");
+      return;
+    }
+    const cleanStock = parseFloat(newStock.replace(",", ".")) || 0;
+
+    if (!onQuickCreate) return;
+
+    setIsSaving(true);
+    try {
+      await onQuickCreate({
+        name: newName.trim(),
+        salePrice: cleanPrice,
+        stock: cleanStock,
+        barcode: newBarcode.trim() || undefined,
+      });
+      setNewName("");
+      setNewPrice("");
+      setNewStock("1");
+      setNewBarcode("");
+      setIsCreating(false);
+    } catch {
+      // Toast já tratado no caller
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const availableProducts = useMemo(() => {
     if (trackStock && blockOutOfStock) {
       return products.filter((p) => getProductTotalStock(p) > 0);
@@ -108,7 +157,94 @@ export function ProductPicker({
     }
   };
 
-  const PickerContent = (
+  const PickerContent = isCreating ? (
+    <form onSubmit={handleQuickSubmit} className="flex min-h-0 flex-1 flex-col px-4 pb-4 overflow-hidden gap-3">
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <Label htmlFor="prod-quick-name" className="text-xs font-semibold">
+            Nome do produto <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="prod-quick-name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Ex.: Camiseta Básica Preta G"
+            className="rounded-xl text-base md:text-sm"
+            autoFocus
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label htmlFor="prod-quick-price" className="text-xs font-semibold">
+              Preço de Venda (R$) <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="prod-quick-price"
+              type="text"
+              inputMode="decimal"
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              placeholder="0,00"
+              className="rounded-xl text-base md:text-sm"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="prod-quick-stock" className="text-xs font-semibold">
+              Estoque Inicial
+            </Label>
+            <Input
+              id="prod-quick-stock"
+              type="text"
+              inputMode="numeric"
+              value={newStock}
+              onChange={(e) => setNewStock(e.target.value)}
+              placeholder="1"
+              className="rounded-xl text-base md:text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="prod-quick-barcode" className="text-xs font-semibold">
+            Código de barras (opcional)
+          </Label>
+          <Input
+            id="prod-quick-barcode"
+            value={newBarcode}
+            onChange={(e) => setNewBarcode(e.target.value)}
+            placeholder="789..."
+            className="rounded-xl text-base md:text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="mt-auto flex flex-col gap-2 pt-2">
+        <Button
+          type="submit"
+          disabled={isSaving || !newName.trim() || !newPrice.trim()}
+          className="h-10 w-full rounded-full font-medium"
+        >
+          {isSaving ? "Salvando..." : "Salvar e Adicionar"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setIsCreating(false);
+            setNewName("");
+            setNewPrice("");
+            setNewStock("1");
+            setNewBarcode("");
+          }}
+          className="h-9 w-full rounded-full text-xs text-muted-foreground"
+        >
+          Voltar para busca
+        </Button>
+      </div>
+    </form>
+  ) : (
     <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 overflow-hidden">
       <div className="flex gap-2 shrink-0 mb-3">
         <div className="relative flex-1">
@@ -126,73 +262,93 @@ export function ProductPicker({
           size="icon"
           className="shrink-0 rounded-xl sm:hidden text-foreground"
           onClick={() => setIsScannerOpen(true)}
+          title="Ler código de barras"
         >
           <BoxIcon name="barcode-reader" className="text-lg text-foreground" />
         </Button>
+        {onQuickCreate && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsCreating(true)}
+            className="rounded-xl shrink-0 gap-1 px-3"
+            title="Cadastrar produto rápido"
+          >
+            <BoxIcon name="plus" className="text-base" />
+            <span className="hidden sm:inline">Novo</span>
+          </Button>
+        )}
       </div>
       <div className="min-h-0 flex-1">
-        {/* SOLUÇÃO: Esconde a barra alvejando o elemento interno do Radix */}
         <ScrollArea className="h-full">
           <div className="space-y-1 pb-4">
             {filtered.map((p) => {
               const cartQty = cartItems
                 .filter((i) => i.productId === p.id)
                 .reduce((sum, i) => sum + i.quantity, 0);
+
+              const hasVariants = Boolean(p.variants && p.variants.length > 0);
               const totalStock = getProductTotalStock(p);
-              const remaining = totalStock - cartQty;
+              const isOutOfStock = trackStock && blockOutOfStock && totalStock <= cartQty;
+              const isLowStock =
+                trackStock && !blockOutOfStock && totalStock <= cartQty;
+
               const isAdded = justAddedId === p.id;
 
               return (
                 <button
                   key={p.id}
-                  type="button"
-                  disabled={trackStock && blockOutOfStock && remaining <= 0}
-                  onClick={() => handlePick(p)}
+                  onClick={() => !isOutOfStock && handlePick(p)}
+                  disabled={isOutOfStock}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-all duration-200",
-                    trackStock && blockOutOfStock && remaining <= 0
-                      ? "opacity-50 cursor-not-allowed bg-muted/20 border-border/40"
-                      : "hover:border-primary/40 hover:bg-accent cursor-pointer",
-                    isAdded
-                      ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 ring-2 ring-emerald-500/20 scale-[0.99]"
-                      : "border-border/60",
+                    "flex w-full items-center gap-3 rounded-xl border border-border/60 p-2.5 text-left transition-all",
+                    isOutOfStock
+                      ? "opacity-50 cursor-not-allowed bg-muted/30"
+                      : "hover:border-primary/40 hover:bg-accent active:scale-[0.99]",
+                    isAdded && "border-primary bg-primary/10 transition-colors duration-300"
                   )}
                 >
-                  <ProductThumb name={p.name} image={p.image} />
+                  <ProductThumb
+                    name={p.name}
+                    image={p.image}
+                    className="h-10 w-10 shrink-0 rounded-lg border border-border/40 object-cover"
+                  />
+
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span className="truncate text-sm font-medium">{p.name}</span>
-                      {cartQty > 0 && (
+                      {hasVariants && (
                         <Badge
                           variant="secondary"
-                          className="h-5 px-1.5 text-[10px] font-semibold bg-zinc-100 text-zinc-900 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 shrink-0"
+                          className="shrink-0 text-[10px] h-4 px-1 leading-none font-normal"
                         >
-                          {cartQty} no carrinho
+                          Variações
                         </Badge>
                       )}
                     </div>
-                    {trackStock && (
-                      <div className="text-xs text-muted-foreground">
-                        {remaining} em estoque
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isAdded && (
-                      <span className="flex items-center gap-1 text-xs font-bold text-foreground animate-in fade-in zoom-in-75">
-                        <BoxIcon name="check" className="text-sm text-foreground" /> +1
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                      <span className="font-semibold text-foreground">
+                        {currency(Number(p.salePrice))}
                       </span>
-                    )}
-                    <div className="text-sm font-semibold tabular-nums">
-                      {currency(p.salePrice as number)}
+                      {trackStock && (
+                        <>
+                          <span>•</span>
+                          <span
+                            className={cn(
+                              isLowStock && "text-amber-500 font-medium",
+                              isOutOfStock && "text-destructive font-medium",
+                            )}
+                          >
+                            Estoque: {totalStock}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  {trackStock && remaining <= 0 && (
-                    <Badge
-                      variant="outline"
-                      className="text-amber-600 border-amber-600/30"
-                    >
-                      Sem estoque
+
+                  {cartQty > 0 && (
+                    <Badge variant="default" className="shrink-0 h-5 px-1.5 text-xs">
+                      {cartQty}
                     </Badge>
                   )}
                 </button>
@@ -210,20 +366,24 @@ export function ProductPicker({
         <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
           <DrawerContent className="h-[90vh]">
             <DrawerHeader className="shrink-0 px-4 text-center">
-              <DrawerTitle className="text-center">Produtos</DrawerTitle>
+              <DrawerTitle className="text-center">
+                {isCreating ? "Novo produto rápido" : "Produtos"}
+              </DrawerTitle>
             </DrawerHeader>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {PickerContent}
-              <div className="shrink-0 pt-3 pb-6 px-4 border-t border-border w-full flex flex-col gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={onClose}
-                  className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Fechar
-                </Button>
-              </div>
+              {!isCreating && (
+                <div className="shrink-0 pt-3 pb-6 px-4 border-t border-border w-full flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onClose}
+                    className="h-10 w-full rounded-full text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -243,7 +403,9 @@ export function ProductPicker({
         <DialogContent className="sm:max-w-125 p-0 gap-0 overflow-hidden grid-rows-[auto_1fr] max-h-[85vh]">
           <DialogHeader className="flex-row items-center gap-2 p-4 pb-0 pr-10">
             <div className="flex items-center gap-2 py-2">
-              <DialogTitle>Produtos</DialogTitle>
+              <DialogTitle>
+                {isCreating ? "Novo produto rápido" : "Produtos"}
+              </DialogTitle>
             </div>
           </DialogHeader>
           {PickerContent}

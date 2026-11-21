@@ -25,15 +25,19 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
     {
-      matcher: ({ request, url: { pathname }, sameOrigin }) =>
-        request.destination === "document" ||
-        (sameOrigin && pathname.startsWith("/_next/data/")),
+      matcher: ({ request, url: { pathname, searchParams }, sameOrigin }) =>
+        sameOrigin &&
+        !pathname.startsWith("/api/") &&
+        (request.destination === "document" ||
+          request.headers.get("RSC") === "1" ||
+          searchParams.has("_rsc") ||
+          pathname.startsWith("/_next/data/")),
       handler: new StaleWhileRevalidate({
         cacheName: "pages-cache",
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+            maxEntries: 100,
+            maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
           }),
         ],
       }),
