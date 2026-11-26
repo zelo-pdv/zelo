@@ -5,7 +5,7 @@ import { getProductTotalStock } from "@/lib/stock";
 
 export async function GET(req: Request) {
   try {
-    const auth = await requirePermission("historico", "Visualizar");
+    const auth = await requirePermission("relatorios", "Visualizar");
     if (!auth.authorized) return auth.response;
     const user = auth.user;
 

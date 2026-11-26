@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/components/auth/permissions-provider";
 import { currency } from "@/lib/format";
 import { maskPhone } from "@/lib/masks";
 import { PAYMENT_METHOD_NAMES } from "@/lib/audit-formatter";
@@ -106,6 +107,8 @@ const DATE_PRESETS = [
 
 export default function RelatoriosPage() {
   const isMobile = useIsMobile();
+  const { can } = usePermissions();
+  const canView = can("relatorios", "Visualizar");
   const [selectedReport, setSelectedReport] =
     useState<ReportType>("top-products");
   const [datePreset, setDatePreset] = useState("esteMes");
@@ -130,6 +133,7 @@ export default function RelatoriosPage() {
 
   // Carrega categorias da loja para o filtro de produtos
   useEffect(() => {
+    if (!canView) return;
     async function loadCategories() {
       try {
         const res = await fetch("/api/categories");
@@ -142,7 +146,7 @@ export default function RelatoriosPage() {
       }
     }
     loadCategories();
-  }, []);
+  }, [canView]);
 
   // Calcula intervalo de datas a partir do preset selecionado
   const getDateRange = useCallback(() => {
@@ -192,6 +196,10 @@ export default function RelatoriosPage() {
 
   // Busca dados do relatório
   const fetchReport = useCallback(async () => {
+    if (!canView) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -223,7 +231,7 @@ export default function RelatoriosPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedReport, getDateRange, selectedCategory, onlyOverdue]);
+  }, [canView, selectedReport, getDateRange, selectedCategory, onlyOverdue]);
 
   useEffect(() => {
     fetchReport();
@@ -415,6 +423,17 @@ export default function RelatoriosPage() {
       toast.error("Erro ao gerar PDF do relatório.");
     }
   };
+
+  if (!canView) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-2">
+        <BoxIcon name="lock" className="text-3xl text-muted-foreground" />
+        <p className="text-muted-foreground">
+          Você não tem permissão para visualizar os relatórios.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-3 sm:px-6 space-y-4 max-w-7xl mx-auto">

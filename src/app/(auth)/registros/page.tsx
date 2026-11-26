@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/components/auth/permissions-provider";
 import { formatAuditLog, PAYMENT_METHOD_NAMES } from "@/lib/audit-formatter";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { toast } from "sonner";
@@ -69,6 +70,8 @@ const DATE_PRESETS = [
 
 export default function RegistrosPage() {
   const isMobile = useIsMobile();
+  const { can } = usePermissions();
+  const canView = can("registros", "Visualizar");
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [storeUsers, setStoreUsers] = useState<StoreUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +130,10 @@ export default function RegistrosPage() {
 
   const fetchLogs = useCallback(
     async (targetPage = 1) => {
+      if (!canView) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const params = new URLSearchParams();
@@ -174,6 +181,7 @@ export default function RegistrosPage() {
       }
     },
     [
+      canView,
       activeCategory,
       getDateRange,
       selectedUser,
@@ -267,6 +275,17 @@ export default function RegistrosPage() {
       toast.error("Erro ao gerar PDF dos registros.");
     }
   };
+
+  if (!canView) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-2">
+        <BoxIcon name="lock" className="text-3xl text-muted-foreground" />
+        <p className="text-muted-foreground">
+          Você não tem permissão para visualizar os registros de auditoria.
+        </p>
+      </div>
+    );
+  }
 
   const selectedCategoryLabel =
     CATEGORIES.find((c) => c.id === activeCategory)?.label || "Todos";

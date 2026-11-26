@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/require-permission";
 
 export async function GET(req: Request) {
   try {
-    const auth = await requirePermission("historico", "Visualizar");
+    const auth = await requirePermission("registros", "Visualizar");
     if (!auth.authorized) return auth.response;
     const user = auth.user;
 
