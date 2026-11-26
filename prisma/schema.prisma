@@ -435,6 +435,11 @@ enum IngestionJobStatus {
   CANCELLED
 }
 
+enum IngestionMode {
+  MULTIMODAL
+  TEXT_ONLY
+}
+
 enum SheetStatus {
   PENDING
   PROCESSING
@@ -545,6 +550,7 @@ model CatalogIngestionJob {
   id                 String                  @id @default(cuid())
   catalogId          String
   catalog            Catalog                 @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  mode               IngestionMode           @default(MULTIMODAL)
   status             IngestionJobStatus      @default(QUEUED)
   totalPages         Int
   processedPages     Int                     @default(0)
@@ -552,6 +558,7 @@ model CatalogIngestionJob {
   totalProductsFound Int                     @default(0)
   totalTokensUsed    Int                     @default(0)
   estimatedCostUsd   Decimal?                @db.Decimal(10, 4)
+  metrics            Json?
   currentSheet       Int?
   startedAt          DateTime?
   completedAt        DateTime?
@@ -562,6 +569,7 @@ model CatalogIngestionJob {
 
   @@index([catalogId])
   @@index([status])
+  @@index([mode])
 }
 
 model CatalogIngestionSheet {

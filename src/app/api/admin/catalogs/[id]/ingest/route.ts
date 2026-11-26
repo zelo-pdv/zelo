@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requirePlatformAdmin } from "@/lib/require-platform-admin";
 import { runIngestionJob } from "@/lib/catalog-ingestion";
+import { IngestionMode } from "@/prisma";
 
 export const dynamic = "force-dynamic";
+
+const startIngestionSchema = z
+  .object({
+    mode: z.nativeEnum(IngestionMode).optional(),
+    resumeJobId: z.string().min(1).optional(),
+  })
+  .optional();
 
 export async function POST(
   req: Request,
@@ -16,6 +25,30 @@ export async function POST(
 
   try {
     const { id } = await params;
+
+    let rawBody: unknown = undefined;
+    try {
+      const text = await req.text();
+      if (text.trim()) {
+        rawBody = JSON.parse(text);
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Corpo da requisição JSON inválido." },
+        { status: 400 }
+      );
+    }
+
+    const parsed = startIngestionSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Parâmetros de ingestão inválidos.", details: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const requestedMode = parsed.data?.mode ?? IngestionMode.MULTIMODAL;
+    const resumeJobId = parsed.data?.resumeJobId;
 
     const catalog = await prisma.catalog.findUnique({
       where: { id },
@@ -57,30 +90,66 @@ export async function POST(
       );
     }
 
-    // Cria o novo job
-    const job = await prisma.catalogIngestionJob.create({
-      data: {
-        catalogId: id,
-        status: "QUEUED",
-        totalPages: 0,
-      },
-    });
+    let job;
+
+    if (resumeJobId) {
+      const existingJob = await prisma.catalogIngestionJob.findUnique({
+        where: { id: resumeJobId },
+      });
+      if (!existingJob || existingJob.catalogId !== id) {
+        return NextResponse.json(
+          { error: "Job para retomada não encontrado neste catálogo." },
+          { status: 404 }
+        );
+      }
+      if (existingJob.status !== "FAILED" && existingJob.status !== "CANCELLED") {
+        return NextResponse.json(
+          { error: `Apenas jobs com status FAILED ou CANCELLED podem ser retomados (atual: ${existingJob.status}).` },
+          { status: 400 }
+        );
+      }
+
+      // Garante que folhas presas em PROCESSING voltem para PENDING
+      await prisma.catalogIngestionSheet.updateMany({
+        where: { jobId: resumeJobId, status: "PROCESSING" },
+        data: { status: "PENDING" },
+      });
+
+      job = await prisma.catalogIngestionJob.update({
+        where: { id: resumeJobId },
+        data: {
+          status: "QUEUED",
+          errorMessage: null,
+          completedAt: null,
+        },
+      });
+    } else {
+      job = await prisma.catalogIngestionJob.create({
+        data: {
+          catalogId: id,
+          mode: requestedMode,
+          status: "QUEUED",
+          totalPages: 0,
+        },
+      });
+    }
 
     await prisma.platformAuditLog.create({
       data: {
         adminId: auth.admin.id,
-        action: "CATALOG_INGESTION_STARTED",
+        action: resumeJobId ? "CATALOG_INGESTION_RESUMED" : "CATALOG_INGESTION_STARTED",
         targetType: "Catalog",
         targetId: id,
         details: {
           jobId: job.id,
+          mode: job.mode,
+          resumed: Boolean(resumeJobId),
           catalogTitle: catalog.title,
           brand: catalog.brand.name,
         },
       },
     });
 
-    // Inicia a execução assíncrona desacoplada da requisição HTTP
     setImmediate(() => {
       runIngestionJob(job.id).catch((err) => {
         console.error(`[Background Ingestion] Erro fatal no job ${job.id}:`, err);
@@ -89,8 +158,11 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Processamento de catálogo iniciado em segundo plano com sucesso.",
+      message: resumeJobId
+        ? "Retomada do processamento iniciada em segundo plano."
+        : "Processamento de catálogo iniciado em segundo plano com sucesso.",
       jobId: job.id,
+      mode: job.mode,
     });
   } catch (error: any) {
     console.error("Erro ao iniciar ingestão de catálogo:", error);
@@ -124,7 +196,13 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ success: true, jobs });
+    return NextResponse.json({
+      success: true,
+      jobs: jobs.map((j) => ({
+        ...j,
+        estimatedCostUsd: j.estimatedCostUsd !== null ? Number(j.estimatedCostUsd) : 0,
+      })),
+    });
   } catch (error: any) {
     console.error("Erro ao consultar histórico de jobs:", error);
     return NextResponse.json(

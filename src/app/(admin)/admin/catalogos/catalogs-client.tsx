@@ -120,9 +120,13 @@ export function CatalogsClient() {
   const [ingestionCatalog, setIngestionCatalog] = useState<CatalogItem | null>(
     null,
   );
+  const [ingestionMode, setIngestionMode] = useState<"TEXT_ONLY" | "MULTIMODAL">(
+    "TEXT_ONLY",
+  );
   const [activeJob, setActiveJob] = useState<any>(null);
   const [loadingJob, setLoadingJob] = useState(false);
   const [startingIngestion, setStartingIngestion] = useState(false);
+  const [cancellingIngestion, setCancellingIngestion] = useState(false);
 
   // Busca lista de marcas para selects
   const fetchBrands = useCallback(async () => {
@@ -480,7 +484,7 @@ export function CatalogsClient() {
     }
   };
 
-  const handleStartIngestion = async () => {
+  const handleStartIngestion = async (resumeJobId?: string) => {
     if (!ingestionCatalog) return;
     setStartingIngestion(true);
     try {
@@ -488,11 +492,21 @@ export function CatalogsClient() {
         `/api/admin/catalogs/${ingestionCatalog.id}/ingest`,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            resumeJobId
+              ? { mode: activeJob?.mode || ingestionMode, resumeJobId }
+              : { mode: ingestionMode },
+          ),
         },
       );
       const data = await res.json();
       if (data.success) {
-        toast.success("Processamento iniciado em segundo plano!");
+        toast.success(
+          resumeJobId
+            ? "Retomada do processamento iniciada em segundo plano!"
+            : "Processamento iniciado em segundo plano!",
+        );
         await fetchJobStatus(ingestionCatalog.id, data.jobId);
         fetchCatalogs();
       } else {
@@ -502,6 +516,28 @@ export function CatalogsClient() {
       toast.error("Erro ao iniciar ingestão com IA.");
     } finally {
       setStartingIngestion(false);
+    }
+  };
+
+  const handleCancelIngestion = async () => {
+    if (!ingestionCatalog || !activeJob) return;
+    setCancellingIngestion(true);
+    try {
+      const res = await fetch(
+        `/api/admin/catalogs/${ingestionCatalog.id}/jobs/${activeJob.id}`,
+        { method: "DELETE" },
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Processamento cancelado.");
+        await fetchJobStatus(ingestionCatalog.id, activeJob.id);
+      } else {
+        toast.error(data.error || "Falha ao cancelar processamento.");
+      }
+    } catch {
+      toast.error("Erro de conexão ao cancelar.");
+    } finally {
+      setCancellingIngestion(false);
     }
   };
 
@@ -1121,16 +1157,15 @@ export function CatalogsClient() {
       </Dialog>
 
       {/* Modal de Ingestão de Produtos com IA */}
-      <Dialog open={ingestionModalOpen} onOpenChange={setIngestionModalOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={ingestionModalOpen} onOpenChange={setIngestionModalOpen} blur>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <BoxIcon name="bot" className="size-5 text-indigo-600" />
-              Extração Automática com IA Multimodal
+              Extração Automática de Catálogo
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Processa o PDF da revista, extrai referências, preços, variantes e
-              gera recortes de imagem otimizados.
+              Escolha a modalidade de processamento do PDF e acompanhe o progresso por folha em tempo real.
             </DialogDescription>
           </DialogHeader>
 
@@ -1150,6 +1185,64 @@ export function CatalogsClient() {
                 )}
               </div>
 
+              {/* Seletor de Modalidade de Processamento */}
+              {(!activeJob ||
+                (activeJob.status !== "PROCESSING" &&
+                  activeJob.status !== "QUEUED")) && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground">
+                    Modalidade de extração
+                  </Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIngestionMode("TEXT_ONLY")}
+                      className={`text-left rounded-lg border p-3 transition-all ${
+                        ingestionMode === "TEXT_ONLY"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-border bg-card hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <BoxIcon name="file-doc" className="size-4 text-primary" />
+                          Extração de dados (sem imagens)
+                        </span>
+                        <Badge variant="secondary" className="text-[10px]">
+                          Recomendado • Econômico
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                        Extrai nomes, códigos, descrições, preços, variantes e demais informações dos produtos utilizando processamento de texto e IA, sem processar imagens.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIngestionMode("MULTIMODAL")}
+                      className={`text-left rounded-lg border p-3 transition-all ${
+                        ingestionMode === "MULTIMODAL"
+                          ? "border-indigo-600 bg-indigo-50/40 ring-1 ring-indigo-600 dark:bg-indigo-950/20"
+                          : "border-border bg-card hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <BoxIcon name="image" className="size-4 text-indigo-600" />
+                          Extração multimodal (com imagens)
+                        </span>
+                        <Badge variant="outline" className="text-[10px]">
+                          Legado • Alto consumo
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                        Renderiza cada folha em alta resolução para análise visual por IA e gera recortes automáticos das fotos dos produtos.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {loadingJob ? (
                 <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
                   <BoxIcon
@@ -1162,10 +1255,20 @@ export function CatalogsClient() {
                 </div>
               ) : activeJob ? (
                 <div className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/40 p-3.5 dark:border-indigo-900/40 dark:bg-indigo-950/20">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-indigo-900 dark:text-indigo-300">
-                      Status: {activeJob.status}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-indigo-900 dark:text-indigo-300">
+                        Status: {activeJob.status}
+                      </span>
+                      <Badge
+                        variant={activeJob.mode === "TEXT_ONLY" ? "secondary" : "outline"}
+                        className="text-[10px]"
+                      >
+                        {activeJob.mode === "TEXT_ONLY"
+                          ? "Extração de dados (sem imagens)"
+                          : "Multimodal (com imagens)"}
+                      </Badge>
+                    </div>
                     <Badge variant="outline" className="font-mono text-[10px]">
                       {activeJob.processedPages} / {activeJob.totalPages || "?"}{" "}
                       folhas
@@ -1183,10 +1286,64 @@ export function CatalogsClient() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>Progresso: {activeJob.progressPercentage || 0}%</span>
                     <span>
+                      Progresso: {activeJob.progressPercentage || 0}%
+                      {activeJob.failedPages > 0 && (
+                        <span className="text-destructive ml-1.5">
+                          ({activeJob.failedPages} falha(s))
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-medium text-foreground">
                       {activeJob.totalProductsFound || 0} produtos encontrados
                     </span>
+                  </div>
+
+                  {/* Telemetria detalhada para extração textual / consumo de API */}
+                  <div className="grid grid-cols-2 gap-2 rounded-md border border-border/60 bg-background/70 p-2 text-[11px]">
+                    {activeJob.mode === "TEXT_ONLY" && activeJob.metrics ? (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground">Tokens (Ent./Saída): </span>
+                          <span className="font-mono font-medium text-foreground">
+                            {activeJob.metrics.inputTokens || 0} / {activeJob.metrics.outputTokens || 0}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Chamadas IA: </span>
+                          <span className="font-mono font-medium text-foreground">
+                            {activeJob.metrics.aiCalls || 0}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Origem páginas: </span>
+                          <span className="font-medium text-foreground">
+                            {activeJob.metrics.nativeTextPages || 0} nativas • {activeJob.metrics.ocrPages || 0} OCR
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Custo est.: </span>
+                          <span className="font-mono font-medium text-foreground">
+                            ${Number(activeJob.estimatedCostUsd || 0).toFixed(4)}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground">Tokens totais: </span>
+                          <span className="font-mono font-medium text-foreground">
+                            {activeJob.totalTokensUsed || 0}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Custo est.: </span>
+                          <span className="font-mono font-medium text-foreground">
+                            ${Number(activeJob.estimatedCostUsd || 0).toFixed(4)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {activeJob.status === "PROCESSING" && (
@@ -1198,6 +1355,51 @@ export function CatalogsClient() {
                       <span>
                         Processando folha {activeJob.currentSheet || "atual"}...
                       </span>
+                    </div>
+                  )}
+
+                  {activeJob.errorMessage && (
+                    <p className="text-[11px] text-destructive">
+                      Erro: {activeJob.errorMessage}
+                    </p>
+                  )}
+
+                  {/* Resumo compacto das últimas folhas processadas */}
+                  {Array.isArray(activeJob.sheets) && activeJob.sheets.length > 0 && (
+                    <div className="max-h-28 overflow-y-auto rounded-md border border-border/50 bg-background/60 p-2 space-y-1">
+                      {activeJob.sheets
+                        .filter((s: any) => s.status !== "PENDING")
+                        .slice(-8)
+                        .map((s: any) => (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between text-[10px] text-muted-foreground"
+                          >
+                            <span className="font-mono">
+                              Folha {s.sheetNumber}
+                              {s.editorialPages ? ` (${s.editorialPages})` : ""}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              {s.usedOcr && (
+                                <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                                  OCR
+                                </Badge>
+                              )}
+                              <span>{s.extractedCount} prod.</span>
+                              <span
+                                className={
+                                  s.status === "FAILED"
+                                    ? "text-destructive font-semibold"
+                                    : s.status === "SKIPPED"
+                                      ? "text-muted-foreground"
+                                      : "text-emerald-600 dark:text-emerald-400"
+                                }
+                              >
+                                {s.status}
+                              </span>
+                            </span>
+                          </div>
+                        ))}
                     </div>
                   )}
 
@@ -1217,40 +1419,68 @@ export function CatalogsClient() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground space-y-2">
+                <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground space-y-1.5">
                   <p>Nenhuma extração anterior encontrada para esta edição.</p>
                   <p className="text-[11px]">
-                    O modelo analisará todas as folhas duplas em segundo plano.
-                    Você poderá acompanhar o progresso em tempo real e revisar
-                    os produtos na tela de curadoria.
+                    O processamento rodará em segundo plano por página. Você poderá acompanhar o progresso e revisar os produtos na curadoria.
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIngestionModalOpen(false)}>
               Fechar
             </Button>
+
+            {activeJob &&
+              (activeJob.status === "PROCESSING" ||
+                activeJob.status === "QUEUED") && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleCancelIngestion}
+                  disabled={cancellingIngestion}
+                  className="gap-1.5">
+                  <BoxIcon name="stop-circle" className="size-4" />
+                  {cancellingIngestion ? "Cancelando..." : "Cancelar"}
+                </Button>
+              )}
+
+            {activeJob &&
+              (activeJob.status === "FAILED" ||
+                activeJob.status === "CANCELLED") &&
+              activeJob.totalPages > activeJob.processedPages && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleStartIngestion(activeJob.id)}
+                  disabled={startingIngestion}
+                  className="gap-1.5">
+                  <BoxIcon name="play" className="size-4" />
+                  Retomar Pendentes
+                </Button>
+              )}
+
             {(!activeJob ||
               activeJob.status === "COMPLETED" ||
               activeJob.status === "FAILED" ||
               activeJob.status === "CANCELLED") && (
               <Button
                 size="sm"
-                onClick={handleStartIngestion}
+                onClick={() => handleStartIngestion()}
                 disabled={startingIngestion}
                 className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
                 <BoxIcon name="bot" className="size-4" />
                 {startingIngestion
                   ? "Iniciando..."
                   : activeJob
-                    ? "Reprocessar Catálogo"
-                    : "Iniciar Extração com IA"}
+                    ? "Nova Extração"
+                    : "Iniciar Extração"}
               </Button>
             )}
           </DialogFooter>

@@ -9,6 +9,14 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
+  serverExternalPackages: [
+    "pdfjs-dist",
+    "tesseract.js",
+    "@tesseract.js-data/por",
+    "@napi-rs/canvas",
+    "sharp",
+    "playwright",
+  ],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

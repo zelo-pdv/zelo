@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,7 @@ interface CatalogProductItem {
     name: string;
     referenceSku: string | null;
     description: string | null;
+    imageUrl?: string | null;
     suggestedPrice: number | string | null;
     variants: ProductVariantItem[];
   };
@@ -79,9 +81,14 @@ export function CurationClient({ catalog }: CurationClientProps) {
 
   // Modal de edição manual do item
   const [editingItem, setEditingItem] = useState<CatalogProductItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editSku, setEditSku] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editRegularPrice, setEditRegularPrice] = useState("");
   const [editPromoPrice, setEditPromoPrice] = useState("");
+  const [editPromoMinQty, setEditPromoMinQty] = useState("1");
   const [editPromoRule, setEditPromoRule] = useState("");
+  const [editNotes, setEditNotes] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Modal de Zoom da Foto
@@ -185,9 +192,14 @@ export function CurationClient({ catalog }: CurationClientProps) {
 
   const handleOpenEdit = (item: CatalogProductItem) => {
     setEditingItem(item);
+    setEditName(item.globalProduct.name || "");
+    setEditSku(item.globalProduct.referenceSku || "");
+    setEditDescription(item.globalProduct.description || "");
     setEditRegularPrice(item.regularPrice !== null ? String(item.regularPrice) : "");
     setEditPromoPrice(item.promoPrice !== null ? String(item.promoPrice) : "");
+    setEditPromoMinQty(item.promoMinQuantity ? String(item.promoMinQuantity) : "1");
     setEditPromoRule(item.promoRule || "");
+    setEditNotes(item.curationNotes || "");
   };
 
   const handleSaveEdit = async () => {
@@ -200,14 +212,19 @@ export function CurationClient({ catalog }: CurationClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           catalogProductId: editingItem.id,
+          productName: editName.trim() || undefined,
+          referenceSku: editSku.trim() || null,
+          description: editDescription.trim() || null,
           regularPrice: editRegularPrice ? parseFloat(editRegularPrice) : null,
           promoPrice: editPromoPrice ? parseFloat(editPromoPrice) : null,
+          promoMinQuantity: editPromoMinQty ? Math.max(1, parseInt(editPromoMinQty, 10) || 1) : 1,
           promoRule: editPromoRule.trim() || null,
+          curationNotes: editNotes.trim() || null,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Preços e regras atualizados com sucesso.");
+        toast.success("Dados do produto atualizados com sucesso.");
         setEditingItem(null);
         fetchItems();
       } else {
@@ -404,45 +421,58 @@ export function CurationClient({ catalog }: CurationClientProps) {
                 className="flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-md"
               >
                 <div>
-                  {/* Cabeçalho do Card: Foto Recortada + Badges */}
-                  <div className="relative h-48 w-full bg-muted/40">
-                    {item.cropUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImageUrl(item.cropUrl)}
-                        className="relative h-full w-full cursor-zoom-in"
-                        title="Clique para ampliar o recorte"
-                      >
-                        <Image
-                          src={item.cropUrl}
-                          alt={item.globalProduct.name}
-                          fill
-                          className="object-contain p-2"
-                          unoptimized
-                        />
-                      </button>
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-                        <BoxIcon name="image" className="size-10" />
+                  {/* Cabeçalho do Card: Foto Recortada (ou estado textual sem imagem) + Badges */}
+                  {(() => {
+                    const displayImage = item.cropUrl || item.globalProduct.imageUrl || null;
+                    return (
+                      <div className={`relative w-full bg-muted/40 ${displayImage ? "h-48" : "h-24 border-b border-border/50"}`}>
+                        {displayImage ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImageUrl(displayImage)}
+                            className="relative h-full w-full cursor-zoom-in"
+                            title="Clique para ampliar a imagem"
+                          >
+                            <Image
+                              src={displayImage}
+                              alt={item.globalProduct.name}
+                              fill
+                              className="object-contain p-2"
+                              unoptimized
+                            />
+                          </button>
+                        ) : (
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 pt-4 text-muted-foreground/70">
+                            <BoxIcon name="file-doc" className="size-5 opacity-60" />
+                            <span className="text-[11px] font-medium">
+                              Sem imagem (extração textual)
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Selos Flutuantes */}
+                        <div className="absolute left-2 top-2 flex flex-wrap items-center gap-1">
+                          {item.pageNumber && (
+                            <Badge variant="outline" className="bg-background/90 text-[10px] font-mono shadow-xs">
+                              Pág. {item.pageNumber}
+                            </Badge>
+                          )}
+                          <Badge
+                            variant={item.globalProduct.referenceSku ? "outline" : "secondary"}
+                            className="bg-background/90 text-[10px] font-mono font-bold shadow-xs"
+                          >
+                            {item.globalProduct.referenceSku
+                              ? `#${item.globalProduct.referenceSku}`
+                              : "Sem SKU"}
+                          </Badge>
+                        </div>
+
+                        <div className="absolute right-2 top-2">
+                          {getStatusBadge(item.curationStatus)}
+                        </div>
                       </div>
-                    )}
-
-                    {/* Selos Flutuantes */}
-                    <div className="absolute left-2 top-2 flex flex-col gap-1">
-                      {item.pageNumber && (
-                        <Badge variant="outline" className="bg-background/90 text-[10px] font-mono shadow-xs">
-                          Pág. {item.pageNumber}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="bg-background/90 text-[10px] font-mono font-bold shadow-xs">
-                        #{item.globalProduct.referenceSku}
-                      </Badge>
-                    </div>
-
-                    <div className="absolute right-2 top-2">
-                      {getStatusBadge(item.curationStatus)}
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Detalhes do Produto */}
                   <div className="p-3.5 space-y-2.5">
@@ -457,6 +487,19 @@ export function CurationClient({ catalog }: CurationClientProps) {
                       )}
                     </div>
 
+                    {item.curationNotes && (
+                      <div
+                        className={`rounded-md border px-2.5 py-1.5 text-[11px] leading-snug ${
+                          item.curationStatus === "FLAGGED"
+                            ? "border-amber-300 bg-amber-50/70 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
+                            : "border-border bg-muted/40 text-muted-foreground"
+                        }`}
+                      >
+                        <span className="font-semibold">Revisão: </span>
+                        {item.curationNotes}
+                      </div>
+                    )}
+
                     {/* Preços e Promoções */}
                     <div className="rounded-lg bg-muted/40 p-2 text-xs space-y-1">
                       <div className="flex items-center justify-between">
@@ -469,7 +512,9 @@ export function CurationClient({ catalog }: CurationClientProps) {
                       {hasPromo && (
                         <div className="flex flex-col gap-0.5 pt-1 border-t border-border/60">
                           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-                            <span>Oferta da Edição:</span>
+                            <span>
+                              Oferta{item.promoMinQuantity && item.promoMinQuantity > 1 ? ` (${item.promoMinQuantity}+ un.)` : ""}:
+                            </span>
                             <span>{currency(item.promoPrice)}</span>
                           </div>
                           {item.promoRule && (
@@ -482,11 +527,32 @@ export function CurationClient({ catalog }: CurationClientProps) {
                     </div>
 
                     {/* Variantes (Tamanhos e Cores) */}
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Grades:</span>
-                      <span className="font-medium text-foreground">
-                        {item.globalProduct.variants?.length || 0} variações
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>Grades / Variantes:</span>
+                        <span className="font-medium text-foreground">
+                          {item.globalProduct.variants?.length || 0} variações
+                        </span>
+                      </div>
+                      {item.globalProduct.variants && item.globalProduct.variants.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {item.globalProduct.variants.slice(0, 4).map((v) => (
+                            <Badge
+                              key={v.id}
+                              variant="outline"
+                              className="px-1.5 py-0 text-[10px] font-normal max-w-[130px] truncate"
+                              title={v.name}
+                            >
+                              {v.name}
+                            </Badge>
+                          ))}
+                          {item.globalProduct.variants.length > 4 && (
+                            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                              +{item.globalProduct.variants.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -540,44 +606,86 @@ export function CurationClient({ catalog }: CurationClientProps) {
         </div>
       )}
 
-      {/* Modal de Edição de Preços e Regras */}
-      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="sm:max-w-md">
+      {/* Modal de Edição de Produto, Preços e Regras */}
+      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)} blur>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar Preços e Regras</DialogTitle>
+            <DialogTitle>Editar Produto na Curadoria</DialogTitle>
           </DialogHeader>
 
           {editingItem && (
-            <div className="space-y-4 py-2">
-              <div className="text-xs text-muted-foreground">
-                <p className="font-semibold text-foreground">{editingItem.globalProduct.name}</p>
-                <p>SKU: #{editingItem.globalProduct.referenceSku}</p>
+            <div className="space-y-3.5 py-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="edit-name" className="text-xs font-medium">Nome do Produto</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-base md:text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-sku" className="text-xs font-medium">SKU / Código</Label>
+                  <Input
+                    id="edit-sku"
+                    value={editSku}
+                    onChange={(e) => setEditSku(e.target.value)}
+                    placeholder="Ex: 067249"
+                    className="text-base md:text-sm font-mono"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="reg-price" className="text-xs font-medium">Preço de Tabela (R$)</Label>
-                <Input
-                  id="reg-price"
-                  type="number"
-                  step="0.01"
-                  value={editRegularPrice}
-                  onChange={(e) => setEditRegularPrice(e.target.value)}
-                  placeholder="Ex: 26.99"
-                  className="text-xs"
+                <Label htmlFor="edit-desc" className="text-xs font-medium">Descrição</Label>
+                <Textarea
+                  id="edit-desc"
+                  rows={2}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="text-base md:text-sm"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="promo-price" className="text-xs font-medium">Preço Promocional (R$)</Label>
-                <Input
-                  id="promo-price"
-                  type="number"
-                  step="0.01"
-                  value={editPromoPrice}
-                  onChange={(e) => setEditPromoPrice(e.target.value)}
-                  placeholder="Ex: 17.99 (ou deixe vazio se não houver promoção)"
-                  className="text-xs"
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="reg-price" className="text-xs font-medium">Preço Tabela (R$)</Label>
+                  <Input
+                    id="reg-price"
+                    type="number"
+                    step="0.01"
+                    value={editRegularPrice}
+                    onChange={(e) => setEditRegularPrice(e.target.value)}
+                    placeholder="Ex: 26.99"
+                    className="text-base md:text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="promo-price" className="text-xs font-medium">Preço Promo (R$)</Label>
+                  <Input
+                    id="promo-price"
+                    type="number"
+                    step="0.01"
+                    value={editPromoPrice}
+                    onChange={(e) => setEditPromoPrice(e.target.value)}
+                    placeholder="Opcional"
+                    className="text-base md:text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="promo-qty" className="text-xs font-medium">Qtd. Mín. Promo</Label>
+                  <Input
+                    id="promo-qty"
+                    type="number"
+                    min="1"
+                    value={editPromoMinQty}
+                    onChange={(e) => setEditPromoMinQty(e.target.value)}
+                    className="text-base md:text-sm"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -587,7 +695,19 @@ export function CurationClient({ catalog }: CurationClientProps) {
                   value={editPromoRule}
                   onChange={(e) => setEditPromoRule(e.target.value)}
                   placeholder="Ex: 3 ou + por 17,99 CADA"
-                  className="text-xs"
+                  className="text-base md:text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="curation-notes" className="text-xs font-medium">Notas de Revisão</Label>
+                <Textarea
+                  id="curation-notes"
+                  rows={2}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Observações ou resolução de ambiguidades..."
+                  className="text-base md:text-sm"
                 />
               </div>
             </div>

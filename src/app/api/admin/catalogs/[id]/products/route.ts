@@ -257,7 +257,11 @@ export async function PATCH(
       regularPrice,
       promoPrice,
       promoRule,
+      promoMinQuantity,
       curationNotes,
+      productName,
+      referenceSku,
+      description,
     } = body;
 
     if (!catalogProductId) {
@@ -267,6 +271,39 @@ export async function PATCH(
       );
     }
 
+    const existingItem = await prisma.catalogProduct.findUnique({
+      where: { id: catalogProductId },
+      select: { id: true, catalogId: true, globalProductId: true },
+    });
+
+    if (!existingItem || existingItem.catalogId !== id) {
+      return NextResponse.json(
+        { error: "Item de catálogo não encontrado." },
+        { status: 404 }
+      );
+    }
+
+    if (
+      productName !== undefined ||
+      referenceSku !== undefined ||
+      description !== undefined
+    ) {
+      await prisma.globalProduct.update({
+        where: { id: existingItem.globalProductId },
+        data: {
+          name: typeof productName === "string" && productName.trim() ? productName.trim() : undefined,
+          referenceSku:
+            referenceSku !== undefined
+              ? referenceSku?.trim() || null
+              : undefined,
+          description:
+            description !== undefined
+              ? description?.trim() || null
+              : undefined,
+        },
+      });
+    }
+
     const updated = await prisma.catalogProduct.update({
       where: { id: catalogProductId },
       data: {
@@ -274,6 +311,8 @@ export async function PATCH(
         regularPrice: regularPrice !== undefined ? regularPrice : undefined,
         promoPrice: promoPrice !== undefined ? promoPrice : undefined,
         promoRule: promoRule !== undefined ? promoRule : undefined,
+        promoMinQuantity:
+          promoMinQuantity !== undefined ? promoMinQuantity : undefined,
         curationNotes: curationNotes !== undefined ? curationNotes : undefined,
       },
     });

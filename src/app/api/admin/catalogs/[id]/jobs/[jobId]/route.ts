@@ -29,7 +29,10 @@ export async function GET(
             attempts: true,
             modelUsed: true,
             durationMs: true,
+            inputTokens: true,
+            outputTokens: true,
             extractedCount: true,
+            rawExtraction: true,
             errorMessage: true,
             updatedAt: true,
           },
@@ -54,10 +57,34 @@ export async function GET(
           )
         : 0;
 
+    // Resumo compacto por folha sem trafegar todo o array bruto em cada poll de 3s
+    const serializedSheets = job.sheets.map((s) => {
+      const raw = (s.rawExtraction as Record<string, any> | null) || null;
+      return {
+        id: s.id,
+        sheetNumber: s.sheetNumber,
+        editorialPages: s.editorialPages,
+        status: s.status,
+        attempts: s.attempts,
+        modelUsed: s.modelUsed,
+        durationMs: s.durationMs,
+        inputTokens: s.inputTokens,
+        outputTokens: s.outputTokens,
+        extractedCount: s.extractedCount,
+        errorMessage: s.errorMessage,
+        updatedAt: s.updatedAt,
+        extractionSource: raw?.extractionSource || null,
+        usedOcr: Boolean(raw?.usedOcr),
+        aiCalls: typeof raw?.aiCalls === "number" ? raw.aiCalls : null,
+      };
+    });
+
     return NextResponse.json({
       success: true,
       job: {
         ...job,
+        estimatedCostUsd: job.estimatedCostUsd !== null ? Number(job.estimatedCostUsd) : 0,
+        sheets: serializedSheets,
         progressPercentage,
       },
     });
