@@ -26,7 +26,9 @@ export async function cacheCatalogData(params: {
     // 1. Atualiza Produtos
     if (params.products && Array.isArray(params.products)) {
       // Coleta IDs dos produtos criados offline para não sobrescrever
-      const localOnlyProducts = await db.products.where("isLocalOnly").equals(1 as any).toArray();
+      const localOnlyProducts = await db.products
+        .filter((p) => Boolean(p.isLocalOnly))
+        .toArray();
       const localOnlyIds = new Set(localOnlyProducts.map((p) => p.id));
 
       const formattedProducts: LocalProduct[] = params.products
@@ -68,7 +70,9 @@ export async function cacheCatalogData(params: {
 
     // 2. Atualiza Clientes
     if (params.clients && Array.isArray(params.clients)) {
-      const localOnlyClients = await db.clients.where("isLocalOnly").equals(1 as any).toArray();
+      const localOnlyClients = await db.clients
+        .filter((c) => Boolean(c.isLocalOnly))
+        .toArray();
       const localOnlyIds = new Set(localOnlyClients.map((c) => c.id));
 
       const formattedClients: LocalClient[] = params.clients
@@ -105,7 +109,7 @@ export async function cacheCatalogData(params: {
 export async function getOfflineProducts(): Promise<LocalProduct[]> {
   const db = getOfflineDb();
   if (!db) return [];
-  return db.products.where("active").equals(1 as any).toArray();
+  return db.products.filter((p) => p.active !== false).toArray();
 }
 
 /**
@@ -114,7 +118,7 @@ export async function getOfflineProducts(): Promise<LocalProduct[]> {
 export async function getOfflineClients(): Promise<LocalClient[]> {
   const db = getOfflineDb();
   if (!db) return [];
-  return db.clients.where("active").equals(1 as any).toArray();
+  return db.clients.filter((c) => c.active !== false).toArray();
 }
 
 /**
@@ -305,5 +309,5 @@ export async function getPendingSyncCount(): Promise<number> {
 export async function getPendingOfflineSales(): Promise<LocalSale[]> {
   const db = getOfflineDb();
   if (!db) return [];
-  return db.sales.where("synced").equals(0 as any).toArray();
+  return db.sales.filter((s) => !s.synced).toArray();
 }
