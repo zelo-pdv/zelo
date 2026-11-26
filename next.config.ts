@@ -10,7 +10,14 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
-  serverExternalPackages: ["@napi-rs/canvas", "tesseract.js"],
+  serverExternalPackages: ["@napi-rs/canvas", "tesseract.js", "playwright", "pdfjs-dist"],
+  outputFileTracingIncludes: {
+    "/api/admin/catalogs/**": [
+      "./node_modules/pdfjs-dist/build/**/*",
+      "./node_modules/pdfjs-dist/legacy/build/**/*",
+      "./node_modules/pdfjs-dist/standard_fonts/**/*",
+    ],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

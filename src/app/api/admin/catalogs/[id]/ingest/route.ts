@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requirePlatformAdmin } from "@/lib/require-platform-admin";
-import { runIngestionJob } from "@/lib/catalog-ingestion";
+import {
+  enqueueIngestionJob,
+  recoverStaleIngestionJobs,
+} from "@/lib/catalog-ingestion/job-runner";
 import { IngestionMode } from "@/prisma";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +74,9 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // Recupera eventuais jobs órfãos/travados antes de checar concorrência
+    await recoverStaleIngestionJobs(id);
 
     // Verifica se já existe um job em andamento
     const activeJob = await prisma.catalogIngestionJob.findFirst({
@@ -150,11 +156,7 @@ export async function POST(
       },
     });
 
-    setImmediate(() => {
-      runIngestionJob(job.id).catch((err) => {
-        console.error(`[Background Ingestion] Erro fatal no job ${job.id}:`, err);
-      });
-    });
+    enqueueIngestionJob(job.id);
 
     return NextResponse.json({
       success: true,
@@ -184,6 +186,8 @@ export async function GET(
 
   try {
     const { id } = await params;
+
+    await recoverStaleIngestionJobs(id);
 
     const jobs = await prisma.catalogIngestionJob.findMany({
       where: { catalogId: id },

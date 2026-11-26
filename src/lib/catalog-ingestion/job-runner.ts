@@ -2,13 +2,105 @@ import prisma from "@/lib/prisma";
 import { downloadCatalogPdf } from "@/lib/supabase";
 import { getPdfSheetCount } from "./pdf-splitter";
 import { processCatalogSheet } from "./ingestion-pipeline";
-import { closeRenderer } from "./page-renderer";
+import { closeRenderer, retainRenderer } from "./page-renderer";
 import { loadPdfTextDocument } from "./pdf-text-extractor";
 import { closeOcrWorker } from "./selective-ocr";
 import { processCatalogSheetTextOnly } from "./text-ingestion-pipeline";
 import { calculateGeminiCostUsd } from "./cost-calculator";
 import type { TextJobMetrics } from "./types";
 import fs from "fs";
+
+const globalForJobs = globalThis as unknown as {
+  __zeloActiveIngestionJobs?: Map<string, Promise<void>>;
+};
+
+function getActiveIngestionJobsMap(): Map<string, Promise<void>> {
+  if (!globalForJobs.__zeloActiveIngestionJobs) {
+    globalForJobs.__zeloActiveIngestionJobs = new Map<string, Promise<void>>();
+  }
+  return globalForJobs.__zeloActiveIngestionJobs;
+}
+
+export function isIngestionJobRunningLocally(jobId: string): boolean {
+  return getActiveIngestionJobsMap().has(jobId);
+}
+
+export function getStaleJobTimeoutMs(): number {
+  const configured = Number(process.env.CATALOG_JOB_STALE_MINUTES || "10");
+  const minutes = Number.isFinite(configured) && configured >= 1 ? configured : 10;
+  return minutes * 60 * 1000;
+}
+
+/**
+ * Enfileira a execução de um job no processo atual garantindo unicidade por jobId
+ * (substitui disparos cegos via `setImmediate`).
+ */
+export function enqueueIngestionJob(jobId: string): void {
+  const activeJobs = getActiveIngestionJobsMap();
+  if (activeJobs.has(jobId)) return;
+
+  const runnerPromise = Promise.resolve()
+    .then(() => runIngestionJob(jobId))
+    .catch((err) => {
+      console.error(`[Background Ingestion] Erro fatal no job ${jobId}:`, err);
+    })
+    .finally(() => {
+      activeJobs.delete(jobId);
+    });
+
+  activeJobs.set(jobId, runnerPromise);
+}
+
+/**
+ * Recupera jobs presos em QUEUED/PROCESSING após reinício do container/servidor ou
+ * inatividade prolongada sem execução local ativa, liberando o catálogo para retomada.
+ */
+export async function recoverStaleIngestionJobs(catalogId?: string): Promise<number> {
+  const staleThresholdMs = getStaleJobTimeoutMs();
+  const candidates = await prisma.catalogIngestionJob.findMany({
+    where: {
+      ...(catalogId ? { catalogId } : {}),
+      status: { in: ["QUEUED", "PROCESSING"] },
+    },
+    include: {
+      sheets: {
+        select: { updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  const now = Date.now();
+  let recoveredCount = 0;
+
+  for (const job of candidates) {
+    if (isIngestionJobRunningLocally(job.id)) continue;
+
+    const latestSheetAt = job.sheets[0]?.updatedAt?.getTime() ?? 0;
+    const lastActivityAt = Math.max(job.updatedAt.getTime(), latestSheetAt);
+
+    if (now - lastActivityAt > staleThresholdMs) {
+      await prisma.catalogIngestionSheet.updateMany({
+        where: { jobId: job.id, status: "PROCESSING" },
+        data: { status: "PENDING" },
+      });
+      await prisma.catalogIngestionJob.update({
+        where: { id: job.id },
+        data: {
+          status: "FAILED",
+          currentSheet: null,
+          errorMessage:
+            "Processamento interrompido por inatividade ou reinício do servidor. Utilize 'Retomar' para continuar de onde parou.",
+          completedAt: new Date(),
+        },
+      });
+      recoveredCount++;
+    }
+  }
+
+  return recoveredCount;
+}
 
 /**
  * Obtém o buffer do PDF a partir do Supabase Storage ou do sistema de arquivos local.
@@ -54,6 +146,7 @@ export async function runIngestionJob(jobId: string): Promise<void> {
   }
 
   const isTextOnly = job.mode === "TEXT_ONLY";
+  const releaseRendererLease = isTextOnly ? null : retainRenderer();
   let loadedTextDoc: Awaited<ReturnType<typeof loadPdfTextDocument>> | null = null;
   const jobStartTime = Date.now();
 
@@ -347,6 +440,7 @@ export async function runIngestionJob(jobId: string): Promise<void> {
     if (isTextOnly) {
       await closeOcrWorker();
     } else {
+      releaseRendererLease?.();
       await closeRenderer();
     }
   }

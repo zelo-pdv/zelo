@@ -34,7 +34,7 @@ export interface ProcessSheetOutput {
 /**
  * Salva a imagem recortada no Supabase Storage ou faz fallback local para public/uploads.
  */
-async function saveCroppedImage(
+export async function saveCroppedImage(
   catalogId: string,
   sku: string,
   buffer: Buffer
@@ -45,7 +45,19 @@ async function saveCroppedImage(
     const uploaded = await uploadImageToSupabase(buffer, fileName, "image/webp", BUCKET_PRODUCTS);
     return { url: uploaded.url, storagePath: uploaded.path };
   } catch (err: any) {
-    console.warn(`[Supabase Storage Fallback] Não foi possível enviar imagem para o Storage: ${err.message}. Salvando localmente...`);
+    const allowLocalFallback =
+      process.env.NODE_ENV !== "production" ||
+      process.env.ALLOW_LOCAL_CROP_FALLBACK === "true";
+
+    if (!allowLocalFallback) {
+      const msg = `[Storage Produção] Falha ao enviar recorte "${sku}" do catálogo ${catalogId} para o Supabase Storage: ${err.message}. Configure SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ou habilite ALLOW_LOCAL_CROP_FALLBACK=true caso utilize volume persistente.`;
+      console.error(msg);
+      throw new Error(msg);
+    }
+
+    console.warn(
+      `[Supabase Storage Fallback] Falha no Storage (${err.message}). Salvando recorte localmente em public/uploads...`
+    );
     const localDir = path.join(process.cwd(), "public", "uploads", "catalog-crops", catalogId);
     if (!fs.existsSync(localDir)) {
       fs.mkdirSync(localDir, { recursive: true });

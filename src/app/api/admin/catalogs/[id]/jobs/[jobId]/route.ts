@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePlatformAdmin } from "@/lib/require-platform-admin";
+import { recoverStaleIngestionJobs } from "@/lib/catalog-ingestion/job-runner";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,8 @@ export async function GET(
 
   try {
     const { id, jobId } = await params;
+
+    await recoverStaleIngestionJobs(id);
 
     const job = await prisma.catalogIngestionJob.findUnique({
       where: { id: jobId },
@@ -108,6 +111,8 @@ export async function DELETE(
 
   try {
     const { id, jobId } = await params;
+
+    await recoverStaleIngestionJobs(id);
 
     const job = await prisma.catalogIngestionJob.findUnique({
       where: { id: jobId },

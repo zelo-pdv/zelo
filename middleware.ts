@@ -96,6 +96,7 @@ export async function middleware(req: NextRequest) {
   // 3. CONTEXTO DOS LOJISTAS (/api/*, /dashboard, /produtos, etc.)
   // -------------------------------------------------------------
   const isLojistaPublicApi =
+    pathname === "/api/health" ||
     pathname === "/api/auth/login" ||
     pathname === "/api/auth/register" ||
     pathname === "/api/auth/logout";

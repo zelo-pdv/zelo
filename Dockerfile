@@ -24,6 +24,8 @@ WORKDIR /app
 # Instala ferramentas necessárias para módulos nativos (ex.: bcrypt)
 RUN apk add --no-cache python3 make g++
 
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 # Copia apenas os manifestos de dependências para aproveitar o cache de camadas do Docker
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
@@ -62,9 +64,20 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Instala OpenSSL e compatibilidade de bibliotecas no container final
-RUN apk add --no-cache libc6-compat openssl curl
+# Instala OpenSSL, utilitários e Chromium headless compatível com Alpine para o scanner de PDFs
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    curl \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Cria usuário e grupo de sistema não-root por motivos de segurança (Princípio do Menor Privilégio)
 RUN addgroup --system --gid 1001 nodejs && \
@@ -84,8 +97,8 @@ USER nextjs
 EXPOSE 3000
 
 # Healthcheck para monitoramento da saúde do container
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/api/sync || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Comando de inicialização do servidor HTTP standalone
 CMD ["node", "server.js"]
