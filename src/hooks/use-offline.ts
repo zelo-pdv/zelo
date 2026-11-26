@@ -24,9 +24,6 @@ export function useOffline(): OfflineStatus {
 
     const updateOnline = () => {
       setIsOnline(navigator.onLine);
-      if (navigator.onLine) {
-        void syncManager.sync();
-      }
     };
 
     const updateOffline = () => {

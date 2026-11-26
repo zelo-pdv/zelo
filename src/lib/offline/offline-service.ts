@@ -131,6 +131,12 @@ export async function getOfflineSettings(): Promise<any | null> {
   return s?.config || null;
 }
 
+function notifySyncQueueUpdated() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("zelo-sync-queue-updated"));
+  }
+}
+
 /**
  * Registra um cliente localmente (offline) e adiciona à fila de sincronização.
  */
@@ -166,6 +172,7 @@ export async function createOfflineClient(data: {
     });
   });
 
+  notifySyncQueueUpdated();
   return localClient;
 }
 
@@ -214,6 +221,7 @@ export async function createOfflineProduct(data: {
     });
   });
 
+  notifySyncQueueUpdated();
   return localProduct;
 }
 
@@ -285,12 +293,13 @@ export async function createOfflineSale(saleData: {
     await db.syncQueue.add({
       type: "CREATE_SALE",
       tempId: localSaleId,
-      payload: sale,
+      payload: { ...sale, tempId: localSaleId },
       createdAt: new Date().toISOString(),
       attempts: 0,
     });
   });
 
+  notifySyncQueueUpdated();
   return sale;
 }
 

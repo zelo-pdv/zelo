@@ -1,3 +1,13 @@
+export class ApiRequestError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+  }
+}
+
 /**
  * Resolve a URL base das APIs evitando bloqueios de CSP/CORS entre
  * `localhost`, `127.0.0.1` e IPs locais em rede quando executado no navegador.
@@ -57,7 +67,7 @@ export async function apiRequest<T>(
     } catch {
       // Falha ao fazer parse do JSON, mantem o erro padrão
     }
-    throw new Error(errorMessage);
+    throw new ApiRequestError(errorMessage, response.status);
   }
 
   if (response.status === 204) {

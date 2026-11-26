@@ -44,7 +44,7 @@ import { VariantPicker } from "@/components/nova-venda/variant-picker";
 
 import { clientsService } from "@/services/clients.service";
 import { productsService } from "@/services/products.service";
-import { apiRequest } from "@/lib/api-request";
+import { ApiRequestError, apiRequest } from "@/lib/api-request";
 import {
   type EffectiveDiscountLimit,
   validateDiscountLimit,
@@ -79,6 +79,19 @@ type CartItem = {
   quantity: number;
   unitPrice: number;
 };
+
+function isOfflineNetworkError(err: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+  if (err instanceof ApiRequestError) {
+    return err.status === 0;
+  }
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return (
+    msg === "Failed to fetch" ||
+    msg.includes("NetworkError") ||
+    msg.includes("Load failed")
+  );
+}
 
 export default function NovaVenda() {
   const router = useRouter();
@@ -565,12 +578,7 @@ export default function NovaVenda() {
             clear();
           } catch (err: any) {
             // Se falhou por queda de rede súbita (Failed to fetch)
-            if (
-              (typeof navigator !== "undefined" && !navigator.onLine) ||
-              err?.message?.includes("Failed to fetch") ||
-              err?.message?.includes("NetworkError") ||
-              err?.message?.includes("Load failed")
-            ) {
+            if (isOfflineNetworkError(err)) {
               await createOfflineSale(salePayload);
               toast.warning("Sem conexão no momento. Venda salva offline e será sincronizada assim que a internet voltar.");
               notifyLocalSync("sales");
@@ -590,21 +598,29 @@ export default function NovaVenda() {
   };
 
   const handleQuickCreateClient = async (data: { name: string; phone: string }) => {
-    let newCli: Client;
-    if (typeof navigator !== "undefined" && navigator.onLine) {
-      try {
-        newCli = (await clientsService.create({ name: data.name, phone: data.phone } as any)) as any;
-      } catch {
+    try {
+      let newCli: Client;
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        try {
+          newCli = (await clientsService.create({ name: data.name, phone: data.phone } as any)) as any;
+        } catch (err: any) {
+          if (isOfflineNetworkError(err)) {
+            newCli = (await createOfflineClient(data)) as any;
+          } else {
+            throw err;
+          }
+        }
+      } else {
         newCli = (await createOfflineClient(data)) as any;
       }
-    } else {
-      newCli = (await createOfflineClient(data)) as any;
+      setClients((prev) => [newCli, ...prev]);
+      setClient(newCli);
+      setClientPicker(false);
+      toast.success("Cliente cadastrado com sucesso!");
+      notifyLocalSync("clients");
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao cadastrar cliente.");
     }
-    setClients((prev) => [newCli, ...prev]);
-    setClient(newCli);
-    setClientPicker(false);
-    toast.success("Cliente cadastrado com sucesso!");
-    notifyLocalSync("clients");
   };
 
   const handleQuickCreateProduct = async (data: {
@@ -613,26 +629,34 @@ export default function NovaVenda() {
     stock: number;
     barcode?: string;
   }) => {
-    let newProd: Product;
-    if (typeof navigator !== "undefined" && navigator.onLine) {
-      try {
-        newProd = (await productsService.create({
-          name: data.name,
-          salePrice: data.salePrice,
-          stock: data.stock,
-          barcode: data.barcode || null,
-        })) as any as Product;
-      } catch {
+    try {
+      let newProd: Product;
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        try {
+          newProd = (await productsService.create({
+            name: data.name,
+            salePrice: data.salePrice,
+            stock: data.stock,
+            barcode: data.barcode || null,
+          })) as any as Product;
+        } catch (err: any) {
+          if (isOfflineNetworkError(err)) {
+            newProd = (await createOfflineProduct(data)) as any;
+          } else {
+            throw err;
+          }
+        }
+      } else {
         newProd = (await createOfflineProduct(data)) as any;
       }
-    } else {
-      newProd = (await createOfflineProduct(data)) as any;
+      setProducts((prev) => [newProd, ...prev]);
+      addProduct(newProd as any);
+      setProductPicker(false);
+      toast.success("Produto cadastrado e adicionado ao carrinho!");
+      notifyLocalSync("products");
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao cadastrar produto.");
     }
-    setProducts((prev) => [newProd, ...prev]);
-    addProduct(newProd as any);
-    setProductPicker(false);
-    toast.success("Produto cadastrado e adicionado ao carrinho!");
-    notifyLocalSync("products");
   };
 
   if (!can("nova-venda", "Visualizar")) {

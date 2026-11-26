@@ -233,12 +233,14 @@ model Sale {
   discount      Decimal?   @default(0.00) @db.Decimal(10, 2)
   surcharge     Decimal?   @default(0.00) @db.Decimal(10, 2)
   saleNumber    Int?
+  offlineTempId String?
   client        Client?    @relation(fields: [clientId], references: [id])
   loja          Loja       @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   seller        User?      @relation(fields: [sellerId], references: [id])
   items         SaleItem[]
 
   @@unique([lojaId, saleNumber])
+  @@unique([lojaId, offlineTempId])
   @@index([lojaId])
   @@index([lojaId, date])
   @@index([lojaId, updatedAt])
