@@ -229,38 +229,50 @@ export default function HistoricoPage() {
     }
   };
 
-  const handleBulkCancel = async (selected: Sale[]) => {
+  const handleBulkCancel = async (selected: Sale[]): Promise<string[]> => {
     try {
       const activeSales = selected.filter((s) => s.status !== "CANCELADO");
       if (activeSales.length === 0) {
         toast.info("Nenhuma das vendas selecionadas está ativa para cancelamento.");
-        return;
+        return selected.map((s) => s.id);
       }
 
-      const results = await Promise.allSettled(
-        activeSales.map((s) => apiRequest(`/sales/${s.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ status: "CANCELADO" }),
-        }))
-      );
+      const res = await apiRequest<{
+        cancelledIds: string[];
+        failed: { id: string; reason: string }[];
+      }>("/sales/bulk-cancel", {
+        method: "POST",
+        body: JSON.stringify({ ids: activeSales.map((s) => s.id) }),
+      });
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? activeSales[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      const cancelledIds = res.cancelledIds ?? [];
+      const failed = res.failed ?? [];
+      const successfulSet = new Set(cancelledIds);
 
-      setSales((prev) =>
-        prev.map((s) => (successfulIds.has(s.id) ? { ...s, status: "CANCELADO" as any } : s))
-      );
+      if (cancelledIds.length > 0) {
+        setSales((prev) =>
+          prev.map((s) => (successfulSet.has(s.id) ? { ...s, status: "CANCELADO" as any } : s))
+        );
+        notifyLocalSync("sales");
+        notifyLocalSync("products");
+      }
 
-      toast.success(
-        `${successfulIds.size} venda(s) cancelada(s) com sucesso! O estoque foi restabelecido.`
-      );
-      notifyLocalSync("sales");
-      notifyLocalSync("products");
+      if (cancelledIds.length > 0 && failed.length === 0) {
+        toast.success(
+          `${cancelledIds.length} venda(s) cancelada(s) com sucesso! O estoque foi restabelecido.`
+        );
+      } else if (cancelledIds.length > 0 && failed.length > 0) {
+        toast.warning(
+          `${cancelledIds.length} venda(s) cancelada(s), mas ${failed.length} falhou/não pôde ser cancelada.`
+        );
+      } else if (failed.length > 0) {
+        toast.error(failed[0]?.reason || "Nenhuma venda pôde ser cancelada.");
+      }
+
+      return cancelledIds;
     } catch {
       toast.error("Erro ao cancelar vendas em massa.");
+      return [];
     }
   };
 

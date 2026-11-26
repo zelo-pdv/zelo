@@ -182,11 +182,28 @@ export function StockMovementDialog({
       return;
     }
 
+    const targetVariantId = hasVariants ? selectedVariantId : null;
+    const isDuplicate = addedItems.some(
+      (item) =>
+        item.productId === currentProduct.id &&
+        (item.variantId ?? null) === targetVariantId,
+    );
+
+    if (isDuplicate) {
+      const label = hasVariants && selectedVariant?.name
+        ? `${currentProduct.name} (${selectedVariant.name})`
+        : currentProduct.name;
+      toast.warning(
+        `"${label}" já foi adicionado a este lote. Remova-o da lista para alterar quantidade ou tipo.`,
+      );
+      return;
+    }
+
     const newItem: AddedProductItem = {
       id: Math.random().toString(36).substring(2, 9),
       productId: currentProduct.id,
       productName: currentProduct.name,
-      variantId: hasVariants ? selectedVariantId : null,
+      variantId: targetVariantId,
       variantName: hasVariants ? selectedVariant?.name : null,
       type: selectedType,
       quantity: Number(selectedQuantity),

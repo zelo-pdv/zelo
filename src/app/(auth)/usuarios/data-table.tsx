@@ -80,8 +80,8 @@ export function UsersDataTable({
   currentUserId?: string;
   canEdit?: boolean;
   canDelete?: boolean;
-  onBulkToggleActive?: (users: UserTableData[], active: boolean) => Promise<void>;
-  onBulkDelete?: (users: UserTableData[]) => Promise<void>;
+  onBulkToggleActive?: (users: UserTableData[], active: boolean) => Promise<string[] | void>;
+  onBulkDelete?: (users: UserTableData[]) => Promise<string[] | void>;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -96,11 +96,12 @@ export function UsersDataTable({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => row.id,
     state: { globalFilter, columnFilters, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
-    enableRowSelection: (row) => !row.original.isFirstUser,
+    enableRowSelection: (row) => !row.original.isFirstUser && row.original.id !== currentUserId,
     globalFilterFn: (row, _id, value) => {
       if (!value) return true;
       const u = row.original;
@@ -573,8 +574,17 @@ export function UsersDataTable({
                   icon: "check-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, true);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, true);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
                 {
@@ -582,8 +592,17 @@ export function UsersDataTable({
                   icon: "x-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, false);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, false);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
               ]
@@ -622,8 +641,17 @@ export function UsersDataTable({
                 setIsBulkDeleting(true);
                 try {
                   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                  await onBulkDelete?.(selected);
-                  table.resetRowSelection();
+                  const deletedIds = await onBulkDelete?.(selected);
+                  if (Array.isArray(deletedIds)) {
+                    const done = new Set(deletedIds);
+                    setRowSelection((prev) => {
+                      const next = { ...prev };
+                      for (const id of done) delete next[id];
+                      return next;
+                    });
+                  } else {
+                    table.resetRowSelection();
+                  }
                   setShowBulkDeleteConfirm(false);
                 } finally {
                   setIsBulkDeleting(false);

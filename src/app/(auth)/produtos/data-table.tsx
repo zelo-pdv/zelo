@@ -74,8 +74,8 @@ interface ProductsDataTableProps {
   categoryLowStockThresholds?: Record<string, number>;
   canEdit?: boolean;
   canDelete?: boolean;
-  onBulkToggleActive?: (products: ProductFrontend[], active: boolean) => Promise<void>;
-  onBulkDelete?: (products: ProductFrontend[]) => Promise<void>;
+  onBulkToggleActive?: (products: ProductFrontend[], active: boolean) => Promise<string[] | void>;
+  onBulkDelete?: (products: ProductFrontend[]) => Promise<string[] | void>;
   onBulkExport?: (products: ProductFrontend[]) => void;
 }
 
@@ -111,6 +111,7 @@ export function ProductsDataTable({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => row.id,
     state: { sorting, columnFilters, globalFilter, rowSelection },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -625,8 +626,17 @@ export function ProductsDataTable({
                   icon: "check-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, true);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, true);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
                 {
@@ -634,8 +644,17 @@ export function ProductsDataTable({
                   icon: "x-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, false);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, false);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
               ]
@@ -686,8 +705,17 @@ export function ProductsDataTable({
                 setIsBulkDeleting(true);
                 try {
                   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                  await onBulkDelete?.(selected);
-                  table.resetRowSelection();
+                  const deletedIds = await onBulkDelete?.(selected);
+                  if (Array.isArray(deletedIds)) {
+                    const done = new Set(deletedIds);
+                    setRowSelection((prev) => {
+                      const next = { ...prev };
+                      for (const id of done) delete next[id];
+                      return next;
+                    });
+                  } else {
+                    table.resetRowSelection();
+                  }
                   setShowBulkDeleteConfirm(false);
                 } finally {
                   setIsBulkDeleting(false);

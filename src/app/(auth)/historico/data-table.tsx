@@ -66,7 +66,7 @@ export function SalesDataTable({
   onVoucher?: (s: Sale) => void;
   onEdit?: (s: Sale) => void;
   onCancel?: (s: Sale) => void;
-  onBulkCancel?: (sales: Sale[]) => Promise<void>;
+  onBulkCancel?: (sales: Sale[]) => Promise<string[] | void>;
   onBulkExport?: (sales: Sale[]) => void;
 }) {
   const isMobile = useIsMobile();
@@ -163,6 +163,7 @@ export function SalesDataTable({
   const table = useReactTable({
     data: filteredData,
     columns,
+    getRowId: (row) => row.id,
     state: { globalFilter, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
@@ -459,7 +460,18 @@ export function SalesDataTable({
             return (
               <div
                 key={row.id}
-                className="p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20">
+                onClick={() => row.toggleSelected()}
+                className={cn(
+                  "p-3.5 sm:p-4 flex items-center gap-3.5 transition-colors hover:bg-muted/20 cursor-pointer",
+                  row.getIsSelected() && "bg-primary/5 dark:bg-primary/10"
+                )}>
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(val) => row.toggleSelected(!!val)}
+                    aria-label={`Selecionar venda ${sale.clientName || "Consumidor Final"}`}
+                  />
+                </div>
                 {/* Dados da Venda */}
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1">
                   <div className="flex items-center gap-1.5">
@@ -716,8 +728,17 @@ export function SalesDataTable({
                 setIsBulkCancelling(true);
                 try {
                   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                  await onBulkCancel?.(selected);
-                  table.resetRowSelection();
+                  const cancelledIds = await onBulkCancel?.(selected);
+                  if (Array.isArray(cancelledIds)) {
+                    const done = new Set(cancelledIds);
+                    setRowSelection((prev) => {
+                      const next = { ...prev };
+                      for (const id of done) delete next[id];
+                      return next;
+                    });
+                  } else {
+                    table.resetRowSelection();
+                  }
                   setShowBulkCancelConfirm(false);
                 } finally {
                   setIsBulkCancelling(false);

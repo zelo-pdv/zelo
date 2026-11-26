@@ -39,12 +39,23 @@ export async function cancelSale(id: string): Promise<Sale> {
   });
 }
 
+export async function bulkCancelSales(ids: string[]): Promise<{
+  cancelledIds: string[];
+  failed: { id: string; reason: string }[];
+}> {
+  return apiRequest("/sales/bulk-cancel", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
 export const salesService = {
   list: listSales,
   create: createSale,
   updateStatus: updateSaleStatus,
   update: updateSale,
   cancel: cancelSale,
+  bulkCancel: bulkCancelSales,
 };
 
 export default salesService;

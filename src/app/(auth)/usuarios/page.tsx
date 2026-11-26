@@ -182,54 +182,76 @@ export default function UsuariosPage() {
     });
   }, [users, groups, lojaOwnerId]);
 
-  const handleBulkToggleActive = async (selected: UserTableData[], active: boolean) => {
+  const handleBulkToggleActive = async (selected: UserTableData[], active: boolean): Promise<string[]> => {
     try {
       const validUsers = selected.filter((u) => !u.isFirstUser && u.id !== currentUser?.sub);
-      if (validUsers.length === 0) return;
+      if (validUsers.length === 0) return [];
 
       const results = await Promise.allSettled(
         validUsers.map((u) => usersService.update(u.id, { active }))
       );
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? validUsers[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      const successfulIds = results
+        .map((res, index) => (res.status === "fulfilled" ? validUsers[index].id : null))
+        .filter(Boolean) as string[];
+      const successfulSet = new Set(successfulIds);
+      const failedCount = validUsers.length - successfulIds.length;
 
-      setUsers((prev) =>
-        prev.map((u) => (successfulIds.has(u.id) ? { ...u, active } : u))
-      );
+      if (successfulIds.length > 0) {
+        setUsers((prev) =>
+          prev.map((u) => (successfulSet.has(u.id) ? { ...u, active } : u))
+        );
+        notifyLocalSync("users");
+      }
 
-      toast.success(
-        `${successfulIds.size} usuário(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
-      );
-      notifyLocalSync("users");
+      if (successfulIds.length > 0 && failedCount === 0) {
+        toast.success(
+          `${successfulIds.length} usuário(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+        );
+      } else if (successfulIds.length > 0 && failedCount > 0) {
+        toast.warning(
+          `${successfulIds.length} usuário(s) atualizado(s), mas ${failedCount} falhou.`
+        );
+      } else {
+        toast.error("Não foi possível atualizar os usuários selecionados.");
+      }
+
+      return successfulIds;
     } catch {
       toast.error("Erro ao alterar status dos usuários em massa.");
+      return [];
     }
   };
 
-  const handleBulkDelete = async (selected: UserTableData[]) => {
+  const handleBulkDelete = async (selected: UserTableData[]): Promise<string[]> => {
     try {
       const validUsers = selected.filter((u) => !u.isFirstUser && u.id !== currentUser?.sub);
-      if (validUsers.length === 0) return;
+      if (validUsers.length === 0) return [];
 
-      const results = await Promise.allSettled(
-        validUsers.map((u) => usersService.delete(u.id))
-      );
+      const res = await usersService.bulkDelete(validUsers.map((u) => u.id));
+      const deletedIds = res.deletedIds ?? [];
+      const failed = res.failed ?? [];
+      const deletedSet = new Set(deletedIds);
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? validUsers[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      if (deletedIds.length > 0) {
+        setUsers((prev) => prev.filter((u) => !deletedSet.has(u.id)));
+        notifyLocalSync("users");
+      }
 
-      setUsers((prev) => prev.filter((u) => !successfulIds.has(u.id)));
-      toast.success(`${successfulIds.size} usuário(s) excluído(s) com sucesso!`);
-      notifyLocalSync("users");
+      if (deletedIds.length > 0 && failed.length === 0) {
+        toast.success(`${deletedIds.length} usuário(s) excluído(s) com sucesso!`);
+      } else if (deletedIds.length > 0 && failed.length > 0) {
+        toast.warning(
+          `${deletedIds.length} usuário(s) excluído(s), mas ${failed.length} não pôde ser removido (${failed[0]?.reason || "erro"}).`
+        );
+      } else if (failed.length > 0) {
+        toast.error(failed[0]?.reason || "Nenhum usuário pôde ser excluído.");
+      }
+
+      return deletedIds;
     } catch {
       toast.error("Erro ao excluir usuários em massa.");
+      return [];
     }
   };
 

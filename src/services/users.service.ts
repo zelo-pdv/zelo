@@ -31,6 +31,16 @@ export const usersService = {
     });
   },
 
+  async bulkDelete(ids: string[]): Promise<{
+    deletedIds: string[];
+    failed: { id: string; reason: string }[];
+  }> {
+    return apiRequest("/users/bulk-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    });
+  },
+
   async toggleActive(id: string, active: boolean) {
     return this.update(id, { active });
   },

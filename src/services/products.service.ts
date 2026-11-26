@@ -26,6 +26,16 @@ export const productsService = {
     });
   },
 
+  async bulkRemove(ids: string[]): Promise<{
+    deletedIds: string[];
+    failed: { id: string; reason: string }[];
+  }> {
+    return apiRequest("/products/bulk-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    });
+  },
+
   async addStock(id: string, qty: number, variantId?: string) {
     return apiRequest(`/products/${id}`, {
       method: "PATCH",

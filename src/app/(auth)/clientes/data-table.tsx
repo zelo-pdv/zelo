@@ -82,8 +82,8 @@ export function ClientsDataTable({
   onToggleActive?: (client: ClientTableData) => void;
   canEdit?: boolean;
   canDelete?: boolean;
-  onBulkToggleActive?: (clients: ClientTableData[], active: boolean) => Promise<void>;
-  onBulkDelete?: (clients: ClientTableData[]) => Promise<void>;
+  onBulkToggleActive?: (clients: ClientTableData[], active: boolean) => Promise<string[] | void>;
+  onBulkDelete?: (clients: ClientTableData[]) => Promise<string[] | void>;
 }) {
   const isMobile = useIsMobile();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -99,6 +99,7 @@ export function ClientsDataTable({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => row.id,
     state: { sorting, globalFilter, columnFilters, rowSelection },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -359,7 +360,8 @@ export function ClientsDataTable({
         {rows.length ? (
           rows.map((row) => {
             const client = row.original;
-            const isProtected = client.name === "Consumidor Final";
+            const isProtected =
+              client.name.trim().toLowerCase() === "consumidor final";
             const hasMobileActions =
               onView || onEdit || onDelete || onToggleActive;
 
@@ -607,8 +609,17 @@ export function ClientsDataTable({
                   icon: "check-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, true);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, true);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
                 {
@@ -616,8 +627,17 @@ export function ClientsDataTable({
                   icon: "x-circle",
                   onClick: async () => {
                     const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                    await onBulkToggleActive(selected, false);
-                    table.resetRowSelection();
+                    const succeededIds = await onBulkToggleActive(selected, false);
+                    if (Array.isArray(succeededIds)) {
+                      const done = new Set(succeededIds);
+                      setRowSelection((prev) => {
+                        const next = { ...prev };
+                        for (const id of done) delete next[id];
+                        return next;
+                      });
+                    } else {
+                      table.resetRowSelection();
+                    }
                   },
                 },
               ]
@@ -656,8 +676,17 @@ export function ClientsDataTable({
                 setIsBulkDeleting(true);
                 try {
                   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-                  await onBulkDelete?.(selected);
-                  table.resetRowSelection();
+                  const deletedIds = await onBulkDelete?.(selected);
+                  if (Array.isArray(deletedIds)) {
+                    const done = new Set(deletedIds);
+                    setRowSelection((prev) => {
+                      const next = { ...prev };
+                      for (const id of done) delete next[id];
+                      return next;
+                    });
+                  } else {
+                    table.resetRowSelection();
+                  }
                   setShowBulkDeleteConfirm(false);
                 } finally {
                   setIsBulkDeleting(false);

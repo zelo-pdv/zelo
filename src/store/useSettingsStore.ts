@@ -209,6 +209,7 @@ export const defaultProductsSettings: ProductsSettings = {
 };
 
 interface SettingsState {
+  settingsLoaded: boolean;
   store: StoreInfo;
   groups: AccessGroup[];
   voucher: VoucherSettings;
@@ -307,6 +308,7 @@ export const defaultGroups: AccessGroup[] = [
 ];
 
 export const useSettingsStore = create<SettingsState>()((set, get) => ({
+  settingsLoaded: false,
   store: defaultStore,
   groups: defaultGroups,
   voucher: defaultVoucher,
@@ -325,6 +327,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
         }
         set((state) => ({
           ...state,
+          settingsLoaded: true,
           store: config.store ? { ...state.store, ...config.store } : state.store,
           groups: config.groups ?? state.groups,
           voucher: config.voucher ? { ...state.voucher, ...config.voucher } : state.voucher,
@@ -333,9 +336,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
           dashboard: config.dashboard ? { ...state.dashboard, ...config.dashboard } : state.dashboard,
           products: config.products ? { ...state.products, ...config.products } : state.products,
         }));
+      } else {
+        set({ settingsLoaded: true });
       }
     } catch (e) {
       console.error("Failed to fetch settings", e);
+      set({ settingsLoaded: true });
     }
   },
 

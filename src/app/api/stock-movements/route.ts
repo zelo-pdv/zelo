@@ -112,6 +112,20 @@ export async function POST(request: Request) {
   }
 
   try {
+    const storeSettings = await prisma.settings.findUnique({
+      where: { lojaId: auth.user.lojaId },
+    });
+    const config = (storeSettings?.config as any) ?? {};
+    if (config?.products?.trackStock === false) {
+      return NextResponse.json(
+        {
+          error:
+            "O controle de estoque está desativado nas configurações da loja.",
+        },
+        { status: 400 },
+      );
+    }
+
     const body = await request.json();
     const isBatch = Array.isArray(body?.items);
 

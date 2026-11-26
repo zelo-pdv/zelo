@@ -140,50 +140,72 @@ export default function ProdutosPage() {
     [categories],
   );
 
-  const handleBulkToggleActive = async (selected: ProductFrontend[], active: boolean) => {
+  const handleBulkToggleActive = async (selected: ProductFrontend[], active: boolean): Promise<string[]> => {
     try {
-      if (selected.length === 0) return;
+      if (selected.length === 0) return [];
       const results = await Promise.allSettled(
         selected.map((p) => productsService.update(p.id, { active }))
       );
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? selected[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      const successfulIds = results
+        .map((res, index) => (res.status === "fulfilled" ? selected[index].id : null))
+        .filter(Boolean) as string[];
+      const successfulSet = new Set(successfulIds);
+      const failedCount = selected.length - successfulIds.length;
 
-      setProducts((prev) =>
-        prev.map((p) => (successfulIds.has(p.id) ? { ...p, active } : p))
-      );
+      if (successfulIds.length > 0) {
+        setProducts((prev) =>
+          prev.map((p) => (successfulSet.has(p.id) ? { ...p, active } : p))
+        );
+        notifyLocalSync("products");
+      }
 
-      toast.success(
-        `${successfulIds.size} produto(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
-      );
-      notifyLocalSync("products");
+      if (successfulIds.length > 0 && failedCount === 0) {
+        toast.success(
+          `${successfulIds.length} produto(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+        );
+      } else if (successfulIds.length > 0 && failedCount > 0) {
+        toast.warning(
+          `${successfulIds.length} produto(s) atualizado(s), mas ${failedCount} falhou.`
+        );
+      } else {
+        toast.error("Não foi possível atualizar os produtos selecionados.");
+      }
+
+      return successfulIds;
     } catch {
       toast.error("Erro ao alterar status dos produtos em massa.");
+      return [];
     }
   };
 
-  const handleBulkDelete = async (selected: ProductFrontend[]) => {
+  const handleBulkDelete = async (selected: ProductFrontend[]): Promise<string[]> => {
     try {
-      if (selected.length === 0) return;
-      const results = await Promise.allSettled(
-        selected.map((p) => productsService.remove(p.id))
-      );
+      if (selected.length === 0) return [];
+      const res = await productsService.bulkRemove(selected.map((p) => p.id));
+      const deletedIds = res.deletedIds ?? [];
+      const failed = res.failed ?? [];
+      const deletedSet = new Set(deletedIds);
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? selected[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      if (deletedIds.length > 0) {
+        setProducts((prev) => prev.filter((p) => !deletedSet.has(p.id)));
+        notifyLocalSync("products");
+      }
 
-      setProducts((prev) => prev.filter((p) => !successfulIds.has(p.id)));
-      toast.success(`${successfulIds.size} produto(s) excluído(s) com sucesso!`);
-      notifyLocalSync("products");
+      if (deletedIds.length > 0 && failed.length === 0) {
+        toast.success(`${deletedIds.length} produto(s) excluído(s) com sucesso!`);
+      } else if (deletedIds.length > 0 && failed.length > 0) {
+        toast.warning(
+          `${deletedIds.length} produto(s) excluído(s), mas ${failed.length} falhou (${failed[0]?.reason || "erro"}).`
+        );
+      } else if (failed.length > 0) {
+        toast.error(failed[0]?.reason || "Nenhum produto pôde ser excluído.");
+      }
+
+      return deletedIds;
     } catch {
       toast.error("Erro ao excluir produtos em massa.");
+      return [];
     }
   };
 

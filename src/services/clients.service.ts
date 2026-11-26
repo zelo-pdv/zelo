@@ -33,4 +33,14 @@ export const clientsService = {
       method: "DELETE",
     });
   },
+
+  async bulkRemove(ids: string[]): Promise<{
+    deletedIds: string[];
+    failed: { id: string; reason: string }[];
+  }> {
+    return apiRequest("/clients/bulk-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    });
+  },
 };

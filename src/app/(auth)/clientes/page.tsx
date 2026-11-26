@@ -91,58 +91,80 @@ export default function ClientesPage() {
     });
   }, [clients, sales]);
 
-  const handleBulkToggleActive = async (selected: ClientTableData[], active: boolean) => {
+  const handleBulkToggleActive = async (selected: ClientTableData[], active: boolean): Promise<string[]> => {
     try {
       const validClients = selected.filter(
         (c) => c.name.trim().toLowerCase() !== "consumidor final"
       );
-      if (validClients.length === 0) return;
+      if (validClients.length === 0) return [];
 
       const results = await Promise.allSettled(
         validClients.map((c) => clientsService.update(c.id, { active }))
       );
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? validClients[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      const successfulIds = results
+        .map((res, index) => (res.status === "fulfilled" ? validClients[index].id : null))
+        .filter(Boolean) as string[];
+      const successfulSet = new Set(successfulIds);
+      const failedCount = validClients.length - successfulIds.length;
 
-      setClients((prev) =>
-        prev.map((c) => (successfulIds.has(c.id) ? { ...c, active } : c))
-      );
+      if (successfulIds.length > 0) {
+        setClients((prev) =>
+          prev.map((c) => (successfulSet.has(c.id) ? { ...c, active } : c))
+        );
+        notifyLocalSync("clients");
+      }
 
-      toast.success(
-        `${successfulIds.size} cliente(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
-      );
-      notifyLocalSync("clients");
+      if (successfulIds.length > 0 && failedCount === 0) {
+        toast.success(
+          `${successfulIds.length} cliente(s) ${active ? "ativado(s)" : "desativado(s)"} com sucesso!`
+        );
+      } else if (successfulIds.length > 0 && failedCount > 0) {
+        toast.warning(
+          `${successfulIds.length} cliente(s) atualizado(s), mas ${failedCount} falhou.`
+        );
+      } else {
+        toast.error("Não foi possível atualizar os clientes selecionados.");
+      }
+
+      return successfulIds;
     } catch {
       toast.error("Erro ao alterar status dos clientes em massa.");
+      return [];
     }
   };
 
-  const handleBulkDelete = async (selected: ClientTableData[]) => {
+  const handleBulkDelete = async (selected: ClientTableData[]): Promise<string[]> => {
     try {
       const validClients = selected.filter(
         (c) => c.name.trim().toLowerCase() !== "consumidor final"
       );
-      if (validClients.length === 0) return;
+      if (validClients.length === 0) return [];
 
-      const results = await Promise.allSettled(
-        validClients.map((c) => clientsService.remove(c.id))
-      );
+      const res = await clientsService.bulkRemove(validClients.map((c) => c.id));
+      const deletedIds = res.deletedIds ?? [];
+      const failed = res.failed ?? [];
+      const deletedSet = new Set(deletedIds);
 
-      const successfulIds = new Set(
-        results
-          .map((res, index) => (res.status === "fulfilled" ? validClients[index].id : null))
-          .filter(Boolean) as string[]
-      );
+      if (deletedIds.length > 0) {
+        setClients((prev) => prev.filter((c) => !deletedSet.has(c.id)));
+        notifyLocalSync("clients");
+      }
 
-      setClients((prev) => prev.filter((c) => !successfulIds.has(c.id)));
-      toast.success(`${successfulIds.size} cliente(s) excluído(s) com sucesso!`);
-      notifyLocalSync("clients");
+      if (deletedIds.length > 0 && failed.length === 0) {
+        toast.success(`${deletedIds.length} cliente(s) excluído(s) com sucesso!`);
+      } else if (deletedIds.length > 0 && failed.length > 0) {
+        toast.warning(
+          `${deletedIds.length} cliente(s) excluído(s), mas ${failed.length} não pôde ser removido (${failed[0]?.reason || "erro"}).`
+        );
+      } else if (failed.length > 0) {
+        toast.error(failed[0]?.reason || "Nenhum cliente pôde ser excluído.");
+      }
+
+      return deletedIds;
     } catch {
       toast.error("Erro ao excluir clientes em massa.");
+      return [];
     }
   };
 

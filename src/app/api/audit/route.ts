@@ -45,6 +45,7 @@ export async function GET(req: Request) {
                   "UPDATE_SALE_STATUS",
                   "CANCEL_SALE",
                   "DELETE_SALE",
+                  "BULK_CANCEL_SALES",
                   "SYNC_OFFLINE_SALES",
                 ],
               },
@@ -61,6 +62,7 @@ export async function GET(req: Request) {
                   "CREATE",
                   "UPDATE_PRODUCT",
                   "DELETE_PRODUCT",
+                  "BULK_DELETE_PRODUCTS",
                   "UPDATE_STOCK",
                   "STOCK_ENTRY",
                   "STOCK_REVERT",
@@ -76,7 +78,7 @@ export async function GET(req: Request) {
             { entity: "Client" },
             {
               action: {
-                in: ["CREATE_CLIENT", "UPDATE_CLIENT", "DELETE_CLIENT", "IMPORT_CLIENTS"],
+                in: ["CREATE_CLIENT", "UPDATE_CLIENT", "DELETE_CLIENT", "BULK_DELETE_CLIENTS", "IMPORT_CLIENTS"],
               },
             },
           ];
@@ -86,7 +88,7 @@ export async function GET(req: Request) {
             { entity: "User" },
             {
               action: {
-                in: ["CREATE_USER", "UPDATE_USER", "DELETE_USER"],
+                in: ["CREATE_USER", "UPDATE_USER", "DELETE_USER", "BULK_DELETE_USERS"],
               },
             },
           ];

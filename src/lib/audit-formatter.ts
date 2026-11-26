@@ -126,6 +126,26 @@ export function formatAuditLog(log: {
       };
     }
 
+    if (action === "BULK_CANCEL_SALES") {
+      const count = Number(details.count ?? 0);
+      const saleNumbers = Array.isArray(details.saleNumbers)
+        ? details.saleNumbers.filter(Boolean)
+        : [];
+      return {
+        title: "Cancelamento de vendas em lote",
+        categoryLabel: "Vendas",
+        icon: "x-circle",
+        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800",
+        primaryDetail: `${count} venda${count === 1 ? "" : "s"} cancelada${count === 1 ? "" : "s"} em lote`,
+        secondaryDetail:
+          saleNumbers.length > 0
+            ? `Vendas: ${saleNumbers.join(", ")}${count > saleNumbers.length ? "..." : ""}`
+            : "Estoque estornado automaticamente quando aplicável.",
+        tags: [{ text: "Cancelamento em Lote", variant: "danger" }],
+      };
+    }
+
     if (action === "SYNC_OFFLINE_SALES") {
       const syncedList = Array.isArray(details.sales) ? details.sales : [];
       const count = typeof details.count === "number" ? details.count : syncedList.length || 1;
@@ -307,6 +327,24 @@ export function formatAuditLog(log: {
         tags: [{ text: "Excluído", variant: "danger" }],
       };
     }
+
+    if (action === "BULK_DELETE_PRODUCTS") {
+      const count = Number(details.count ?? 0);
+      const deletedNames = Array.isArray(details.deletedNames)
+        ? details.deletedNames.filter(Boolean)
+        : [];
+      return {
+        title: "Exclusão de produtos em lote",
+        categoryLabel: "Produtos",
+        icon: "trash",
+        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800",
+        primaryDetail: `${count} produto${count === 1 ? "" : "s"} excluído${count === 1 ? "" : "s"} em lote`,
+        secondaryDetail:
+          deletedNames.length > 0 ? `Exemplos: ${deletedNames.join(", ")}` : undefined,
+        tags: [{ text: "Exclusão em Lote", variant: "danger" }],
+      };
+    }
   }
 
   // 3. CLIENTES
@@ -351,6 +389,24 @@ export function formatAuditLog(log: {
         primaryDetail: `Cliente: "${clientName}"`,
         secondaryDetail: "O cadastro do cliente foi desativado.",
         tags: [{ text: "Removido", variant: "danger" }],
+      };
+    }
+
+    if (action === "BULK_DELETE_CLIENTS") {
+      const count = Number(details.count ?? 0);
+      const deletedNames = Array.isArray(details.deletedNames)
+        ? details.deletedNames.filter(Boolean)
+        : [];
+      return {
+        title: "Exclusão de clientes em lote",
+        categoryLabel: "Clientes",
+        icon: "user-x",
+        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800",
+        primaryDetail: `${count} cliente${count === 1 ? "" : "s"} excluído${count === 1 ? "" : "s"} em lote`,
+        secondaryDetail:
+          deletedNames.length > 0 ? `Exemplos: ${deletedNames.join(", ")}` : undefined,
+        tags: [{ text: "Exclusão em Lote", variant: "danger" }],
       };
     }
 
@@ -411,6 +467,24 @@ export function formatAuditLog(log: {
         primaryDetail: `Colaborador: "${userName}"`,
         secondaryDetail: details.email ? `E-mail: ${details.email}` : undefined,
         tags: [{ text: "Removido", variant: "danger" }],
+      };
+    }
+
+    if (action === "BULK_DELETE_USERS") {
+      const count = Number(details.count ?? 0);
+      const deletedNames = Array.isArray(details.deletedNames)
+        ? details.deletedNames.filter(Boolean)
+        : [];
+      return {
+        title: "Exclusão de colaboradores em lote",
+        categoryLabel: "Equipe",
+        icon: "user-x",
+        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800",
+        primaryDetail: `${count} colaborador${count === 1 ? "" : "es"} removido${count === 1 ? "" : "s"} em lote`,
+        secondaryDetail:
+          deletedNames.length > 0 ? `Exemplos: ${deletedNames.join(", ")}` : undefined,
+        tags: [{ text: "Exclusão em Lote", variant: "danger" }],
       };
     }
   }

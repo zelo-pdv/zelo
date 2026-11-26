@@ -56,6 +56,7 @@ import { StockMovementDetailDialog } from "@/components/estoque/stock-movement-d
 
 export default function EstoquePage() {
   const { can } = usePermissions();
+  const settingsLoaded = useSettingsStore((s) => s.settingsLoaded);
   const productsSettings = useSettingsStore((s) => s.products) ?? {
     trackStock: false,
   };
@@ -248,7 +249,7 @@ export default function EstoquePage() {
   return (
     <div className="w-full px-4 space-y-4 pb-24 md:pb-6">
       {/* Alerta caso o controle de estoque esteja desativado */}
-      {!trackStock && (
+      {settingsLoaded && !trackStock && (
         <div className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
           <BoxIcon name="info-circle" className="text-xl shrink-0" />
           <p className="flex-1">
@@ -369,7 +370,7 @@ export default function EstoquePage() {
             <span>Exportar</span>
           </Button>
 
-          {trackStock && canAdd && (
+          {settingsLoaded && trackStock && canAdd && (
             <Button
               type="button"
               size="sm"
@@ -392,7 +393,7 @@ export default function EstoquePage() {
             <p className="text-sm font-medium">
               Nenhuma movimentação de estoque encontrada.
             </p>
-            {trackStock && canAdd && (
+            {settingsLoaded && trackStock && canAdd && (
               <Button
                 type="button"
                 variant="outline"
@@ -658,7 +659,7 @@ export default function EstoquePage() {
       {/* FAB Mobile Flutuante */}
       <MobileActionFab
         page="estoque"
-        onAdd={trackStock && canAdd ? () => setIsDialogOpen(true) : undefined}
+        onAdd={settingsLoaded && trackStock && canAdd ? () => setIsDialogOpen(true) : undefined}
         onExport={handleExport}
         isExporting={isExporting}
       />

@@ -352,16 +352,37 @@ export const handleDownloadClientTemplate = () => {
   toast.success("Modelo oficial de clientes baixado com sucesso!");
 };
 
+function formatLocalDateISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export const handleExportStockMovements = async (typeFilter?: string, search?: string) => {
   try {
-    const res = await stockMovementsService.list({
-      page: 1,
-      limit: 1000,
-      type: typeFilter,
-      q: search,
-    });
-    const movements = res.items;
-    if (!movements || movements.length === 0) {
+    const pageLimit = 100;
+    let currentPage = 1;
+    let totalPages = 1;
+    const movements: Awaited<ReturnType<typeof stockMovementsService.list>>["items"] = [];
+
+    do {
+      const res = await stockMovementsService.list({
+        page: currentPage,
+        limit: pageLimit,
+        type: typeFilter,
+        q: search,
+      });
+      const items = res.items || [];
+      movements.push(...items);
+      totalPages = res.totalPages || 1;
+      if (items.length < pageLimit || currentPage >= totalPages) {
+        break;
+      }
+      currentPage += 1;
+    } while (currentPage <= 200);
+
+    if (movements.length === 0) {
       toast.warning("Nenhuma movimentação de estoque encontrada para exportar.");
       return;
     }
@@ -406,7 +427,7 @@ export const handleExportStockMovements = async (typeFilter?: string, search?: s
       m.notes || "",
     ]);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDateISO(new Date());
     downloadCsv(`estoque_movimentacoes_zelo_${today}.csv`, headers, rows);
     toast.success(`${movements.length} movimentação(ões) exportada(s) com sucesso!`);
   } catch (error) {
