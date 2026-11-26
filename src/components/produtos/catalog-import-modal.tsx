@@ -67,6 +67,8 @@ export function CatalogImportModal({
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("auto");
+  const [defaultStockInput, setDefaultStockInput] = useState<string>("0");
+  const [priceMode, setPriceMode] = useState<"regular" | "promo">("regular");
   const [isImporting, setIsImporting] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
@@ -83,6 +85,8 @@ export function CatalogImportModal({
         setSelectedProductIds(new Set());
         setSearchQuery("");
         setSelectedCategoryId("auto");
+        setDefaultStockInput("0");
+        setPriceMode("regular");
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -191,10 +195,12 @@ export function CatalogImportModal({
       const categoryIdParam =
         selectedCategoryId === "auto" ? null : selectedCategoryId;
 
+      const parsedStock = Math.max(0, Number(defaultStockInput.replace(",", ".")) || 0);
       const result = await catalogsService.importProducts(selectedCatalog.id, {
         globalProductIds: Array.from(selectedProductIds),
         categoryId: categoryIdParam,
-        defaultStock: 0,
+        defaultStock: parsedStock,
+        priceMode,
       });
 
       toast.success(result.message || "Produtos importados com sucesso!");
@@ -324,46 +330,96 @@ export function CatalogImportModal({
           </div>
         </div>
 
-        {/* Toolbar de Ações e Seleção de Categoria */}
-        <div className="p-3 bg-muted/30 border border-border/50 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="select-all-catalog-items"
-              checked={isAllSelected}
-              onCheckedChange={handleToggleSelectAll}
-              disabled={importableCount === 0 || isImporting}
-              className="cursor-pointer"
-            />
-            <label
-              htmlFor="select-all-catalog-items"
-              className="cursor-pointer font-medium select-none text-foreground"
-            >
-              Selecionar todos os novos ({selectedCountInView}/{importableCount})
-            </label>
+        {/* Toolbar de Ações, Estoque Inicial, Preço e Categoria */}
+        <div className="p-3 bg-muted/30 border border-border/50 rounded-xl space-y-2.5 text-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Checkbox
+                id="select-all-catalog-items"
+                checked={isAllSelected}
+                onCheckedChange={handleToggleSelectAll}
+                disabled={importableCount === 0 || isImporting}
+                className="cursor-pointer"
+              />
+              <label
+                htmlFor="select-all-catalog-items"
+                className="cursor-pointer font-medium select-none text-foreground"
+              >
+                Selecionar todos os novos ({selectedCountInView}/{importableCount})
+              </label>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="catalog-default-stock" className="text-muted-foreground shrink-0 font-medium">
+                  Estoque inicial:
+                </label>
+                <Input
+                  id="catalog-default-stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={defaultStockInput}
+                  onChange={(e) => setDefaultStockInput(e.target.value)}
+                  disabled={isImporting}
+                  className="h-8 w-20 text-base md:text-xs rounded-lg bg-background"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground shrink-0 font-medium">
+                  Preço:
+                </span>
+                <Select
+                  value={priceMode}
+                  onValueChange={(val) => setPriceMode((val as "regular" | "promo") || "regular")}
+                  disabled={isImporting}
+                >
+                  <SelectTrigger className="h-8 text-xs w-[145px] rounded-lg bg-background">
+                    <SelectValue placeholder="Preço de venda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="regular">Preço de tabela</SelectItem>
+                    <SelectItem value="promo">Usar promocional</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground shrink-0 font-medium">
+                  Categoria:
+                </span>
+                <Select
+                  value={selectedCategoryId}
+                  onValueChange={(val) => setSelectedCategoryId(val || "auto")}
+                  disabled={isImporting}
+                >
+                  <SelectTrigger className="h-8 text-xs w-[160px] rounded-lg bg-background">
+                    <SelectValue placeholder="Categoria de destino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Automática (Detectada)</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground shrink-0 font-medium">
-              Vincular a:
-            </span>
-            <Select
-              value={selectedCategoryId}
-              onValueChange={(val) => setSelectedCategoryId(val || "auto")}
-              disabled={isImporting}
-            >
-              <SelectTrigger className="h-8 text-xs w-[170px] rounded-lg bg-background">
-                <SelectValue placeholder="Categoria de destino" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automática (Detectada)</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {filteredProducts.some((p) => p.promoPrice && Number(p.promoPrice) > 0) && (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+              <BoxIcon name="info-circle" className="text-primary shrink-0 text-sm" />
+              <span>
+                {priceMode === "regular"
+                  ? "Os produtos serão importados pelo preço regular de tabela; ofertas ficam registradas nas observações como referência."
+                  : "Quando o item possuir oferta, o preço promocional do catálogo será definido como preço de venda inicial."}
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Listagem de Produtos */}

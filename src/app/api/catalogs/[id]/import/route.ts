@@ -12,6 +12,7 @@ const importProductsSchema = z.object({
     .min(1, "Selecione ao menos um produto para importar."),
   categoryId: z.string().optional().nullable(),
   defaultStock: z.number().min(0).default(0),
+  priceMode: z.enum(["regular", "promo"]).default("regular"),
 });
 
 async function getUniqueStoreCode(
@@ -72,8 +73,12 @@ export async function POST(
       );
     }
 
-    const { globalProductIds, categoryId: requestedCategoryId, defaultStock } =
-      parsed.data;
+    const {
+      globalProductIds,
+      categoryId: requestedCategoryId,
+      defaultStock,
+      priceMode,
+    } = parsed.data;
 
     // Busca os produtos e a relação de ciclo, incluindo variantes globais
     const catalogProducts = await prisma.catalogProduct.findMany({
@@ -177,10 +182,24 @@ export async function POST(
         }
       }
 
-      // Preço de venda: usa o preço de catálogo ou o sugerido
-      const salePrice = Number(
+      // Preço de venda: tabela regular (ou promocional quando explicitamente escolhido)
+      const regularSalePrice = Number(
         cp.regularPrice ?? cp.cyclePrice ?? gp.suggestedPrice ?? 0
       );
+      const promoPriceVal =
+        cp.promoPrice !== null && Number(cp.promoPrice) > 0
+          ? Number(cp.promoPrice)
+          : null;
+      const salePrice =
+        priceMode === "promo" && promoPriceVal !== null
+          ? promoPriceVal
+          : regularSalePrice;
+
+      const promoNotes =
+        promoPriceVal !== null || cp.promoRule
+          ? `Referência promocional do catálogo${promoPriceVal !== null ? `: R$ ${promoPriceVal.toFixed(2).replace(".", ",")}` : ""}${cp.promoRule ? ` (${cp.promoRule})` : ""}${priceMode === "promo" && promoPriceVal !== null ? ` • Tabela regular: R$ ${regularSalePrice.toFixed(2).replace(".", ",")}` : ""}`
+          : null;
+
       const costPrice = Number(gp.costPrice ?? 0);
       const productImage = cp.cropUrl || gp.imageUrl || null;
 
@@ -248,6 +267,7 @@ export async function POST(
           salePrice,
           costPrice: costPrice > 0 ? costPrice : null,
           stock: hasVariants ? 0 : defaultStock,
+          notes: promoNotes,
           categoryId: localCategoryId,
           active: true,
           variants:

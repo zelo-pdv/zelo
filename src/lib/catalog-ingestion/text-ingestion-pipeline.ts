@@ -162,7 +162,21 @@ async function persistTextOnlyProducts(
       }
     }
 
-    // 3. Upsert em CatalogProduct preservando eventuais cropUrl/cropBox prévios
+    // 3. Upsert em CatalogProduct preservando curadoria já concluída (APPROVED / REJECTED) e cropUrl/cropBox prévios
+    const existingCatalogProduct = await prisma.catalogProduct.findUnique({
+      where: {
+        catalogId_globalProductId: {
+          catalogId,
+          globalProductId: globalProduct.id,
+        },
+      },
+      select: { id: true, curationStatus: true },
+    });
+
+    const preserveCuratedStatus =
+      existingCatalogProduct?.curationStatus === "APPROVED" ||
+      existingCatalogProduct?.curationStatus === "REJECTED";
+
     await prisma.catalogProduct.upsert({
       where: {
         catalogId_globalProductId: {
@@ -177,8 +191,12 @@ async function persistTextOnlyProducts(
         cyclePrice: prod.preco_ciclo,
         promoRule: prod.regra_promocional,
         promoMinQuantity: prod.promoMinQuantity,
-        curationStatus: prod.curationStatus,
-        curationNotes: prod.curationNotes,
+        ...(preserveCuratedStatus
+          ? {}
+          : {
+              curationStatus: prod.curationStatus,
+              curationNotes: prod.curationNotes,
+            }),
       },
       create: {
         catalogId,

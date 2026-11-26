@@ -145,6 +145,9 @@ export async function GET(
       include: {
         globalProduct: {
           include: {
+            globalCategory: {
+              select: { id: true, name: true },
+            },
             variants: {
               orderBy: [{ size: "asc" }, { colorName: "asc" }],
             },
@@ -250,6 +253,48 @@ export async function PATCH(
       });
     }
 
+    // Ação em lote para itens selecionados (aprovar, rejeitar, sinalizar ou retornar a pendente)
+    if (body.action === "batch_update_status") {
+      const ids: string[] = Array.isArray(body.catalogProductIds)
+        ? body.catalogProductIds.filter((v: unknown): v is string => typeof v === "string" && v.length > 0)
+        : [];
+      const targetStatus = body.curationStatus;
+      const validStatuses = ["PENDING_REVIEW", "APPROVED", "REJECTED", "FLAGGED"];
+
+      if (ids.length === 0 || !validStatuses.includes(targetStatus)) {
+        return NextResponse.json(
+          { error: "Informe ao menos um produto e um status de curadoria válido." },
+          { status: 400 }
+        );
+      }
+
+      const updateResult = await prisma.catalogProduct.updateMany({
+        where: {
+          id: { in: ids },
+          catalogId: id,
+        },
+        data: {
+          curationStatus: targetStatus,
+        },
+      });
+
+      await prisma.platformAuditLog.create({
+        data: {
+          adminId: auth.admin.id,
+          action: "CATALOG_CURATION_BATCH_STATUS_UPDATED",
+          targetType: "Catalog",
+          targetId: id,
+          details: { updatedCount: updateResult.count, curationStatus: targetStatus },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        updatedCount: updateResult.count,
+        message: `${updateResult.count} produto(s) atualizado(s) com sucesso.`,
+      });
+    }
+
     // Atualização de item individual
     const {
       catalogProductId,
@@ -262,6 +307,7 @@ export async function PATCH(
       productName,
       referenceSku,
       description,
+      globalCategoryId,
     } = body;
 
     if (!catalogProductId) {
@@ -271,22 +317,36 @@ export async function PATCH(
       );
     }
 
-    const existingItem = await prisma.catalogProduct.findUnique({
-      where: { id: catalogProductId },
+    const existingItem = await prisma.catalogProduct.findFirst({
+      where: { id: catalogProductId, catalogId: id },
       select: { id: true, catalogId: true, globalProductId: true },
     });
 
-    if (!existingItem || existingItem.catalogId !== id) {
+    if (!existingItem) {
       return NextResponse.json(
         { error: "Item de catálogo não encontrado." },
         { status: 404 }
       );
     }
 
+    if (globalCategoryId !== undefined && globalCategoryId !== null && globalCategoryId !== "") {
+      const categoryExists = await prisma.globalCategory.findUnique({
+        where: { id: globalCategoryId },
+        select: { id: true },
+      });
+      if (!categoryExists) {
+        return NextResponse.json(
+          { error: "Categoria global não encontrada." },
+          { status: 400 }
+        );
+      }
+    }
+
     if (
       productName !== undefined ||
       referenceSku !== undefined ||
-      description !== undefined
+      description !== undefined ||
+      globalCategoryId !== undefined
     ) {
       await prisma.globalProduct.update({
         where: { id: existingItem.globalProductId },
@@ -300,14 +360,24 @@ export async function PATCH(
             description !== undefined
               ? description?.trim() || null
               : undefined,
+          globalCategoryId:
+            globalCategoryId !== undefined
+              ? globalCategoryId || null
+              : undefined,
         },
       });
     }
 
+    const validSingleStatuses = ["PENDING_REVIEW", "APPROVED", "REJECTED", "FLAGGED"];
+    const sanitizedStatus =
+      curationStatus && validSingleStatuses.includes(curationStatus)
+        ? curationStatus
+        : undefined;
+
     const updated = await prisma.catalogProduct.update({
-      where: { id: catalogProductId },
+      where: { id: existingItem.id },
       data: {
-        curationStatus: curationStatus || undefined,
+        curationStatus: sanitizedStatus,
         regularPrice: regularPrice !== undefined ? regularPrice : undefined,
         promoPrice: promoPrice !== undefined ? promoPrice : undefined,
         promoRule: promoRule !== undefined ? promoRule : undefined,

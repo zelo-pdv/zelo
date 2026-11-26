@@ -218,6 +218,13 @@ export async function runIngestionJob(jobId: string): Promise<void> {
     let processedCount = job.processedPages;
     let failedCount = job.failedPages;
 
+    let metricsQueue: Promise<void> = Promise.resolve();
+    const withMetricsLock = async (task: () => Promise<void>) => {
+      const next = metricsQueue.then(task, task);
+      metricsQueue = next.catch(() => {});
+      await next;
+    };
+
     const existingMetrics = (job.metrics as Partial<TextJobMetrics> | null) || {};
     const textMetrics: TextJobMetrics = {
       mode: "TEXT_ONLY",
@@ -279,48 +286,50 @@ export async function runIngestionJob(jobId: string): Promise<void> {
               jobId,
             });
 
-            processedCount++;
-            productsCount += result.extractedCount;
-            totalTokens += result.inputTokens + result.outputTokens;
-            totalCostUsd = Number((totalCostUsd + result.estimatedCostUsd).toFixed(6));
+            await withMetricsLock(async () => {
+              processedCount++;
+              productsCount += result.extractedCount;
+              totalTokens += result.inputTokens + result.outputTokens;
+              totalCostUsd = Number((totalCostUsd + result.estimatedCostUsd).toFixed(6));
 
-            textMetrics.inputTokens += result.inputTokens;
-            textMetrics.outputTokens += result.outputTokens;
-            textMetrics.totalTokens = textMetrics.inputTokens + textMetrics.outputTokens;
-            textMetrics.aiCalls += result.aiCalls;
-            if (result.usedOcr) textMetrics.ocrPages++;
-            else if (result.extractionSource === "SKIPPED") textMetrics.skippedPages++;
-            else textMetrics.nativeTextPages++;
-            textMetrics.deterministicProducts += result.deterministicCount;
-            textMetrics.aiAssistedProducts += result.aiAssistedCount;
-            textMetrics.flaggedProducts += result.flaggedCount;
-            textMetrics.totalDurationMs = Date.now() - jobStartTime;
-            textMetrics.estimatedCostUsd = totalCostUsd;
+              textMetrics.inputTokens += result.inputTokens;
+              textMetrics.outputTokens += result.outputTokens;
+              textMetrics.totalTokens = textMetrics.inputTokens + textMetrics.outputTokens;
+              textMetrics.aiCalls += result.aiCalls;
+              if (result.usedOcr) textMetrics.ocrPages++;
+              else if (result.extractionSource === "SKIPPED") textMetrics.skippedPages++;
+              else textMetrics.nativeTextPages++;
+              textMetrics.deterministicProducts += result.deterministicCount;
+              textMetrics.aiAssistedProducts += result.aiAssistedCount;
+              textMetrics.flaggedProducts += result.flaggedCount;
+              textMetrics.totalDurationMs = Date.now() - jobStartTime;
+              textMetrics.estimatedCostUsd = totalCostUsd;
 
-            if (result.aiCalls > 0 && result.modelUsed !== "none") {
-              const prev = textMetrics.modelBreakdown[result.modelUsed] || {
-                calls: 0,
-                inputTokens: 0,
-                outputTokens: 0,
-                estimatedCostUsd: 0,
-              };
-              textMetrics.modelBreakdown[result.modelUsed] = {
-                calls: prev.calls + result.aiCalls,
-                inputTokens: prev.inputTokens + result.inputTokens,
-                outputTokens: prev.outputTokens + result.outputTokens,
-                estimatedCostUsd: Number((prev.estimatedCostUsd + result.estimatedCostUsd).toFixed(6)),
-              };
-            }
+              if (result.aiCalls > 0 && result.modelUsed !== "none") {
+                const prev = textMetrics.modelBreakdown[result.modelUsed] || {
+                  calls: 0,
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  estimatedCostUsd: 0,
+                };
+                textMetrics.modelBreakdown[result.modelUsed] = {
+                  calls: prev.calls + result.aiCalls,
+                  inputTokens: prev.inputTokens + result.inputTokens,
+                  outputTokens: prev.outputTokens + result.outputTokens,
+                  estimatedCostUsd: Number((prev.estimatedCostUsd + result.estimatedCostUsd).toFixed(6)),
+                };
+              }
 
-            await prisma.catalogIngestionJob.update({
-              where: { id: jobId },
-              data: {
-                processedPages: processedCount,
-                totalProductsFound: productsCount,
-                totalTokensUsed: totalTokens,
-                estimatedCostUsd: totalCostUsd,
-                metrics: textMetrics as any,
-              },
+              await prisma.catalogIngestionJob.update({
+                where: { id: jobId },
+                data: {
+                  processedPages: processedCount,
+                  totalProductsFound: productsCount,
+                  totalTokensUsed: totalTokens,
+                  estimatedCostUsd: totalCostUsd,
+                  metrics: textMetrics as any,
+                },
+              });
             });
 
             console.log(
@@ -330,33 +339,37 @@ export async function runIngestionJob(jobId: string): Promise<void> {
             const result = await processCatalogSheet({
               catalogId: job.catalogId,
               brandId: job.catalog.brandId,
+              brandName: job.catalog.brand.name,
+              catalogTitle: job.catalog.title,
               pdfBuffer,
               sheetNumber: sheetNum,
               jobId,
             });
 
-            processedCount++;
-            productsCount += result.extractedCount;
-            totalTokens += result.inputTokens + result.outputTokens;
-            totalCostUsd = Number(
-              (
-                totalCostUsd +
-                calculateGeminiCostUsd({
-                  modelUsed: result.modelUsed,
-                  inputTokens: result.inputTokens,
-                  outputTokens: result.outputTokens,
-                })
-              ).toFixed(6)
-            );
+            await withMetricsLock(async () => {
+              processedCount++;
+              productsCount += result.extractedCount;
+              totalTokens += result.inputTokens + result.outputTokens;
+              totalCostUsd = Number(
+                (
+                  totalCostUsd +
+                  calculateGeminiCostUsd({
+                    modelUsed: result.modelUsed,
+                    inputTokens: result.inputTokens,
+                    outputTokens: result.outputTokens,
+                  })
+                ).toFixed(6)
+              );
 
-            await prisma.catalogIngestionJob.update({
-              where: { id: jobId },
-              data: {
-                processedPages: processedCount,
-                totalProductsFound: productsCount,
-                totalTokensUsed: totalTokens,
-                estimatedCostUsd: totalCostUsd,
-              },
+              await prisma.catalogIngestionJob.update({
+                where: { id: jobId },
+                data: {
+                  processedPages: processedCount,
+                  totalProductsFound: productsCount,
+                  totalTokensUsed: totalTokens,
+                  estimatedCostUsd: totalCostUsd,
+                },
+              });
             });
 
             console.log(
@@ -364,7 +377,6 @@ export async function runIngestionJob(jobId: string): Promise<void> {
             );
           }
         } catch (sheetErr: any) {
-          failedCount++;
           console.error(
             `[JobRunner] Erro ao processar folha ${sheetNum}: ${sheetErr.message}`
           );
@@ -377,9 +389,12 @@ export async function runIngestionJob(jobId: string): Promise<void> {
             },
           });
 
-          await prisma.catalogIngestionJob.update({
-            where: { id: jobId },
-            data: { failedPages: failedCount },
+          await withMetricsLock(async () => {
+            failedCount++;
+            await prisma.catalogIngestionJob.update({
+              where: { id: jobId },
+              data: { failedPages: failedCount },
+            });
           });
         }
       }
@@ -404,17 +419,23 @@ export async function runIngestionJob(jobId: string): Promise<void> {
         textMetrics.totalDurationMs = Date.now() - jobStartTime;
       }
 
+      const partialWarning =
+        finalJob && finalJob.failedPages > 0 && finalJob.processedPages > 0
+          ? `${finalJob.failedPages} folha(s) falharam durante o processamento. Use 'Retomar' para reprocessar pendências.`
+          : null;
+
       await prisma.catalogIngestionJob.update({
         where: { id: jobId },
         data: {
           status: finalStatus,
           completedAt: new Date(),
           currentSheet: null,
+          ...(partialWarning ? { errorMessage: partialWarning } : {}),
           ...(isTextOnly ? { metrics: textMetrics as any } : {}),
         },
       });
 
-      if (finalStatus === "COMPLETED") {
+      if (finalStatus === "COMPLETED" && job.catalog.status !== "PUBLISHED") {
         await prisma.catalog.update({
           where: { id: job.catalogId },
           data: { status: "CURATION" },

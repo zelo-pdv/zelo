@@ -10,9 +10,32 @@ import path from "path";
 export interface ProcessSheetOptions {
   catalogId: string;
   brandId: string;
+  brandName?: string | null;
+  catalogTitle?: string | null;
   pdfBuffer: Buffer;
   sheetNumber: number;
   jobId?: string;
+}
+
+/**
+ * Extrai a quantidade mínima promocional apenas quando expressamente indicada na regra.
+ */
+export function extractPromoMinQuantity(
+  promoPrice?: number | null,
+  promoRule?: string | null
+): number | null {
+  if (!promoPrice || promoPrice <= 0) return null;
+  if (promoRule) {
+    const match = promoRule.match(
+      /(?:leve|a\s+partir\s+de|compre|m[ií]n(?:imo)?\.?)\s*(\d+)|(\d+)\s*(?:ou\s*\+|\+|unidades?|pe[cç]as?)/i
+    );
+    const numStr = match?.[1] || match?.[2];
+    const parsed = numStr ? parseInt(numStr, 10) : NaN;
+    if (Number.isFinite(parsed) && parsed >= 2) {
+      return parsed;
+    }
+  }
+  return 1;
 }
 
 export interface ProcessSheetOutput {
@@ -75,6 +98,8 @@ export async function saveCroppedImage(
 export async function processCatalogSheet({
   catalogId,
   brandId,
+  brandName,
+  catalogTitle,
   pdfBuffer,
   sheetNumber,
   jobId,
@@ -88,7 +113,10 @@ export async function processCatalogSheet({
   const rendered = await renderPdfSheetToImage(sliced.pdfBytes);
 
   // 3. Extração Multimodal via IA (gemini-3.8-flash com fallback gemini-3.5-flash)
-  const extraction = await extractProductsFromSheet(rendered.imageBuffer);
+  const extraction = await extractProductsFromSheet(rendered.imageBuffer, {
+    brandName,
+    catalogTitle,
+  });
 
   const summaryProducts: ProcessSheetOutput["products"] = [];
 
@@ -169,13 +197,16 @@ export async function processCatalogSheet({
           variantName = "Padrão";
         }
 
+        const normalizedSize = size || "";
+        const normalizedColorCode = colorCode || "";
+
         try {
           await prisma.globalProductVariant.upsert({
             where: {
               globalProductId_size_colorCode: {
                 globalProductId: globalProduct.id,
-                size: size || "",
-                colorCode: colorCode || "",
+                size: normalizedSize,
+                colorCode: normalizedColorCode,
               },
             },
             update: {
@@ -186,9 +217,9 @@ export async function processCatalogSheet({
             create: {
               globalProductId: globalProduct.id,
               name: variantName,
-              size: size || null,
+              size: normalizedSize,
               colorName,
-              colorCode,
+              colorCode: normalizedColorCode,
               active: true,
             },
           });
@@ -199,7 +230,25 @@ export async function processCatalogSheet({
       }
     }
 
-    // 4.4 Upsert de CatalogProduct (Preço, Promoção, Recorte e Curadoria nesta Edição)
+    // 4.4 Upsert de CatalogProduct preservando curadoria já concluída (APPROVED / REJECTED)
+    const existingCatalogProduct = await prisma.catalogProduct.findUnique({
+      where: {
+        catalogId_globalProductId: {
+          catalogId,
+          globalProductId: globalProduct.id,
+        },
+      },
+      select: { id: true, curationStatus: true },
+    });
+
+    const preserveCuratedStatus =
+      existingCatalogProduct?.curationStatus === "APPROVED" ||
+      existingCatalogProduct?.curationStatus === "REJECTED";
+    const resolvedPromoMinQty = extractPromoMinQuantity(
+      prod.preco_promocional,
+      prod.regra_promocional
+    );
+
     await prisma.catalogProduct.upsert({
       where: {
         catalogId_globalProductId: {
@@ -212,10 +261,10 @@ export async function processCatalogSheet({
         regularPrice: prod.preco_regular,
         promoPrice: prod.preco_promocional || null,
         promoRule: prod.regra_promocional || null,
-        promoMinQuantity: prod.preco_promocional ? 2 : 1,
+        promoMinQuantity: resolvedPromoMinQty,
         cropBox: cropBox ? (cropBox as any) : undefined,
         cropUrl: cropUrl || undefined,
-        curationStatus: "PENDING_REVIEW",
+        ...(preserveCuratedStatus ? {} : { curationStatus: "PENDING_REVIEW" }),
       },
       create: {
         catalogId,
@@ -224,7 +273,7 @@ export async function processCatalogSheet({
         regularPrice: prod.preco_regular,
         promoPrice: prod.preco_promocional || null,
         promoRule: prod.regra_promocional || null,
-        promoMinQuantity: prod.preco_promocional ? 2 : 1,
+        promoMinQuantity: resolvedPromoMinQty,
         cropBox: cropBox ? (cropBox as any) : undefined,
         cropUrl,
         curationStatus: "PENDING_REVIEW",

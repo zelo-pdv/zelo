@@ -99,6 +99,7 @@ export const catalogsService = {
       globalProductIds: string[];
       categoryId?: string | null;
       defaultStock?: number;
+      priceMode?: "regular" | "promo";
     }
   ): Promise<{ success: boolean; message: string; importedCount: number; skippedCount: number }> {
     return apiRequest(`/catalogs/${catalogId}/import`, {

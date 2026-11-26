@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requirePlatformAdminPage } from "@/lib/require-platform-admin";
 import { CatalogsClient } from "./catalogs-client";
 
 export const metadata: Metadata = {
@@ -6,7 +7,9 @@ export const metadata: Metadata = {
   description: "Gerenciamento central de revistas, ciclos de vendas e arquivos PDF seguros das marcas parceiras.",
 };
 
-export default function AdminCatalogosPage() {
+export default async function AdminCatalogosPage() {
+  const admin = await requirePlatformAdminPage();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
@@ -18,7 +21,7 @@ export default function AdminCatalogosPage() {
         </p>
       </div>
 
-      <CatalogsClient />
+      <CatalogsClient adminRole={admin.role} />
     </div>
   );
 }

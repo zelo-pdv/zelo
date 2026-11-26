@@ -65,7 +65,8 @@ interface GlobalProductOption {
   imageUrl: string | null;
 }
 
-export function CatalogsClient() {
+export function CatalogsClient({ adminRole = "OPERATOR" }: { adminRole?: string }) {
+  const canDeleteCatalog = adminRole === "SUPERADMIN";
   const [catalogs, setCatalogs] = useState<CatalogItem[]>([]);
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -777,17 +778,19 @@ export function CatalogsClient() {
                         className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <BoxIcon name="edit" className="size-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setCatalogToDelete(catalog);
-                          setDeleteModalOpen(true);
-                        }}
-                        title="Excluir"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <BoxIcon name="trash" className="size-4" />
-                      </Button>
+                      {canDeleteCatalog && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setCatalogToDelete(catalog);
+                            setDeleteModalOpen(true);
+                          }}
+                          title="Excluir"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                          <BoxIcon name="trash" className="size-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

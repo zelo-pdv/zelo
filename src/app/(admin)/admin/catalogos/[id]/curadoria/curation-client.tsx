@@ -10,6 +10,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -59,10 +77,20 @@ interface CatalogProductItem {
     name: string;
     referenceSku: string | null;
     description: string | null;
+    globalCategoryId?: string | null;
+    globalCategory?: {
+      id: string;
+      name: string;
+    } | null;
     imageUrl?: string | null;
     suggestedPrice: number | string | null;
     variants: ProductVariantItem[];
   };
+}
+
+interface GlobalCategoryOption {
+  id: string;
+  name: string;
 }
 
 export function CurationClient({ catalog }: CurationClientProps) {
@@ -80,10 +108,17 @@ export function CurationClient({ catalog }: CurationClientProps) {
   const [catalogStatus, setCatalogStatus] = useState(catalog.status);
 
   // Modal de edição manual do item
+  const [globalCategories, setGlobalCategories] = useState<GlobalCategoryOption[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchUpdating, setBatchUpdating] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"approve_all" | "publish" | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+
   const [editingItem, setEditingItem] = useState<CatalogProductItem | null>(null);
   const [editName, setEditName] = useState("");
   const [editSku, setEditSku] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState<string>("none");
   const [editRegularPrice, setEditRegularPrice] = useState("");
   const [editPromoPrice, setEditPromoPrice] = useState("");
   const [editPromoMinQty, setEditPromoMinQty] = useState("1");
@@ -120,9 +155,20 @@ export function CurationClient({ catalog }: CurationClientProps) {
     fetchItems();
   }, [fetchItems]);
 
+  useEffect(() => {
+    fetch("/api/admin/global-categories?status=active")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setGlobalCategories(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleUpdateStatus = async (
     catalogProductId: string,
-    newStatus: "APPROVED" | "REJECTED" | "FLAGGED"
+    newStatus: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "FLAGGED"
   ) => {
     try {
       const res = await fetch(`/api/admin/catalogs/${catalog.id}/products`, {
@@ -145,48 +191,83 @@ export function CurationClient({ catalog }: CurationClientProps) {
     }
   };
 
-  const handleApproveAllPending = async () => {
-    if (!confirm("Deseja realmente aprovar todos os itens pendentes deste catálogo?")) return;
-
+  const handleBatchUpdateStatus = async (
+    newStatus: "PENDING_REVIEW" | "APPROVED" | "REJECTED"
+  ) => {
+    if (selectedIds.size === 0) return;
+    setBatchUpdating(true);
     try {
       const res = await fetch(`/api/admin/catalogs/${catalog.id}/products`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve_all_pending" }),
+        body: JSON.stringify({
+          action: "batch_update_status",
+          catalogProductIds: Array.from(selectedIds),
+          curationStatus: newStatus,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(data.message);
+        toast.success(data.message || "Itens atualizados em lote.");
+        setSelectedIds(new Set());
         fetchItems();
       } else {
-        toast.error(data.error || "Falha ao aprovar itens.");
+        toast.error(data.error || "Falha ao atualizar itens selecionados.");
       }
     } catch {
-      toast.error("Erro de conexão ao aprovar itens.");
+      toast.error("Erro de conexão ao atualizar itens em lote.");
+    } finally {
+      setBatchUpdating(false);
     }
   };
 
-  const handlePublishCatalog = async () => {
-    if (
-      !confirm(
-        "Deseja publicar este catálogo? Ele ficará imediatamente disponível para as lojas do Zelo importarem."
-      )
-    )
-      return;
+  const handleToggleSelectAllVisible = () => {
+    const allSelected = items.length > 0 && items.every((it) => selectedIds.has(it.id));
+    if (allSelected) {
+      const next = new Set(selectedIds);
+      for (const it of items) next.delete(it.id);
+      setSelectedIds(next);
+    } else {
+      const next = new Set(selectedIds);
+      for (const it of items) next.add(it.id);
+      setSelectedIds(next);
+    }
+  };
 
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    setConfirmBusy(true);
     try {
-      const res = await fetch(`/api/admin/catalogs/${catalog.id}/publish`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Catálogo publicado com sucesso!");
-        setCatalogStatus("PUBLISHED");
-      } else {
-        toast.error(data.error || "Falha ao publicar catálogo.");
+      if (confirmAction === "approve_all") {
+        const res = await fetch(`/api/admin/catalogs/${catalog.id}/products`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "approve_all_pending" }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(data.message);
+          fetchItems();
+        } else {
+          toast.error(data.error || "Falha ao aprovar itens.");
+        }
+      } else if (confirmAction === "publish") {
+        const res = await fetch(`/api/admin/catalogs/${catalog.id}/publish`, {
+          method: "POST",
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Catálogo publicado com sucesso!");
+          setCatalogStatus("PUBLISHED");
+        } else {
+          toast.error(data.error || "Falha ao publicar catálogo.");
+        }
       }
     } catch {
-      toast.error("Erro de conexão ao publicar.");
+      toast.error("Erro de conexão ao executar ação.");
+    } finally {
+      setConfirmBusy(false);
+      setConfirmAction(null);
     }
   };
 
@@ -195,6 +276,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
     setEditName(item.globalProduct.name || "");
     setEditSku(item.globalProduct.referenceSku || "");
     setEditDescription(item.globalProduct.description || "");
+    setEditCategoryId(item.globalProduct.globalCategoryId || "none");
     setEditRegularPrice(item.regularPrice !== null ? String(item.regularPrice) : "");
     setEditPromoPrice(item.promoPrice !== null ? String(item.promoPrice) : "");
     setEditPromoMinQty(item.promoMinQuantity ? String(item.promoMinQuantity) : "1");
@@ -215,6 +297,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
           productName: editName.trim() || undefined,
           referenceSku: editSku.trim() || null,
           description: editDescription.trim() || null,
+          globalCategoryId: editCategoryId === "none" ? null : editCategoryId,
           regularPrice: editRegularPrice ? parseFloat(editRegularPrice) : null,
           promoPrice: editPromoPrice ? parseFloat(editPromoPrice) : null,
           promoMinQuantity: editPromoMinQty ? Math.max(1, parseInt(editPromoMinQty, 10) || 1) : 1,
@@ -292,7 +375,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleApproveAllPending}
+              onClick={() => setConfirmAction("approve_all")}
               className="h-9 gap-1.5 text-xs text-emerald-600 hover:text-emerald-700"
             >
               <BoxIcon name="check-double" className="size-4" />
@@ -304,7 +387,7 @@ export function CurationClient({ catalog }: CurationClientProps) {
             <Button
               variant="default"
               size="sm"
-              onClick={handlePublishCatalog}
+              onClick={() => setConfirmAction("publish")}
               className="h-9 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               <BoxIcon name="globe" className="size-4" />
@@ -389,10 +472,62 @@ export function CurationClient({ catalog }: CurationClientProps) {
             placeholder="Buscar por nome ou SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-9 text-xs"
+            className="h-9 pl-9 text-base md:text-xs"
           />
         </div>
       </div>
+
+      {/* Barra de Seleção em Lote */}
+      {items.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/20 px-4 py-2.5 text-xs">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="curation-select-all"
+              checked={items.length > 0 && items.every((it) => selectedIds.has(it.id))}
+              onCheckedChange={handleToggleSelectAllVisible}
+              disabled={batchUpdating}
+            />
+            <label htmlFor="curation-select-all" className="cursor-pointer font-medium select-none">
+              Selecionar todos da lista ({items.filter((it) => selectedIds.has(it.id)).length}/{items.length})
+            </label>
+          </div>
+
+          {selectedIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={batchUpdating}
+                onClick={() => handleBatchUpdateStatus("APPROVED")}
+                className="h-7 gap-1 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+              >
+                <BoxIcon name="check" className="size-3.5" />
+                Aprovar ({selectedIds.size})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={batchUpdating}
+                onClick={() => handleBatchUpdateStatus("REJECTED")}
+                className="h-7 gap-1 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <BoxIcon name="x" className="size-3.5" />
+                Rejeitar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={batchUpdating}
+                onClick={() => handleBatchUpdateStatus("PENDING_REVIEW")}
+                className="h-7 gap-1 text-xs text-sky-700 border-sky-200 hover:bg-sky-50"
+              >
+                <BoxIcon name="revision" className="size-3.5" />
+                Voltar p/ Pendente
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Grid de Produtos da Curadoria */}
       {loading ? (
@@ -450,8 +585,20 @@ export function CurationClient({ catalog }: CurationClientProps) {
                           </div>
                         )}
 
-                        {/* Selos Flutuantes */}
+                        {/* Selos Flutuantes + Checkbox de seleção em lote */}
                         <div className="absolute left-2 top-2 flex flex-wrap items-center gap-1">
+                          <div className="rounded bg-background/95 p-0.5 shadow-xs flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedIds.has(item.id)}
+                              onCheckedChange={(checked) => {
+                                const next = new Set(selectedIds);
+                                if (checked) next.add(item.id);
+                                else next.delete(item.id);
+                                setSelectedIds(next);
+                              }}
+                              aria-label={`Selecionar ${item.globalProduct.name}`}
+                            />
+                          </div>
                           {item.pageNumber && (
                             <Badge variant="outline" className="bg-background/90 text-[10px] font-mono shadow-xs">
                               Pág. {item.pageNumber}
@@ -571,6 +718,17 @@ export function CurationClient({ catalog }: CurationClientProps) {
                   </Button>
 
                   <div className="flex items-center gap-1">
+                    {item.curationStatus !== "PENDING_REVIEW" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleUpdateStatus(item.id, "PENDING_REVIEW")}
+                        className="size-8 text-sky-600 hover:bg-sky-500/10"
+                        title="Retornar para pendente"
+                      >
+                        <BoxIcon name="revision" className="size-4" />
+                      </Button>
+                    )}
                     <Button
                       variant={item.curationStatus === "REJECTED" ? "destructive" : "ghost"}
                       size="icon"
@@ -646,6 +804,26 @@ export function CurationClient({ catalog }: CurationClientProps) {
                   onChange={(e) => setEditDescription(e.target.value)}
                   className="text-base md:text-sm"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Categoria Global</Label>
+                <Select
+                  value={editCategoryId}
+                  onValueChange={(val) => setEditCategoryId(val || "none")}
+                >
+                  <SelectTrigger className="h-9 text-base md:text-sm">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria global</SelectItem>
+                    {globalCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -740,6 +918,36 @@ export function CurationClient({ catalog }: CurationClientProps) {
           )}
         </DialogContent>
       </Dialog>
+      {/* AlertDialog para Ações Globais de Curadoria */}
+      <AlertDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => !open && !confirmBusy && setConfirmAction(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "approve_all"
+                ? "Aprovar todos os pendentes?"
+                : "Publicar catálogo agora?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "approve_all"
+                ? "Todos os itens atualmente com status Pendente neste catálogo serão marcados como Aprovados."
+                : "O catálogo ficará imediatamente visível para importação pelos lojistas do Zelo."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmBusy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction} disabled={confirmBusy}>
+              {confirmBusy
+                ? "Processando..."
+                : confirmAction === "approve_all"
+                  ? "Sim, aprovar todos"
+                  : "Sim, publicar catálogo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
