@@ -34,7 +34,7 @@ export function SiteHeader() {
   // Se achar em qualquer um dos dois, usa o label. Senão, usa "Página".
   const pageTitle = currentRoute?.label || "Página";
 
-  const isSubPage = ["/historico", "/usuarios", "/registros", "/configuracoes", "/estoque"].some(p => pathname.startsWith(p));
+  const isSubPage = ["/historico", "/usuarios", "/registros", "/configuracoes", "/estoque", "/relatorios"].some(p => pathname.startsWith(p));
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b-0 md:border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">

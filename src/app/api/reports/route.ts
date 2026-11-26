@@ -15,15 +15,38 @@ export async function GET(req: Request) {
     const endDate = searchParams.get("endDate");
     const categoryId = searchParams.get("categoryId");
     const onlyOverdue = searchParams.get("onlyOverdue") === "true";
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "100", 10);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 1000) : 100;
 
-    // Configuração de datas
-    const dateFilter: any = {};
+    const tzOffsetParam = searchParams.get("tzOffset");
+    const tzOffsetMinutes =
+      tzOffsetParam !== null && !Number.isNaN(Number(tzOffsetParam))
+        ? Number(tzOffsetParam)
+        : 180; // Padrão BRT (-03:00)
+
+    const parseDateBoundary = (rawDate: string, endOfDay: boolean): Date => {
+      if (rawDate.includes("T")) return new Date(rawDate);
+      const [y, m, d] = rawDate.split("-").map(Number);
+      if (!y || !m || !d) return new Date(rawDate);
+      const utcMs = Date.UTC(
+        y,
+        m - 1,
+        d,
+        endOfDay ? 23 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 999 : 0
+      );
+      return new Date(utcMs + tzOffsetMinutes * 60_000);
+    };
+
+    // Configuração de datas considerando o fuso horário do cliente
+    const dateFilter: { gte?: Date; lte?: Date } = {};
     if (startDate) {
-      dateFilter.gte = new Date(startDate.includes("T") ? startDate : `${startDate}T00:00:00.000Z`);
+      dateFilter.gte = parseDateBoundary(startDate, false);
     }
     if (endDate) {
-      dateFilter.lte = new Date(endDate.includes("T") ? endDate : `${endDate}T23:59:59.999Z`);
+      dateFilter.lte = parseDateBoundary(endDate, true);
     }
 
     const hasDateFilter = Object.keys(dateFilter).length > 0;
@@ -45,12 +68,16 @@ export async function GET(req: Request) {
       const sales = await prisma.sale.findMany({
         where: {
           lojaId: user.lojaId,
+          deletedAt: null,
           status: { not: "CANCELADO" },
           ...(hasDateFilter ? { date: dateFilter } : {}),
         },
         include: {
           items: {
             include: {
+              variant: {
+                select: { id: true, name: true, stock: true },
+              },
               product: {
                 include: { category: true, variants: { where: { deletedAt: null } } },
               },
@@ -61,52 +88,90 @@ export async function GET(req: Request) {
 
       const productMap = new Map<string, {
         productId: string;
+        variantId: string | null;
         productName: string;
+        variantName: string | null;
         code: string;
         categoryName: string;
         categoryId: string | null;
         quantitySold: number;
         totalRevenue: number;
+        grossRevenue: number;
         currentStock: number;
         salePrice: number;
       }>();
 
       for (const sale of sales) {
-        for (const item of sale.items) {
+        const items = sale.items || [];
+        const saleGrossItems = items.reduce((sum, it) => sum + Number(it.subtotal), 0);
+        const saleNetTotal =
+          sale.total !== undefined && sale.total !== null
+            ? Math.max(0, Number(sale.total))
+            : saleGrossItems;
+        const netFactor = saleGrossItems > 0 ? saleNetTotal / saleGrossItems : 1;
+
+        for (const item of items) {
           if (categoryId && item.product?.categoryId !== categoryId) {
             continue;
           }
 
           const pid = item.productId;
-          const existing = productMap.get(pid);
+          const vid = item.variantId || null;
+          const mapKey = vid ? `${pid}::${vid}` : pid;
+          const existing = productMap.get(mapKey);
           const qty = Number(item.quantity);
-          const subtotal = Number(item.subtotal);
+          const grossSubtotal = Number(item.subtotal);
+          const effectiveRevenue = grossSubtotal * netFactor;
 
           if (existing) {
             existing.quantitySold += qty;
-            existing.totalRevenue += subtotal;
+            existing.totalRevenue += effectiveRevenue;
+            existing.grossRevenue += grossSubtotal;
+            existing.salePrice =
+              existing.quantitySold > 0
+                ? existing.totalRevenue / existing.quantitySold
+                : existing.salePrice;
           } else {
-            productMap.set(pid, {
+            const variantName = item.variant?.name || item.variantName || null;
+            const variantStock = vid
+              ? Number(
+                  item.variant?.stock ??
+                    item.product?.variants?.find((v) => v.id === vid)?.stock ??
+                    0
+                )
+              : getProductTotalStock(item.product);
+
+            productMap.set(mapKey, {
               productId: pid,
+              variantId: vid,
               productName: item.productName || item.product?.name || "Produto",
+              variantName,
               code: item.product?.code || "",
               categoryName: item.product?.category?.name || "Geral",
               categoryId: item.product?.categoryId || null,
               quantitySold: qty,
-              totalRevenue: subtotal,
-              currentStock: getProductTotalStock(item.product),
-              salePrice: Number(item.unitPrice),
+              totalRevenue: effectiveRevenue,
+              grossRevenue: grossSubtotal,
+              currentStock: variantStock,
+              salePrice:
+                qty > 0 ? effectiveRevenue / qty : Number(item.unitPrice) * netFactor,
             });
           }
         }
       }
 
       const list = Array.from(productMap.values())
-        .sort((a, b) => b.quantitySold - a.quantitySold)
+        .sort((a, b) => b.quantitySold - a.quantitySold || b.totalRevenue - a.totalRevenue)
         .slice(0, limit);
 
       const totalItemsSold = list.reduce((acc, p) => acc + p.quantitySold, 0);
       const totalRevenue = list.reduce((acc, p) => acc + p.totalRevenue, 0);
+      const topItem = list[0];
+      const topProductLabel = topItem
+        ? topItem.variantName
+          ? `${topItem.productName} (${topItem.variantName})`
+          : topItem.productName
+        : "Nenhum";
 
       return NextResponse.json({
         reportType,
@@ -115,7 +180,7 @@ export async function GET(req: Request) {
           totalProductsCount: list.length,
           totalItemsSold,
           totalRevenue,
-          topProduct: list[0]?.productName || "Nenhum",
+          topProduct: topProductLabel,
         },
         data: list,
       });
@@ -139,6 +204,7 @@ export async function GET(req: Request) {
       const sales = await prisma.sale.findMany({
         where: {
           lojaId: user.lojaId,
+          deletedAt: null,
           status: { not: "CANCELADO" },
           ...(hasDateFilter ? { date: dateFilter } : {}),
         },
@@ -151,55 +217,74 @@ export async function GET(req: Request) {
 
       const salesCountMap = new Map<string, { qty: number; revenue: number }>();
       for (const sale of sales) {
-        for (const item of sale.items) {
+        const items = sale.items || [];
+        const saleGrossItems = items.reduce((sum, it) => sum + Number(it.subtotal), 0);
+        const saleNetTotal =
+          sale.total !== undefined && sale.total !== null
+            ? Math.max(0, Number(sale.total))
+            : saleGrossItems;
+        const netFactor = saleGrossItems > 0 ? saleNetTotal / saleGrossItems : 1;
+
+        for (const item of items) {
           const prev = salesCountMap.get(item.productId) || { qty: 0, revenue: 0 };
           prev.qty += Number(item.quantity);
-          prev.revenue += Number(item.subtotal);
+          prev.revenue += Number(item.subtotal) * netFactor;
           salesCountMap.set(item.productId, prev);
         }
       }
 
-      const list = allProducts.map((p) => {
-        const sold = salesCountMap.get(p.id) || { qty: 0, revenue: 0 };
-        const stock = getProductTotalStock(p);
-        const costPrice = Number(p.costPrice ?? 0);
-        const salePrice = Number(p.salePrice ?? 0);
-        const stockValue = stock * (costPrice > 0 ? costPrice : salePrice);
+      const fullList = allProducts
+        .map((p) => {
+          const sold = salesCountMap.get(p.id) || { qty: 0, revenue: 0 };
+          const stock = getProductTotalStock(p);
+          const costPrice = Number(p.costPrice ?? 0);
+          const salePrice = Number(p.salePrice ?? 0);
+          const valuationMethod = costPrice > 0 ? "cost" : "sale_price_fallback";
+          const stockValue = stock * (costPrice > 0 ? costPrice : salePrice);
 
-        return {
-          productId: p.id,
-          productName: p.name,
-          code: p.code || "",
-          categoryName: p.category?.name || "Geral",
-          quantitySold: sold.qty,
-          totalRevenue: sold.revenue,
-          currentStock: stock,
-          salePrice,
-          costPrice,
-          stockValue,
-        };
-      })
-      .sort((a, b) => {
-        // Ordena primeiro pelos que menos venderam, depois pelo maior estoque parado
-        if (a.quantitySold !== b.quantitySold) {
-          return a.quantitySold - b.quantitySold;
-        }
-        return b.currentStock - a.currentStock;
-      })
-      .slice(0, limit);
+          return {
+            productId: p.id,
+            productName: p.name,
+            code: p.code || "",
+            categoryName: p.category?.name || "Geral",
+            quantitySold: sold.qty,
+            totalRevenue: sold.revenue,
+            currentStock: stock,
+            salePrice,
+            costPrice,
+            stockValue,
+            valuationMethod,
+          };
+        })
+        .sort((a, b) => {
+          // Ordena primeiro pelos que menos venderam, depois pelo maior estoque parado
+          if (a.quantitySold !== b.quantitySold) {
+            return a.quantitySold - b.quantitySold;
+          }
+          return b.currentStock - a.currentStock;
+        });
 
-      const zeroSalesCount = list.filter((p) => p.quantitySold === 0).length;
-      const totalStockItems = list.reduce((acc, p) => acc + p.currentStock, 0);
-      const totalStockValue = list.reduce((acc, p) => acc + p.stockValue, 0);
+      const zeroSalesCount = fullList.filter((p) => p.quantitySold === 0).length;
+      const totalStockItems = fullList.reduce((acc, p) => acc + p.currentStock, 0);
+      const totalStockValue = fullList.reduce((acc, p) => acc + p.stockValue, 0);
+      const costValuedCount = fullList.filter((p) => p.valuationMethod === "cost").length;
+      const saleFallbackCount = fullList.filter(
+        (p) => p.valuationMethod === "sale_price_fallback" && p.currentStock > 0
+      ).length;
+
+      const list = fullList.slice(0, limit);
 
       return NextResponse.json({
         reportType,
         store: storeInfo,
         summary: {
-          totalProductsCount: list.length,
+          totalProductsCount: fullList.length,
+          displayedCount: list.length,
           zeroSalesCount,
           totalStockItems,
           totalStockValue,
+          costValuedCount,
+          saleFallbackCount,
         },
         data: list,
       });
@@ -210,6 +295,7 @@ export async function GET(req: Request) {
       const sales = await prisma.sale.findMany({
         where: {
           lojaId: user.lojaId,
+          deletedAt: null,
           status: { not: "CANCELADO" },
           ...(hasDateFilter ? { date: dateFilter } : {}),
         },
@@ -287,6 +373,7 @@ export async function GET(req: Request) {
       const pendingSales = await prisma.sale.findMany({
         where: {
           lojaId: user.lojaId,
+          deletedAt: null,
           status: "PENDENTE",
           ...(hasDateFilter ? { date: dateFilter } : {}),
         },
@@ -298,8 +385,8 @@ export async function GET(req: Request) {
         orderBy: { dueDate: "asc" },
       });
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const localNow = new Date(Date.now() - tzOffsetMinutes * 60_000);
+      const todayLocalYmd = localNow.toISOString().slice(0, 10);
 
       const debtorMap = new Map<string, {
         clientId: string | null;
@@ -320,8 +407,9 @@ export async function GET(req: Request) {
         const total = Number(sale.total);
         const saleDateStr = sale.date.toISOString();
         const dueDateStr = sale.dueDate ? sale.dueDate.toISOString() : null;
+        const dueYmd = dueDateStr ? dueDateStr.slice(0, 10) : null;
 
-        const isSaleOverdue = sale.dueDate ? new Date(sale.dueDate) < today : false;
+        const isSaleOverdue = dueYmd ? dueYmd < todayLocalYmd : false;
 
         const existing = debtorMap.get(key);
         if (existing) {
@@ -382,6 +470,7 @@ export async function GET(req: Request) {
       const sales = await prisma.sale.findMany({
         where: {
           lojaId: user.lojaId,
+          deletedAt: null,
           ...(hasDateFilter ? { date: dateFilter } : {}),
         },
       });
@@ -391,6 +480,7 @@ export async function GET(req: Request) {
       let pendingRevenue = 0;
       let cancelledRevenue = 0;
       let totalDiscount = 0;
+      let totalSurcharge = 0;
 
       const paymentMap = new Map<string, { count: number; total: number }>();
       const statusMap = {
@@ -402,7 +492,7 @@ export async function GET(req: Request) {
       for (const sale of sales) {
         const total = Number(sale.total);
         const discount = Number(sale.discount ?? 0);
-        totalDiscount += discount;
+        const surcharge = Number(sale.surcharge ?? 0);
 
         if (sale.status === "PAGO") {
           paidRevenue += total;
@@ -420,8 +510,11 @@ export async function GET(req: Request) {
           statusMap.CANCELADO.total += total;
         }
 
-        // Forma de pagamento (apenas de vendas não canceladas)
+        // Descontos, acréscimos e forma de pagamento (apenas de vendas não canceladas)
         if (sale.status !== "CANCELADO") {
+          totalDiscount += discount;
+          totalSurcharge += surcharge;
+
           const pm = sale.paymentMethod || "OUTRO";
           const prev = paymentMap.get(pm) || { count: 0, total: 0 };
           prev.count++;
@@ -452,6 +545,7 @@ export async function GET(req: Request) {
           pendingRevenue,
           cancelledRevenue,
           totalDiscount,
+          totalSurcharge,
           averageTicket,
         },
         statusBreakdown: statusMap,

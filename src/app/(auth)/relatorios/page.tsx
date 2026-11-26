@@ -12,6 +12,7 @@ import { BoxIcon } from "@/components/ui/box-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerContent,
@@ -40,6 +41,13 @@ type ReportType =
   | "top-clients"
   | "debtor-clients"
   | "financial-summary";
+
+function formatLocalDateISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 interface ReportDef {
   id: ReportType;
@@ -121,6 +129,12 @@ export default function RelatoriosPage() {
     if (repId !== selectedReport) {
       setSelectedReport(repId);
       setReportData(null);
+      if (repId !== "top-products" && repId !== "least-products") {
+        setSelectedCategory("todos");
+      }
+      if (repId !== "debtor-clients") {
+        setOnlyOverdue(false);
+      }
     }
   };
 
@@ -148,10 +162,10 @@ export default function RelatoriosPage() {
     loadCategories();
   }, [canView]);
 
-  // Calcula intervalo de datas a partir do preset selecionado
+  // Calcula intervalo de datas a partir do preset selecionado (usando data local do navegador)
   const getDateRange = useCallback(() => {
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
+    const todayStr = formatLocalDateISO(now);
 
     if (datePreset === "hoje") {
       return { start: todayStr, end: todayStr };
@@ -159,34 +173,34 @@ export default function RelatoriosPage() {
     if (datePreset === "ontem") {
       const y = new Date(now);
       y.setDate(y.getDate() - 1);
-      const yStr = y.toISOString().slice(0, 10);
+      const yStr = formatLocalDateISO(y);
       return { start: yStr, end: yStr };
     }
     if (datePreset === "ultimos7dias") {
       const past = new Date(now);
       past.setDate(past.getDate() - 7);
-      return { start: past.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(past), end: todayStr };
     }
     if (datePreset === "ultimos30dias") {
       const past = new Date(now);
       past.setDate(past.getDate() - 30);
-      return { start: past.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(past), end: todayStr };
     }
     if (datePreset === "esteMes") {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { start: firstDay.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(firstDay), end: todayStr };
     }
     if (datePreset === "mesPassado") {
       const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
       return {
-        start: firstDay.toISOString().slice(0, 10),
-        end: lastDay.toISOString().slice(0, 10),
+        start: formatLocalDateISO(firstDay),
+        end: formatLocalDateISO(lastDay),
       };
     }
     if (datePreset === "esteAno") {
       const firstDay = new Date(now.getFullYear(), 0, 1);
-      return { start: firstDay.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(firstDay), end: todayStr };
     }
     if (datePreset === "personalizado") {
       return { start: customStartDate, end: customEndDate };
@@ -204,6 +218,7 @@ export default function RelatoriosPage() {
     try {
       const params = new URLSearchParams();
       params.set("type", selectedReport);
+      params.set("tzOffset", String(new Date().getTimezoneOffset()));
 
       const { start, end } = getDateRange();
       if (start) params.set("startDate", start);
@@ -292,8 +307,13 @@ export default function RelatoriosPage() {
 
       let head: string[][] = [];
       let body: (string | number)[][] = [];
+      const summaryLines: string[] = [];
+      const summary = reportData.summary || {};
 
       if (selectedReport === "top-products") {
+        summaryLines.push(
+          `Itens vendidos: ${summary.totalItemsSold ?? 0} un.  |  Faturamento total: ${currency(summary.totalRevenue)}  |  Campeão: ${summary.topProduct || "Nenhum"}`
+        );
         head = [
           [
             "#",
@@ -307,7 +327,7 @@ export default function RelatoriosPage() {
         ];
         body = (reportData.data || []).map((p: any, idx: number) => [
           String(idx + 1),
-          p.productName,
+          p.variantName ? `${p.productName} (${p.variantName})` : p.productName,
           p.categoryName,
           `${p.quantitySold} un.`,
           currency(p.salePrice),
@@ -315,6 +335,14 @@ export default function RelatoriosPage() {
           `${p.currentStock} un.`,
         ]);
       } else if (selectedReport === "least-products") {
+        summaryLines.push(
+          `Sem nenhuma venda: ${summary.zeroSalesCount ?? 0} itens  |  Estoque acumulado: ${summary.totalStockItems ?? 0} un.  |  Capital parado estimado: ${currency(summary.totalStockValue)}`
+        );
+        if ((summary.saleFallbackCount ?? 0) > 0) {
+          summaryLines.push(
+            `Obs.: ${summary.saleFallbackCount} produto(s) sem custo cadastrado avaliado(s) pelo preço de venda.`
+          );
+        }
         head = [
           [
             "#",
@@ -336,6 +364,10 @@ export default function RelatoriosPage() {
           currency(p.stockValue),
         ]);
       } else if (selectedReport === "top-clients") {
+        summaryLines.push(
+          `Pedidos: ${summary.totalOrdersCount ?? 0}  |  Ticket médio: ${currency(summary.averageTicket)}  |  Faturamento Top Clientes: ${currency(summary.totalRevenueFromTop)}`
+        );
+        summaryLines.push(`Melhor cliente: ${summary.topClient || "Nenhum"}`);
         head = [
           [
             "#",
@@ -359,6 +391,9 @@ export default function RelatoriosPage() {
             : "-",
         ]);
       } else if (selectedReport === "debtor-clients") {
+        summaryLines.push(
+          `Total a receber: ${currency(summary.totalPendingDebt)}  |  Total em atraso: ${currency(summary.totalOverdueDebt)}  |  Clientes com débito: ${summary.debtorsCount ?? 0}  |  Vendas pendentes: ${summary.totalPendingSales ?? 0}`
+        );
         head = [
           [
             "#",
@@ -382,6 +417,15 @@ export default function RelatoriosPage() {
           currency(c.totalDebt),
         ]);
       } else if (selectedReport === "financial-summary") {
+        summaryLines.push(
+          `Faturamento Bruto (Pago + Pendente): ${currency(summary.grossRevenue)}  |  Faturamento Líquido (Pago): ${currency(summary.netRevenue)}  |  Ticket Médio: ${currency(summary.averageTicket)}`
+        );
+        summaryLines.push(
+          `Pendente / Fiado: ${currency(summary.pendingRevenue)}  |  Cancelado: ${currency(summary.cancelledRevenue)}  |  Vendas Válidas: ${summary.validSalesCount ?? 0} de ${summary.totalSalesCount ?? 0}`
+        );
+        summaryLines.push(
+          `Descontos Aplicados: ${currency(summary.totalDiscount)}  |  Acréscimos Aplicados: ${currency(summary.totalSurcharge)}`
+        );
         head = [
           [
             "Forma de Pagamento",
@@ -398,8 +442,21 @@ export default function RelatoriosPage() {
         ]);
       }
 
+      let currentY = 35;
+      if (summaryLines.length > 0) {
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        for (const line of summaryLines) {
+          const wrapped = doc.splitTextToSize(line, 182);
+          doc.text(wrapped, 14, currentY);
+          currentY += wrapped.length * 4.5;
+        }
+        currentY += 2;
+      }
+
       autoTable(doc, {
-        startY: 35,
+        startY: currentY,
         head,
         body,
         theme: "grid",
@@ -414,7 +471,7 @@ export default function RelatoriosPage() {
         },
       });
 
-      const todayIso = new Date().toISOString().slice(0, 10);
+      const todayIso = formatLocalDateISO(new Date());
       const filename = `relatorio_${selectedReport}_${todayIso}.pdf`;
       doc.save(filename);
       toast.success("Relatório em PDF baixado com sucesso!");
@@ -610,6 +667,11 @@ export default function RelatoriosPage() {
                   <p className="text-base sm:text-lg font-bold mt-1 text-red-600 dark:text-red-400">
                     {currency(reportData.summary.totalStockValue)}
                   </p>
+                  {(reportData.summary.saleFallbackCount ?? 0) > 0 && (
+                    <span className="block text-[10px] text-muted-foreground mt-0.5">
+                      {reportData.summary.saleFallbackCount} item(ns) sem custo avaliado(s) pelo preço de venda
+                    </span>
+                  )}
                 </Card>
               </>
             )}
@@ -721,6 +783,11 @@ export default function RelatoriosPage() {
                   <p className="text-lg sm:text-xl font-bold mt-1 text-muted-foreground">
                     {currency(reportData.summary.totalDiscount)}
                   </p>
+                  {(reportData.summary.totalSurcharge ?? 0) > 0 && (
+                    <span className="block text-[10px] text-muted-foreground mt-0.5">
+                      Acréscimos: {currency(reportData.summary.totalSurcharge)}
+                    </span>
+                  )}
                 </Card>
               </>
             )}
@@ -790,7 +857,7 @@ export default function RelatoriosPage() {
                   <tbody className="divide-y divide-border/50">
                     {(reportData.data || []).map((p: any, idx: number) => (
                       <tr
-                        key={p.productId}
+                        key={p.variantId ? `${p.productId}:${p.variantId}` : p.productId}
                         className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 text-center font-bold text-muted-foreground">
                           {idx === 0
@@ -802,7 +869,12 @@ export default function RelatoriosPage() {
                                 : idx + 1}
                         </td>
                         <td className="px-4 py-3 font-semibold text-foreground">
-                          {p.productName}
+                          <div>{p.productName}</div>
+                          {p.variantName && (
+                            <span className="text-[10px] font-normal text-muted-foreground">
+                              {p.variantName}
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {p.categoryName}
@@ -1107,7 +1179,7 @@ export default function RelatoriosPage() {
                       type="date"
                       value={customStartDate}
                       onChange={(e) => setCustomStartDate(e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-9 md:h-8 text-base md:text-xs"
                     />
                   </div>
                   <div>
@@ -1118,7 +1190,7 @@ export default function RelatoriosPage() {
                       type="date"
                       value={customEndDate}
                       onChange={(e) => setCustomEndDate(e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-9 md:h-8 text-base md:text-xs"
                     />
                   </div>
                 </div>
@@ -1150,13 +1222,11 @@ export default function RelatoriosPage() {
 
             {/* Apenas devedores vencidos */}
             {selectedReport === "debtor-clients" && (
-              <div className="flex items-center gap-2 pt-3 border-t border-border/50">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2.5 pt-3 border-t border-border/50">
+                <Checkbox
                   id="filterOnlyOverdue"
                   checked={onlyOverdue}
-                  onChange={(e) => setOnlyOverdue(e.target.checked)}
-                  className="rounded border-border text-primary focus:ring-primary size-4"
+                  onCheckedChange={(checked) => setOnlyOverdue(checked === true)}
                 />
                 <label
                   htmlFor="filterOnlyOverdue"
