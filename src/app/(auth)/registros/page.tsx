@@ -68,6 +68,13 @@ const DATE_PRESETS = [
   { id: "personalizado", label: "Personalizado" },
 ];
 
+function formatLocalDateISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function RegistrosPage() {
   const isMobile = useIsMobile();
   const { can } = usePermissions();
@@ -75,6 +82,7 @@ export default function RegistrosPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [storeUsers, setStoreUsers] = useState<StoreUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Estados dos filtros
   const [activeCategory, setActiveCategory] = useState("todos");
@@ -94,10 +102,10 @@ export default function RegistrosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Calcula intervalo de datas a partir do preset selecionado
+  // Calcula intervalo de datas locais a partir do preset selecionado
   const getDateRange = useCallback(() => {
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
+    const todayStr = formatLocalDateISO(now);
 
     if (datePreset === "hoje") {
       return { start: todayStr, end: todayStr };
@@ -105,28 +113,71 @@ export default function RegistrosPage() {
     if (datePreset === "ontem") {
       const y = new Date(now);
       y.setDate(y.getDate() - 1);
-      const yStr = y.toISOString().slice(0, 10);
+      const yStr = formatLocalDateISO(y);
       return { start: yStr, end: yStr };
     }
     if (datePreset === "ultimos7dias") {
       const past = new Date(now);
       past.setDate(past.getDate() - 7);
-      return { start: past.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(past), end: todayStr };
     }
     if (datePreset === "ultimos30dias") {
       const past = new Date(now);
       past.setDate(past.getDate() - 30);
-      return { start: past.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(past), end: todayStr };
     }
     if (datePreset === "esteMes") {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { start: firstDay.toISOString().slice(0, 10), end: todayStr };
+      return { start: formatLocalDateISO(firstDay), end: todayStr };
     }
     if (datePreset === "personalizado") {
       return { start: customStartDate, end: customEndDate };
     }
     return { start: "", end: "" };
   }, [datePreset, customStartDate, customEndDate]);
+
+  const buildAuditQueryParams = useCallback(
+    (targetPage: number, limit: number) => {
+      const params = new URLSearchParams();
+      params.set("page", String(targetPage));
+      params.set("limit", String(limit));
+      params.set("tzOffset", String(new Date().getTimezoneOffset()));
+
+      if (activeCategory !== "todos") {
+        params.set("category", activeCategory);
+      }
+
+      const { start, end } = getDateRange();
+      if (start) params.set("startDate", start);
+      if (end) params.set("endDate", end);
+
+      if (selectedUser !== "todos") {
+        params.set("userId", selectedUser);
+      }
+
+      if (saleStatus !== "todos") {
+        params.set("status", saleStatus);
+      }
+
+      if (paymentMethod !== "todos") {
+        params.set("paymentMethod", paymentMethod);
+      }
+
+      if (searchTerm.trim()) {
+        params.set("search", searchTerm.trim());
+      }
+
+      return params;
+    },
+    [
+      activeCategory,
+      getDateRange,
+      selectedUser,
+      saleStatus,
+      paymentMethod,
+      searchTerm,
+    ]
+  );
 
   const fetchLogs = useCallback(
     async (targetPage = 1) => {
@@ -136,33 +187,7 @@ export default function RegistrosPage() {
       }
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        params.set("page", String(targetPage));
-        params.set("limit", "40");
-
-        if (activeCategory !== "todos") {
-          params.set("category", activeCategory);
-        }
-
-        const { start, end } = getDateRange();
-        if (start) params.set("startDate", start);
-        if (end) params.set("endDate", end);
-
-        if (selectedUser !== "todos") {
-          params.set("userId", selectedUser);
-        }
-
-        if (saleStatus !== "todos") {
-          params.set("status", saleStatus);
-        }
-
-        if (paymentMethod !== "todos") {
-          params.set("paymentMethod", paymentMethod);
-        }
-
-        if (searchTerm.trim()) {
-          params.set("search", searchTerm.trim());
-        }
+        const params = buildAuditQueryParams(targetPage, 40);
 
         const res = await fetch(`/api/audit?${params.toString()}`);
         if (!res.ok) throw new Error("Erro ao carregar registros.");
@@ -180,15 +205,7 @@ export default function RegistrosPage() {
         setLoading(false);
       }
     },
-    [
-      canView,
-      activeCategory,
-      getDateRange,
-      selectedUser,
-      saleStatus,
-      paymentMethod,
-      searchTerm,
-    ],
+    [canView, buildAuditQueryParams]
   );
 
   useEffect(() => {
@@ -216,14 +233,46 @@ export default function RegistrosPage() {
     setIsFilterDrawerOpen(false);
   };
 
-  // Exportar registros filtrados em PDF
+  // Exportar TODOS os registros filtrados em PDF (com paginação segura)
   const handleExportPdf = async () => {
-    if (logs.length === 0) {
+    if (totalCount === 0 && logs.length === 0) {
       toast.warning("Nenhum registro para exportar no momento.");
       return;
     }
 
+    setExportingPdf(true);
     try {
+      const PAGE_LIMIT = 200;
+      const MAX_PAGES = 10; // Limite seguro de 2.000 registros por PDF
+      const allLogs: AuditLog[] = [];
+      let currentPage = 1;
+      let serverTotalPages = 1;
+      let serverTotal = totalCount;
+
+      while (currentPage <= MAX_PAGES && currentPage <= serverTotalPages) {
+        const params = buildAuditQueryParams(currentPage, PAGE_LIMIT);
+        const res = await fetch(`/api/audit?${params.toString()}`);
+        if (!res.ok) throw new Error("Erro ao buscar registros para o PDF.");
+        const json = await res.json();
+        const batch: AuditLog[] = Array.isArray(json.data) ? json.data : [];
+        allLogs.push(...batch);
+        serverTotalPages = json.meta?.totalPages || 1;
+        serverTotal = json.meta?.total ?? allLogs.length;
+        if (batch.length < PAGE_LIMIT) break;
+        currentPage++;
+      }
+
+      if (allLogs.length === 0) {
+        toast.warning("Nenhum registro para exportar no momento.");
+        return;
+      }
+
+      if (serverTotal > allLogs.length) {
+        toast.info(
+          `O PDF foi limitado aos primeiros ${allLogs.length} de ${serverTotal} registros filtrados.`
+        );
+      }
+
       const { jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
 
@@ -235,12 +284,12 @@ export default function RegistrosPage() {
       doc.setTextColor(100);
       const todayStr = new Date().toLocaleString("pt-BR");
       doc.text(
-        `Gerado em: ${todayStr} • Total de registros: ${logs.length}`,
+        `Gerado em: ${todayStr} • Total de registros: ${allLogs.length}`,
         14,
         25,
       );
 
-      const tableData = logs.map((log) => {
+      const tableData = allLogs.map((log) => {
         const formatted = formatAuditLog(log);
         const dataStr = new Intl.DateTimeFormat("pt-BR", {
           dateStyle: "short",
@@ -267,12 +316,14 @@ export default function RegistrosPage() {
         styles: { fontSize: 8, cellPadding: 3 },
       });
 
-      const filename = `registros_zelo_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filename = `registros_zelo_${formatLocalDateISO(new Date())}.pdf`;
       doc.save(filename);
       toast.success("PDF gerado e baixado com sucesso!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar PDF dos registros.");
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -291,6 +342,8 @@ export default function RegistrosPage() {
     CATEGORIES.find((c) => c.id === activeCategory)?.label || "Todos";
   const selectedDateLabel =
     DATE_PRESETS.find((d) => d.id === datePreset)?.label || "Todo o período";
+  const selectedUserLabel =
+    storeUsers.find((u) => u.id === selectedUser)?.name || "Operador";
 
   return (
     <div className="w-full px-3 sm:px-6 space-y-4 max-w-7xl mx-auto">
@@ -309,7 +362,7 @@ export default function RegistrosPage() {
               autoComplete="new-password"
               name="search-table"
               id="search-table"
-              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-sm shadow-xs"
+              className="rounded-xl pl-10 h-11 bg-white dark:bg-card border-border/70 w-full text-base md:text-sm shadow-xs"
             />
           </div>
 
@@ -333,7 +386,7 @@ export default function RegistrosPage() {
             variant="outline"
             size="sm"
             onClick={handleExportPdf}
-            disabled={loading || logs.length === 0}
+            disabled={loading || exportingPdf || logs.length === 0}
             className="rounded-xl shrink-0 h-11 px-3 sm:px-4 gap-1.5 text-xs sm:text-sm font-medium border-border/70 bg-white dark:bg-card shadow-xs cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900"
             title="Baixar em PDF">
             <BoxIcon name="file-blank" className="text-base" />
@@ -383,7 +436,7 @@ export default function RegistrosPage() {
           )}
           {selectedUser !== "todos" && (
             <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
-              Operador
+              {selectedUserLabel}
               <button
                 onClick={() => setSelectedUser("todos")}
                 className="hover:opacity-75">

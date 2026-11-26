@@ -39,17 +39,34 @@ export async function GET(req: Request) {
             { entity: "Sale" },
             {
               action: {
-                in: ["CREATE_SALE", "UPDATE_SALE", "UPDATE_SALE_STATUS", "CANCEL_SALE", "DELETE_SALE"],
+                in: [
+                  "CREATE_SALE",
+                  "UPDATE_SALE",
+                  "UPDATE_SALE_STATUS",
+                  "CANCEL_SALE",
+                  "DELETE_SALE",
+                  "SYNC_OFFLINE_SALES",
+                ],
               },
             },
           ];
           break;
         case "produtos":
           where.OR = [
-            { entity: "Product" },
+            { entity: { in: ["Product", "StockMovement"] } },
             {
               action: {
-                in: ["CREATE_PRODUCT", "CREATE", "UPDATE_PRODUCT", "DELETE_PRODUCT", "UPDATE_STOCK"],
+                in: [
+                  "CREATE_PRODUCT",
+                  "CREATE",
+                  "UPDATE_PRODUCT",
+                  "DELETE_PRODUCT",
+                  "UPDATE_STOCK",
+                  "STOCK_ENTRY",
+                  "STOCK_REVERT",
+                  "IMPORT_CATALOG_PRODUCTS",
+                  "IMPORT_PRODUCTS",
+                ],
               },
             },
           ];
@@ -59,7 +76,7 @@ export async function GET(req: Request) {
             { entity: "Client" },
             {
               action: {
-                in: ["CREATE_CLIENT", "UPDATE_CLIENT", "DELETE_CLIENT"],
+                in: ["CREATE_CLIENT", "UPDATE_CLIENT", "DELETE_CLIENT", "IMPORT_CLIENTS"],
               },
             },
           ];
@@ -97,13 +114,35 @@ export async function GET(req: Request) {
       }
     }
 
+    const tzOffsetParam = searchParams.get("tzOffset");
+    const tzOffsetMinutes =
+      tzOffsetParam !== null && !Number.isNaN(Number(tzOffsetParam))
+        ? Number(tzOffsetParam)
+        : 180; // Padrão BRT (-03:00)
+
+    const parseDateBoundary = (rawDate: string, endOfDay: boolean): Date => {
+      if (rawDate.includes("T")) return new Date(rawDate);
+      const [y, m, d] = rawDate.split("-").map(Number);
+      if (!y || !m || !d) return new Date(rawDate);
+      const utcMs = Date.UTC(
+        y,
+        m - 1,
+        d,
+        endOfDay ? 23 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 999 : 0
+      );
+      return new Date(utcMs + tzOffsetMinutes * 60_000);
+    };
+
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) {
-        where.createdAt.gte = new Date(startDate.includes("T") ? startDate : `${startDate}T00:00:00.000Z`);
+        where.createdAt.gte = parseDateBoundary(startDate, false);
       }
       if (endDate) {
-        where.createdAt.lte = new Date(endDate.includes("T") ? endDate : `${endDate}T23:59:59.999Z`);
+        where.createdAt.lte = parseDateBoundary(endDate, true);
       }
     }
 
@@ -148,7 +187,7 @@ export async function GET(req: Request) {
         searchOrList.push({ details: { path: ["saleNumber"], equals: searchNum } });
       }
 
-      // Consulta insensível a acentos no banco de dados via unaccent para operadores/usuários
+      // Consulta insensível a acentos no banco de dados via unaccent para operadores e detalhes JSON
       try {
         const matchingUsers = await prisma.$queryRaw<{ id: string }[]>`
           SELECT id FROM "User"
@@ -160,6 +199,34 @@ export async function GET(req: Request) {
         }
       } catch {
         // Fallback seguro caso o banco de dados não possua unaccent disponível
+      }
+
+      try {
+        const matchingLogDetails = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "AuditLog"
+          WHERE "lojaId" = ${user.lojaId}
+            AND unaccent(CAST("details" AS TEXT)) ILIKE unaccent(${'%' + search + '%'})
+          ORDER BY "createdAt" DESC
+          LIMIT 500
+        `;
+        if (matchingLogDetails.length > 0) {
+          searchOrList.push({ id: { in: matchingLogDetails.map((l) => l.id) } });
+        }
+      } catch {
+        try {
+          const matchingLogDetailsPlain = await prisma.$queryRaw<{ id: string }[]>`
+            SELECT id FROM "AuditLog"
+            WHERE "lojaId" = ${user.lojaId}
+              AND CAST("details" AS TEXT) ILIKE ${'%' + search + '%'}
+            ORDER BY "createdAt" DESC
+            LIMIT 500
+          `;
+          if (matchingLogDetailsPlain.length > 0) {
+            searchOrList.push({ id: { in: matchingLogDetailsPlain.map((l) => l.id) } });
+          }
+        } catch {
+          // Ignora se raw query não estiver disponível em mocks unitários
+        }
       }
 
       andConditions.push({ OR: searchOrList });

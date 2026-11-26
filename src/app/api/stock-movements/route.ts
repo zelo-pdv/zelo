@@ -299,6 +299,7 @@ export async function POST(request: Request) {
         entity: "StockMovement",
         entityId: mov.id,
         details: {
+          title: mov.title,
           type: mov.type,
           productId: mov.productId,
           productName: mov.product?.name,

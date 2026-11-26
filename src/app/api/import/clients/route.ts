@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { createAuditLog } from "@/lib/audit";
 import {
   validateClientHeaders,
   validateClientRow,
@@ -202,6 +203,19 @@ export async function POST(request: Request) {
           },
         });
       }
+    });
+
+    await createAuditLog({
+      action: "IMPORT_CLIENTS",
+      entity: "Client",
+      entityId: auth.user.lojaId,
+      details: {
+        importedCount: validatedRows.length,
+        totalReceived: items.length,
+        sampleNames: validatedRows.slice(0, 3).map((r) => r.data.name),
+      },
+      userId: auth.user.id,
+      lojaId: auth.user.lojaId,
     });
 
     return NextResponse.json({

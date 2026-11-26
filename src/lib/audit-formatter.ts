@@ -125,11 +125,119 @@ export function formatAuditLog(log: {
         tags: [{ text: "Editada", variant: "warning" }],
       };
     }
+
+    if (action === "SYNC_OFFLINE_SALES") {
+      const syncedList = Array.isArray(details.sales) ? details.sales : [];
+      const count = typeof details.count === "number" ? details.count : syncedList.length || 1;
+      const saleNumbers = syncedList
+        .map((s: any) => (s?.saleNumber ? `#${s.saleNumber}` : null))
+        .filter(Boolean)
+        .slice(0, 5);
+      return {
+        title: "Sincronização de vendas offline",
+        categoryLabel: "Vendas",
+        icon: "cloud-upload",
+        colorClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+        badgeClass: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        primaryDetail: `${count} venda${count === 1 ? "" : "s"} offline sincronizada${count === 1 ? "" : "s"}`,
+        secondaryDetail:
+          saleNumbers.length > 0
+            ? `Vendas registradas: ${saleNumbers.join(", ")}${syncedList.length > 5 ? "..." : ""}`
+            : undefined,
+        tags: [{ text: "Offline Sync", variant: "info" }],
+      };
+    }
   }
 
   // 2. PRODUTOS & ESTOQUE
-  if (action.includes("PRODUCT") || action.includes("STOCK") || entity === "product") {
-    const prodName = details.name || details.newName || "Produto";
+  if (action.includes("PRODUCT") || action.includes("STOCK") || entity === "product" || entity === "stockmovement") {
+    const prodName = details.productName || details.name || details.newName || "Produto";
+    const fullProdName = details.variantName ? `${prodName} (${details.variantName})` : prodName;
+
+    if (action === "STOCK_ENTRY") {
+      const movType = String(details.type || "ENTRY").toUpperCase();
+      const qty = details.quantity ?? 0;
+      const prev = details.previousStock ?? "?";
+      const next = details.resultStock ?? "?";
+      const isOut = movType === "OUT";
+      const isAdjustment = movType === "ADJUSTMENT";
+
+      const title = isOut
+        ? "Saída de estoque"
+        : isAdjustment
+          ? "Ajuste de estoque"
+          : "Entrada de estoque";
+      const tagText = isOut ? "Saída" : isAdjustment ? "Ajuste" : "Entrada";
+      const tagVariant = isOut ? "danger" : isAdjustment ? "warning" : "success";
+      const signedQty = isOut ? `-${qty}` : isAdjustment ? `${qty}` : `+${qty}`;
+
+      return {
+        title,
+        categoryLabel: "Estoque",
+        icon: isOut ? "minus-circle" : isAdjustment ? "slider" : "plus-circle",
+        colorClass: isOut
+          ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
+          : isAdjustment
+            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        badgeClass: isOut
+          ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800"
+          : isAdjustment
+            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        primaryDetail: `Produto: "${fullProdName}"`,
+        secondaryDetail: `Saldo: ${prev} → ${next} un. (${signedQty} un.)${details.notes ? ` • ${details.notes}` : ""}`,
+        tags: [{ text: tagText, variant: tagVariant }],
+      };
+    }
+
+    if (action === "STOCK_REVERT") {
+      const origType = details.originalType || "?";
+      const origQty = details.originalQuantity ?? "?";
+      const next = details.resultStock ?? "?";
+      return {
+        title: "Reversão de movimentação",
+        categoryLabel: "Estoque",
+        icon: "undo",
+        colorClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        primaryDetail: details.productName
+          ? `Produto: "${fullProdName}"`
+          : "Movimentação de estoque revertida",
+        secondaryDetail: `Origem: ${origType} (${origQty} un.) • Saldo após reversão: ${next} un.`,
+        tags: [{ text: "Reversão", variant: "warning" }],
+      };
+    }
+
+    if (action === "IMPORT_CATALOG_PRODUCTS") {
+      const importedCount = Number(details.importedCount ?? 0);
+      const skippedCount = Number(details.skippedCount ?? 0);
+      return {
+        title: "Importação de catálogo",
+        categoryLabel: "Produtos",
+        icon: "book-open",
+        colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        primaryDetail: `${importedCount} produto${importedCount === 1 ? "" : "s"} importado${importedCount === 1 ? "" : "s"} do catálogo`,
+        secondaryDetail: skippedCount > 0 ? `${skippedCount} item(ns) já cadastrado(s) foram ignorado(s)` : undefined,
+        tags: [{ text: "Catálogo", variant: "success" }],
+      };
+    }
+
+    if (action === "IMPORT_PRODUCTS") {
+      const importedCount = Number(details.importedCount ?? 0);
+      const sampleNames = Array.isArray(details.sampleNames) ? details.sampleNames.filter(Boolean) : [];
+      return {
+        title: "Importação de produtos via planilha",
+        categoryLabel: "Produtos",
+        icon: "spreadsheet",
+        colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        primaryDetail: `${importedCount} produto${importedCount === 1 ? "" : "s"} importado${importedCount === 1 ? "" : "s"} em lote`,
+        secondaryDetail: sampleNames.length > 0 ? `Exemplos: ${sampleNames.join(", ")}` : undefined,
+        tags: [{ text: "Importação", variant: "success" }],
+      };
+    }
 
     if (action === "CREATE_PRODUCT" || action === "CREATE") {
       const price = details.salePrice !== undefined ? currency(details.salePrice) : "";
@@ -243,6 +351,21 @@ export function formatAuditLog(log: {
         primaryDetail: `Cliente: "${clientName}"`,
         secondaryDetail: "O cadastro do cliente foi desativado.",
         tags: [{ text: "Removido", variant: "danger" }],
+      };
+    }
+
+    if (action === "IMPORT_CLIENTS") {
+      const importedCount = Number(details.importedCount ?? 0);
+      const sampleNames = Array.isArray(details.sampleNames) ? details.sampleNames.filter(Boolean) : [];
+      return {
+        title: "Importação de clientes via planilha",
+        categoryLabel: "Clientes",
+        icon: "spreadsheet",
+        colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        primaryDetail: `${importedCount} cliente${importedCount === 1 ? "" : "s"} importado${importedCount === 1 ? "" : "s"} em lote`,
+        secondaryDetail: sampleNames.length > 0 ? `Exemplos: ${sampleNames.join(", ")}` : undefined,
+        tags: [{ text: "Importação", variant: "success" }],
       };
     }
   }
